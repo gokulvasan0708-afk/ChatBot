@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
 import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -16,6 +15,35 @@ class _LoginPageState extends State<LoginPage> {
   bool loading = false;
 
   Future<void> login() async {
+    // ===== TEMPORARY LOGIN - REMOVE THIS BLOCK LATER =====
+    if (emailController.text.trim() == 'abc@gmail.com' &&
+        passwordController.text == '123456') {
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ),
+      );
+
+      return;
+    }
+
+    // Wrong credentials
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Invalid email or password'),
+      ),
+    );
+
+    return;
+    // ===== END TEMPORARY LOGIN =====
+
+    /*
+    // BACKEND LOGIN - USE THIS LATER
     setState(() {
       loading = true;
     });
@@ -47,6 +75,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     }
+    */
   }
 
   @override
