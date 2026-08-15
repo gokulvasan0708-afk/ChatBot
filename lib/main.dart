@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/login_page.dart';
+import 'pages/get_started_page.dart';
 
 void main() {
   runApp(const ChatBotApp());
@@ -13,7 +13,7 @@ class ChatBotApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ChatBot',
-      home: const LoginPage(),
+      home: GetStartedPage(),
     );
   }
 }
