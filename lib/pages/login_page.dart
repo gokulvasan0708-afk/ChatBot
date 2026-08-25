@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/user_profile_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,6 +18,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  final FocusNode emailFocusNode = FocusNode();
+  final FocusNode passwordFocusNode = FocusNode();
 
   bool loading = false;
   bool googleLoading = false;
@@ -40,16 +45,73 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // ==========================================================
-  // NORMAL LOGIN
-  // ==========================================================
+ // ==========================================================
+// FIREBASE EMAIL/PASSWORD LOGIN + AUTO CREATE
+// ==========================================================
 
-  Future<void> login() async {
-    // ===== TEMPORARY LOGIN =====
+Future<void> login() async {
+  if (loading) return;
 
-    if (emailController.text.trim() == 'abc@gmail.com' &&
-        passwordController.text == '123456') {
+  final email = emailController.text.trim();
+  final password = passwordController.text;
+
+  if (email.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please enter email and password'),
+      ),
+    );
+    return;
+  }
+
+  if (password.length < 6) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Password must be at least 6 characters'),
+      ),
+    );
+    return;
+  }
+
+  setState(() {
+    loading = true;
+  });
+
+  try {
+    // =====================================================
+    // STEP 1: Try normal Firebase login
+    // =====================================================
+
+    try {
+      final credential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      debugPrint('Existing user login');
+      debugPrint('UID: ${credential.user?.uid}');
+
+      if (credential.user != null) {
+  await UserProfileService.createUserProfile(
+    user: credential.user!,
+  );
+}
+
+      // CREATE / GET USER PROFILE
+final user = credential.user;
+
+if (user != null) {
+  await UserProfileService.createUserProfile(
+    user: user,
+  );
+}
+
       if (!mounted) return;
+
+      setState(() {
+        loading = false;
+      });
 
       Navigator.pushReplacement(
         context,
@@ -59,173 +121,233 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       return;
+    } on FirebaseAuthException catch (loginError) {
+      debugPrint('Login error: ${loginError.code}');
+
+      // ===================================================
+      // STEP 2:
+      // If login fails, try creating a new Firebase account
+      // ===================================================
+
+      try {
+        final newUser =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+
+        debugPrint('New Firebase account created');
+        debugPrint('UID: ${newUser.user?.uid}');
+
+        // ==========================================
+        // CREATE FIRESTORE USER PROFILE
+        // ==========================================
+
+        if (newUser.user != null) {
+          await UserProfileService.createUserProfile(
+            user: newUser.user!,
+          );
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          loading = false;
+        });
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomePage(),
+          ),
+        );
+
+        return;
+      } on FirebaseAuthException catch (createError) {
+        debugPrint('Create account error: ${createError.code}');
+
+        if (!mounted) return;
+
+        setState(() {
+          loading = false;
+        });
+
+        String message = 'Login failed';
+
+        if (createError.code == 'email-already-in-use') {
+          message = 'Incorrect email or password';
+        } else if (createError.code == 'weak-password') {
+          message = 'Password must be at least 6 characters';
+        } else if (createError.code == 'invalid-email') {
+          message = 'Invalid email address';
+        } else {
+          message = createError.message ?? 'Login failed';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+          ),
+        );
+      }
     }
+  } catch (e) {
+    debugPrint('Authentication error: $e');
 
-    // Wrong credentials
     if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Invalid email or password'),
-      ),
-    );
-
-    // ===== END TEMPORARY LOGIN =====
-
-    /*
-    // BACKEND LOGIN - USE THIS LATER
-
-    setState(() {
-      loading = true;
-    });
-
-    final result = await ApiService.login(
-      emailController.text.trim(),
-      passwordController.text,
-    );
 
     setState(() {
       loading = false;
     });
 
-    if (result['success'] == true) {
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomePage(),
-        ),
-      );
-    } else {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'Login failed'),
-        ),
-      );
-    }
-    */
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Something went wrong. Please try again.'),
+      ),
+    );
   }
+}
 
-  // ==========================================================
-  // GOOGLE LOGIN
-  // ==========================================================
+// ==========================================================
+// GOOGLE LOGIN
+// ==========================================================
 
-  Future<void> loginWithGoogle() async {
-    if (googleLoading) return;
+Future<void> loginWithGoogle() async {
+  if (googleLoading) return;
 
-    setState(() {
-      googleLoading = true;
-    });
+  setState(() {
+    googleLoading = true;
+  });
 
-    try {
-      // Start Google account selection
-      final GoogleSignInAccount? account =
-          await googleSignIn.authenticate();
+  try {
+    final GoogleSignInAccount googleUser =
+        await googleSignIn.authenticate();
 
-      if (!mounted) return;
+    final GoogleSignInAuthentication googleAuth =
+        googleUser.authentication;
 
-      // User cancelled Google account selection
-      if (account == null) {
-        setState(() {
-          googleLoading = false;
-        });
-        return;
-      }
+    final String? idToken = googleAuth.idToken;
 
-      debugPrint('Google Account: ${account.email}');
-      debugPrint('Google Name: ${account.displayName}');
-
-      // Login successful
-      setState(() {
-        googleLoading = false;
-      });
-
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomePage(),
-        ),
-      );
-    } on GoogleSignInException catch (e) {
-      debugPrint('Google Sign-In Error: ${e.code}');
-
-      if (!mounted) return;
-
-      setState(() {
-        googleLoading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Google Sign-In failed: ${e.code}',
-          ),
-        ),
-      );
-    } catch (e) {
-      debugPrint('Google Sign-In Error: $e');
-
-      if (!mounted) return;
-
-      setState(() {
-        googleLoading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Google Sign-In failed'),
-        ),
-      );
+    if (idToken == null) {
+      throw Exception('Google ID token is null');
     }
-  }
 
-  // ==========================================================
-  // CREATE GOOGLE ACCOUNT
-  // ==========================================================
-
-  Future<void> createGoogleAccount() async {
-    final Uri url = Uri.parse(
-      'https://accounts.google.com/signup',
+    final OAuthCredential credential =
+        GoogleAuthProvider.credential(
+      idToken: idToken,
     );
 
-    try {
-      final bool opened = await launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
+    await FirebaseAuth.instance.signInWithCredential(
+      credential,
+    );
+
+    // ==========================================
+    // CREATE / GET FIRESTORE USER PROFILE
+    // =========================================
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      await UserProfileService.createUserProfile(
+        user: user,
       );
+    }
 
-      if (!opened && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open Google account page'),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('URL launch error: $e');
+    if (!mounted) return;
 
-      if (!mounted) return;
+    setState(() {
+      googleLoading = false;
+    });
 
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const HomePage(),
+      ),
+    );
+  } on GoogleSignInException catch (e) {
+    debugPrint('Google Sign-In Error: ${e.code}');
+
+    if (!mounted) return;
+
+    setState(() {
+      googleLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Google Sign-In failed: ${e.code}',
+        ),
+      ),
+    );
+  } on FirebaseAuthException catch (e) {
+    debugPrint('Firebase Auth Error: ${e.code}');
+
+    if (!mounted) return;
+
+    setState(() {
+      googleLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Firebase login failed: ${e.message ?? e.code}',
+        ),
+      ),
+    );
+  } catch (e) {
+    debugPrint('Google Sign-In Error: $e');
+
+    if (!mounted) return;
+
+    setState(() {
+      googleLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Google Sign-In failed'),
+      ),
+    );
+  }
+}
+
+// ==========================================================
+// CREATE GOOGLE ACCOUNT
+// ==========================================================
+
+Future<void> createGoogleAccount() async {
+  final Uri url = Uri.parse(
+    'https://accounts.google.com/signup',
+  );
+
+  try {
+    final bool opened = await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Could not open Google account page'),
         ),
       );
     }
-  }
+  } catch (e) {
+    debugPrint('URL launch error: $e');
 
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    if (!mounted) return;
 
-    super.dispose();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not open Google account page'),
+      ),
+    );
   }
+}
 
   // ==========================================================
   // UI
@@ -241,11 +363,20 @@ class _LoginPageState extends State<LoginPage> {
           // ==================================================
 
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/login_bg.jpeg',
-              fit: BoxFit.cover,
-            ),
-          ),
+  child: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF020B18),
+          Color(0xFF062B4F),
+          Color(0xFF020B18),
+        ],
+      ),
+    ),
+  ),
+),
 
           // ==================================================
           // DARK OVERLAY
@@ -253,7 +384,7 @@ class _LoginPageState extends State<LoginPage> {
 
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
             ),
           ),
 
@@ -273,7 +404,7 @@ class _LoginPageState extends State<LoginPage> {
                     // ================================
 
                     const Text(
-                      'Login',
+                      'ChatBot',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -287,13 +418,41 @@ class _LoginPageState extends State<LoginPage> {
                     // GMAIL FIELD
                     // ================================
 
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.85),
+
+                        borderRadius: BorderRadius.circular(20),
+
+                      border: Border.all(
+                      color: Colors.lightBlueAccent,
+                      width: 1.5,
+                      ),
+
+                      boxShadow: [
+                    BoxShadow(
+                      color: Colors.lightBlueAccent.withValues(alpha: 0.7),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                      ),
+                    ],
+                    ),
+
+                    child: Column(
+                    children: [
                     TextField(
                       controller: emailController,
+                      focusNode: emailFocusNode,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) {
+                       FocusScope.of(context).requestFocus(
+                          passwordFocusNode,
+                        );
+                      },
                       decoration: InputDecoration(
-                        labelText: 'Gmail ID',
-                        floatingLabelBehavior:
-                            FloatingLabelBehavior.auto,
+                        hintText: 'Gmail ID',
                         border: const OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
@@ -311,11 +470,16 @@ class _LoginPageState extends State<LoginPage> {
 
                     TextField(
                       controller: passwordController,
+                      focusNode: passwordFocusNode,
                       obscureText: obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) {
+                      if (!loading) {
+                      login();
+                       }
+                      },
                       decoration: InputDecoration(
-                        labelText: 'Password',
-                        floatingLabelBehavior:
-                            FloatingLabelBehavior.auto,
+                        hintText: 'Password',
                         border: const OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
@@ -349,16 +513,27 @@ class _LoginPageState extends State<LoginPage> {
 
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 55,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(12),
+                          ),
+                        ),
                         onPressed:
                             loading ? null : login,
                         child: loading
                             ? const SizedBox(
                                 width: 24,
                                 height: 24,
-                                child:
-                                    CircularProgressIndicator(),
+                                child:CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text(
                                 'LOGIN',
@@ -370,6 +545,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     const SizedBox(height: 15),
+
+                        ],
+  ),
+),
 
                     // ================================
                     // OR
@@ -412,7 +591,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 55,
                       child: OutlinedButton.icon(
                         onPressed: googleLoading
                             ? null

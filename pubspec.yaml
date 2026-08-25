@@ -16,6 +16,11 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   http: ^1.6.0
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
+  cloud_firestore: ^6.8.0
+  firebase_messaging: ^16.5.0
+  flutter_local_notifications: ^22.3.0
 
 dev_dependencies:
   flutter_test:
@@ -27,4 +32,6 @@ flutter:
 
   assets:
     - assets/images/chatbot_start.jpeg
-    - assets/images/login_bg.jpeg
+    - assets/images/profile/profile1.jpg
+    - assets/images/profile/profile2.jpg
+    - assets/images/profile/profile3.jpg
