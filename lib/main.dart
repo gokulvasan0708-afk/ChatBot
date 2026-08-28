@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
 import 'pages/get_started_page.dart';
-import 'pages/home_page.dart';
+import 'pages/chat_page.dart';
 import 'services/notification_service.dart';
 
 // ==========================================================
@@ -115,7 +115,7 @@ void setupTokenRefreshListener() {
 
 void setupForegroundMessageHandler() {
   FirebaseMessaging.onMessage.listen(
-    (RemoteMessage message) async {
+    (RemoteMessage message) {
       debugPrint(
         '======================================',
       );
@@ -143,26 +143,6 @@ void setupForegroundMessageHandler() {
       debugPrint(
         '======================================',
       );
-
-      // ------------------------------------------------------
-      // SHOW LOCAL NOTIFICATION
-      // ------------------------------------------------------
-      //
-      // NotificationService must contain a method named:
-      // showNotification(...)
-      //
-      // If your NotificationService already has this method,
-      // this will show notification while app is foreground.
-      // ------------------------------------------------------
-
-      final notification = message.notification;
-
-      if (notification != null) {
-        await NotificationService.showNotification(
-          title: notification.title ?? 'ChatBot',
-          body: notification.body ?? '',
-        );
-      }
     },
   );
 }
@@ -289,25 +269,25 @@ Future<void> main() async {
   // runApp() ONLY ONCE.
   // ========================================================
 
-  runApp(const ChatBotApp());
+  runApp(const chatbotApp());
 }
 
 // ==========================================================
-// CHATBOT APP
+// chatbot APP
 // ==========================================================
 
-class ChatBotApp extends StatelessWidget {
-  const ChatBotApp({super.key});
+class chatbotApp extends StatelessWidget {
+  const chatbotApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      title: 'ChatBot',
+      title: 'Nexus',
 
       home: FirebaseAuth.instance.currentUser != null
-          ? const HomePage()
+          ? const ChatPage()
           : const GetStartedPage(),
     );
   }

@@ -21,7 +21,7 @@ class NotificationService {
     // --------------------------------------------------------
 
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('ic_stat_nexus');
 
     const InitializationSettings settings =
         InitializationSettings(
@@ -152,6 +152,7 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
+      icon: 'ic_stat_nexus',
     );
 
     const NotificationDetails notificationDetails =

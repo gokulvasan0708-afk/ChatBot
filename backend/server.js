@@ -43,7 +43,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.json({
         success: true,
-        message: "ChatBot Backend + FCM is running!",
+        message: "chatbot Backend + FCM is running!",
     });
 });
 
@@ -164,6 +164,7 @@ app.post("/api/send-notification", async (req, res) => {
                 notification: {
                     channelId: "chat_messages",
                     sound: "default",
+                    icon: "ic_stat_nexus",
                 },
             },
         };

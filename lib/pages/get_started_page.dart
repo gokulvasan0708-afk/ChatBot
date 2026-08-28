@@ -15,7 +15,7 @@ class GetStartedPage extends StatelessWidget {
 
           Positioned.fill(
             child: Image.asset(
-              'assets/images/chatbot_start.jpeg',
+              'assets/images/nexus_start.jpeg',
               fit: BoxFit.cover,
             ),
           ),

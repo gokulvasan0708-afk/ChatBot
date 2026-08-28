@@ -50,10 +50,19 @@ class UserProfileService {
       final data = existing.data();
 
       if (data != null &&
-          data['userId'] != null &&
-          data['userId'].toString().isNotEmpty) {
-        return data['userId'].toString();
-      }
+    data['userId'] != null &&
+    data['userId'].toString().isNotEmpty) {
+
+  // Make sure old profiles also have Firebase UID
+  if (data['uid'] == null ||
+      data['uid'].toString().isEmpty) {
+    await userRef.update({
+      'uid': user.uid,
+    });
+  }
+
+  return data['userId'].toString();
+}
 
       // Existing profile but userId missing
       final newUserId = await _generateUniqueUserId();
