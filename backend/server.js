@@ -49,6 +49,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+require("./gateway")(app);
 
 // ==========================================================
 // TEST
