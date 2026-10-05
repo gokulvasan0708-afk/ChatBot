@@ -1,15 +1,26 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'chat_page.dart';
+import 'home_shell.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_profile_service.dart';
+import '../services/account_switch_service.dart';
+import 'nexus_logo.dart';
 
+import '../widgets/top_alert.dart';
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? accountToLinkUid;
+  final bool returnToPreviousPage;
+
+  const LoginPage({
+    super.key,
+    this.accountToLinkUid,
+    this.returnToPreviousPage = false,
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -84,6 +95,29 @@ class _LoginPageState extends State<LoginPage>
   // NAVIGATION TRANSITION
   // ==========================================================
 
+  Future<void> _completeLogin() async {
+    final loggedIn = FirebaseAuth.instance.currentUser;
+    if (loggedIn == null) return;
+
+    if (widget.accountToLinkUid != null &&
+        widget.accountToLinkUid!.isNotEmpty &&
+        widget.accountToLinkUid != loggedIn.uid) {
+      await AccountSwitchService.instance.linkAccounts(
+        widget.accountToLinkUid!,
+        loggedIn.uid,
+      );
+    }
+
+    if (!mounted) return;
+
+    if (widget.returnToPreviousPage) {
+      Navigator.pop(context);
+      return;
+    }
+
+    await _goToChatPage();
+  }
+
   Future<void> _goToChatPage() async {
     if (!mounted) return;
 
@@ -99,7 +133,7 @@ class _LoginPageState extends State<LoginPage>
 
     Navigator.pushReplacement(
       context,
-      _createSlideRoute(const ChatPage()),
+      _createSlideRoute(const HomeShell()),
     );
   }
 
@@ -142,24 +176,12 @@ class _LoginPageState extends State<LoginPage>
     final password = passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please enter email and password',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Please enter email and password');
       return;
     }
 
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Password must be at least 6 characters',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Password must be at least 6 characters');
       return;
     }
 
@@ -192,7 +214,7 @@ class _LoginPageState extends State<LoginPage>
 
         if (!mounted) return;
 
-        await _goToChatPage();
+        await _completeLogin();
 
         return;
       } on FirebaseAuthException catch (loginError) {
@@ -228,7 +250,7 @@ class _LoginPageState extends State<LoginPage>
 
           if (!mounted) return;
 
-          await _goToChatPage();
+          await _completeLogin();
 
           return;
         } on FirebaseAuthException catch (createError) {
@@ -254,11 +276,7 @@ class _LoginPageState extends State<LoginPage>
             message = createError.message ?? 'Login failed';
           }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message),
-            ),
-          );
+          showTopAlert(context, message);
         }
       }
     } catch (e) {
@@ -272,13 +290,7 @@ class _LoginPageState extends State<LoginPage>
         loading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Something went wrong. Please try again.',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Something went wrong. Please try again.');
     }
   }
 
@@ -329,7 +341,7 @@ class _LoginPageState extends State<LoginPage>
 
       if (!mounted) return;
 
-      await _goToChatPage();
+      await _completeLogin();
     } on GoogleSignInException catch (e) {
       debugPrint(
         'Google Sign-In Error: ${e.code}',
@@ -341,13 +353,7 @@ class _LoginPageState extends State<LoginPage>
         googleLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Google Sign-In failed: ${e.code}',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Google Sign-In failed: ${e.code}', isError: true);
     } on FirebaseAuthException catch (e) {
       debugPrint(
         'Firebase Auth Error: ${e.code}',
@@ -359,13 +365,7 @@ class _LoginPageState extends State<LoginPage>
         googleLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Firebase login failed: ${e.message ?? e.code}',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Firebase login failed: ${e.message ?? e.code}', isError: true);
     } catch (e) {
       debugPrint(
         'Google Sign-In Error: $e',
@@ -377,13 +377,7 @@ class _LoginPageState extends State<LoginPage>
         googleLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Google Sign-In failed',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Google Sign-In failed', isError: true);
     }
   }
 
@@ -403,13 +397,7 @@ class _LoginPageState extends State<LoginPage>
       );
 
       if (!opened && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Could not open Google account page',
-            ),
-          ),
-        );
+        showTopAlert(context, 'Could not open Google account page');
       }
     } catch (e) {
       debugPrint(
@@ -418,13 +406,7 @@ class _LoginPageState extends State<LoginPage>
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not open Google account page',
-          ),
-        ),
-      );
+      showTopAlert(context, 'Could not open Google account page');
     }
   }
 
@@ -451,67 +433,13 @@ class _LoginPageState extends State<LoginPage>
   // ==========================================================
 
   Widget _buildLogo() {
-    return Column(
-      children: [
-        // NEXUS LOGO
-        ShaderMask(
-          shaderCallback: (Rect bounds) {
-            return const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF00E5FF),
-                Color(0xFF2196F3),
-                Color(0xFF7C4DFF),
-              ],
-            ).createShader(bounds);
-          },
-          child: const Text(
-            'N',
-            style: TextStyle(
-              fontSize: 105,
-              height: 0.9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -8,
-              color: Colors.white,
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 2),
-
-        const Text(
-          'NEXUS',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 42,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 8,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        const Text(
-          'CONNECT TO THE NEXT LAYER OF INTELLIGENCE',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFFB9C7DD),
-            fontSize: 11,
-            letterSpacing: 1.7,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStarField() {
-    return IgnorePointer(
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _StarFieldPainter(),
-      ),
+    // Same brand mark, same gradient, same tagline as the Splash
+    // Screen — only the sizing is tuned to sit above the login card.
+    return const NexusLogo(
+      nSize: 96,
+      wordSize: 36,
+      letterSpacing: 9,
+      taglineSize: 11.5,
     );
   }
 
@@ -519,11 +447,11 @@ class _LoginPageState extends State<LoginPage>
     return Container(
       height: 64,
       decoration: BoxDecoration(
-        color: const Color(0xFF071426)
+        color: const Color(0xFF130C07)
             .withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF60718B)
+          color: const Color(0xFF9C7B54)
               .withValues(alpha: 0.55),
           width: 1,
         ),
@@ -537,7 +465,7 @@ class _LoginPageState extends State<LoginPage>
           color: Colors.white,
           fontSize: 16,
         ),
-        cursorColor: const Color(0xFF18C8FF),
+        cursorColor: const Color(0xFFD2B48C),
         onSubmitted: (_) {
           FocusScope.of(context).requestFocus(
             passwordFocusNode,
@@ -546,12 +474,12 @@ class _LoginPageState extends State<LoginPage>
         decoration: const InputDecoration(
           hintText: 'Email Address',
           hintStyle: TextStyle(
-            color: Color(0xFF8D9BB2),
+            color: Color(0xFFC2A883),
             fontSize: 16,
           ),
           prefixIcon: Icon(
             Icons.mail_outline_rounded,
-            color: Color(0xFFD5DFEC),
+            color: Color(0xFFF3E6CE),
             size: 26,
           ),
           border: InputBorder.none,
@@ -568,11 +496,11 @@ class _LoginPageState extends State<LoginPage>
     return Container(
       height: 64,
       decoration: BoxDecoration(
-        color: const Color(0xFF071426)
+        color: const Color(0xFF130C07)
             .withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFF60718B)
+          color: const Color(0xFF9C7B54)
               .withValues(alpha: 0.55),
           width: 1,
         ),
@@ -586,7 +514,7 @@ class _LoginPageState extends State<LoginPage>
           color: Colors.white,
           fontSize: 16,
         ),
-        cursorColor: const Color(0xFF18C8FF),
+        cursorColor: const Color(0xFFD2B48C),
         onSubmitted: (_) {
           if (!loading) {
             login();
@@ -595,12 +523,12 @@ class _LoginPageState extends State<LoginPage>
         decoration: InputDecoration(
           hintText: 'Password',
           hintStyle: const TextStyle(
-            color: Color(0xFF8D9BB2),
+            color: Color(0xFFC2A883),
             fontSize: 16,
           ),
           prefixIcon: const Icon(
             Icons.lock_outline_rounded,
-            color: Color(0xFFD5DFEC),
+            color: Color(0xFFF3E6CE),
             size: 26,
           ),
           suffixIcon: IconButton(
@@ -613,7 +541,7 @@ class _LoginPageState extends State<LoginPage>
               obscurePassword
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: const Color(0xFFB9C7DD),
+              color: const Color(0xFFE8D4B0),
             ),
             tooltip: obscurePassword
                 ? 'Show password'
@@ -639,14 +567,14 @@ class _LoginPageState extends State<LoginPage>
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Color(0xFF08A8F5),
-            Color(0xFF1685F7),
-            Color(0xFF2457E8),
+            Color(0xFFC9A063),
+            Color(0xFFB8874A),
+            Color(0xFF8B4513),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00BFFF)
+            color: const Color(0xFFD2B48C)
                 .withValues(alpha: 0.35),
             blurRadius: 20,
             spreadRadius: 1,
@@ -694,10 +622,10 @@ class _LoginPageState extends State<LoginPage>
         onPressed:
             googleLoading ? null : loginWithGoogle,
         style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFF06111F),
+          backgroundColor: const Color(0xFF0D0805),
           foregroundColor: Colors.white,
           side: const BorderSide(
-            color: Color(0xFF19CFFF),
+            color: Color(0xFFD2B48C),
             width: 1,
           ),
           shape: RoundedRectangleBorder(
@@ -709,7 +637,7 @@ class _LoginPageState extends State<LoginPage>
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: Color(0xFF18C8FF),
+                  color: Color(0xFFD2B48C),
                   strokeWidth: 2,
                 ),
               )
@@ -761,7 +689,7 @@ class _LoginPageState extends State<LoginPage>
         Expanded(
           child: Container(
             height: 1,
-            color: const Color(0xFF536278)
+            color: const Color(0xFF8A6A45)
                 .withValues(alpha: 0.55),
           ),
         ),
@@ -772,7 +700,7 @@ class _LoginPageState extends State<LoginPage>
           child: Text(
             'OR',
             style: TextStyle(
-              color: Color(0xFFB5C2D5),
+              color: Color(0xFFE0CFAE),
               fontSize: 13,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -782,7 +710,7 @@ class _LoginPageState extends State<LoginPage>
         Expanded(
           child: Container(
             height: 1,
-            color: const Color(0xFF536278)
+            color: const Color(0xFF8A6A45)
                 .withValues(alpha: 0.55),
           ),
         ),
@@ -797,7 +725,7 @@ class _LoginPageState extends State<LoginPage>
         const Text(
           "Don't have an account? ",
           style: TextStyle(
-            color: Color(0xFFAAB8CC),
+            color: Color(0xFFD8C6A5),
             fontSize: 14,
           ),
         ),
@@ -806,7 +734,7 @@ class _LoginPageState extends State<LoginPage>
           child: const Text(
             'Sign Up',
             style: TextStyle(
-              color: Color(0xFF1BC9FF),
+              color: Color(0xFFD2B48C),
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
@@ -823,7 +751,7 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF01030A),
+      backgroundColor: const Color(0xFF060402),
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
@@ -838,9 +766,9 @@ class _LoginPageState extends State<LoginPage>
                   center: Alignment.center,
                   radius: 1.2,
                   colors: [
-                    Color(0xFF071E3A),
-                    Color(0xFF020B18),
-                    Color(0xFF000108),
+                    Color(0xFF1D1208),
+                    Color(0xFF0A0704),
+                    Color(0xFF000000),
                   ],
                   stops: [
                     0.0,
@@ -859,7 +787,7 @@ class _LoginPageState extends State<LoginPage>
           Positioned.fill(
             child: FadeTransition(
               opacity: _starController,
-              child: _buildStarField(),
+              child: const _LoginStarField(),
             ),
           ),
 
@@ -877,7 +805,7 @@ class _LoginPageState extends State<LoginPage>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF006EFF)
+                    color: const Color(0xFF8B4513)
                         .withValues(alpha: 0.12),
                     blurRadius: 120,
                     spreadRadius: 50,
@@ -901,7 +829,7 @@ class _LoginPageState extends State<LoginPage>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF7B2FFF)
+                    color: const Color(0xFF8B4513)
                         .withValues(alpha: 0.13),
                     blurRadius: 120,
                     spreadRadius: 40,
@@ -953,18 +881,18 @@ class _LoginPageState extends State<LoginPage>
                             28,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF020B16)
+                            color: const Color(0xFF0A0704)
                                 .withValues(alpha: 0.91),
                             borderRadius:
                                 BorderRadius.circular(28),
                             border: Border.all(
-                              color: const Color(0xFF25CFFF)
+                              color: const Color(0xFFE0C29A)
                                   .withValues(alpha: 0.72),
                               width: 1.3,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF00BFFF)
+                                color: const Color(0xFFD2B48C)
                                     .withValues(alpha: 0.18),
                                 blurRadius: 30,
                                 spreadRadius: 1,
@@ -1000,7 +928,7 @@ class _LoginPageState extends State<LoginPage>
                                 'Connect to the next layer of intelligence.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Color(0xFFB5C4D9),
+                                  color: Color(0xFFE3D2B0),
                                   fontSize: 14,
                                 ),
                               ),
@@ -1072,14 +1000,14 @@ class _LoginPageState extends State<LoginPage>
                               decoration:
                                   const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Color(0xFF18C8FF),
+                                color: Color(0xFFD2B48C),
                               ),
                             ),
                             const SizedBox(width: 8),
                             const Text(
                               'NEXUS AI',
                               style: TextStyle(
-                                color: Color(0xFF64758D),
+                                color: Color(0xFFAB8A63),
                                 fontSize: 10,
                                 letterSpacing: 2.5,
                                 fontWeight: FontWeight.w600,
@@ -1092,7 +1020,7 @@ class _LoginPageState extends State<LoginPage>
                               decoration:
                                   const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Color(0xFF18C8FF),
+                                color: Color(0xFFD2B48C),
                               ),
                             ),
                           ],
@@ -1111,81 +1039,165 @@ class _LoginPageState extends State<LoginPage>
 }
 
 // ==========================================================
-// STAR FIELD PAINTER
+// LOGIN PAGE — LIVE STAR FIELD
+// ----------------------------------------------------------
+// Bright glowing stars that slowly drift around the background
+// and continuously fade in and out. This lives on the Login
+// Page only — every other screen keeps using CosmicBackground's
+// stationary twinkle. Motion + fade are driven by a single
+// repeating AnimationController; every star uses an INTEGER
+// motion/fade frequency so its sin/cos position lands back on
+// its exact starting value every loop — the drift never visibly
+// "jumps" or resets when the controller wraps from 1.0 back to 0.0.
 // ==========================================================
 
-class _StarFieldPainter extends CustomPainter {
-  final List<Offset> stars = [
-    const Offset(0.04, 0.08),
-    const Offset(0.12, 0.17),
-    const Offset(0.19, 0.06),
-    const Offset(0.27, 0.13),
-    const Offset(0.34, 0.04),
-    const Offset(0.42, 0.19),
-    const Offset(0.51, 0.08),
-    const Offset(0.59, 0.15),
-    const Offset(0.67, 0.05),
-    const Offset(0.74, 0.18),
-    const Offset(0.83, 0.09),
-    const Offset(0.93, 0.16),
-    const Offset(0.08, 0.34),
-    const Offset(0.22, 0.28),
-    const Offset(0.31, 0.39),
-    const Offset(0.47, 0.31),
-    const Offset(0.57, 0.37),
-    const Offset(0.71, 0.30),
-    const Offset(0.88, 0.35),
-    const Offset(0.96, 0.28),
-    const Offset(0.05, 0.53),
-    const Offset(0.16, 0.64),
-    const Offset(0.28, 0.57),
-    const Offset(0.38, 0.69),
-    const Offset(0.54, 0.58),
-    const Offset(0.65, 0.67),
-    const Offset(0.78, 0.56),
-    const Offset(0.91, 0.66),
-    const Offset(0.14, 0.82),
-    const Offset(0.25, 0.74),
-    const Offset(0.43, 0.86),
-    const Offset(0.58, 0.79),
-    const Offset(0.73, 0.88),
-    const Offset(0.86, 0.77),
-    const Offset(0.96, 0.91),
-  ];
+class _LoginStarSeed {
+  final double baseX;
+  final double baseY;
+  final double driftX;
+  final double driftY;
+  final int moveFreq;
+  final double movePhase;
+  final int fadeFreq;
+  final double fadePhase;
+  final double minAlpha;
+  final double maxAlpha;
+  final double radius;
+  final bool isGold;
+  final bool glow;
+
+  const _LoginStarSeed({
+    required this.baseX,
+    required this.baseY,
+    required this.driftX,
+    required this.driftY,
+    required this.moveFreq,
+    required this.movePhase,
+    required this.fadeFreq,
+    required this.fadePhase,
+    required this.minAlpha,
+    required this.maxAlpha,
+    required this.radius,
+    required this.isGold,
+    required this.glow,
+  });
+}
+
+class _LoginStarField extends StatefulWidget {
+  const _LoginStarField();
 
   @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    final paint = Paint();
+  State<_LoginStarField> createState() => _LoginStarFieldState();
+}
 
-    for (int i = 0; i < stars.length; i++) {
-      final point = Offset(
-        stars[i].dx * size.width,
-        stars[i].dy * size.height,
+class _LoginStarFieldState extends State<_LoginStarField>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final List<_LoginStarSeed> _stars;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 48),
+    )..repeat();
+
+    final rnd = Random(2026);
+
+    _stars = List.generate(85, (i) {
+      final isGold = i % 4 == 0;
+      final isBig = i % 9 == 0;
+
+      return _LoginStarSeed(
+        baseX: rnd.nextDouble(),
+        baseY: rnd.nextDouble(),
+        driftX: 0.015 + rnd.nextDouble() * 0.035,
+        driftY: 0.015 + rnd.nextDouble() * 0.035,
+        moveFreq: 1 + rnd.nextInt(3),
+        movePhase: rnd.nextDouble() * 2 * pi,
+        fadeFreq: 2 + rnd.nextInt(4),
+        fadePhase: rnd.nextDouble() * 2 * pi,
+        minAlpha: 0.08 + rnd.nextDouble() * 0.12,
+        maxAlpha: 0.65 + rnd.nextDouble() * 0.35,
+        radius: isBig ? 2.0 : 0.9,
+        isGold: isGold,
+        glow: isBig || isGold,
       );
+    });
+  }
 
-      final radius =
-          i % 7 == 0 ? 1.35 : 0.65;
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
-      paint.color = i % 5 == 0
-          ? const Color(0xFF6A8CFF)
-              .withValues(alpha: 0.8)
-          : Colors.white.withValues(alpha: 0.55);
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            size: Size.infinite,
+            painter: _LoginStarFieldPainter(
+              t: _controller.value,
+              stars: _stars,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
 
-      canvas.drawCircle(
-        point,
-        radius,
-        paint,
-      );
+class _LoginStarFieldPainter extends CustomPainter {
+  final double t;
+  final List<_LoginStarSeed> stars;
+
+  _LoginStarFieldPainter({
+    required this.t,
+    required this.stars,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final corePaint = Paint()..style = PaintingStyle.fill;
+    final glowPaint = Paint()..style = PaintingStyle.fill;
+
+    for (final star in stars) {
+      final angleMove = (t * star.moveFreq * 2 * pi) + star.movePhase;
+      final angleFade = (t * star.fadeFreq * 2 * pi) + star.fadePhase;
+
+      final dx = (star.baseX + star.driftX * sin(angleMove)) * size.width;
+      final dy = (star.baseY + star.driftY * cos(angleMove)) * size.height;
+
+      final fadeUnit = (sin(angleFade) + 1) / 2; // 0..1
+      final alpha =
+          (star.minAlpha + (star.maxAlpha - star.minAlpha) * fadeUnit)
+              .clamp(0.0, 1.0);
+
+      final color = star.isGold ? const Color(0xFFFFE9B0) : Colors.white;
+
+      final point = Offset(dx, dy);
+
+      // Soft glow halo behind the bigger / gold stars.
+      if (star.glow) {
+        glowPaint
+          ..color = color.withValues(alpha: alpha * 0.35)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, star.radius * 4);
+        canvas.drawCircle(point, star.radius * 3.2, glowPaint);
+      }
+
+      corePaint.color = color.withValues(alpha: alpha);
+      canvas.drawCircle(point, star.radius, corePaint);
     }
   }
 
   @override
-  bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
-  ) {
-    return false;
+  bool shouldRepaint(covariant _LoginStarFieldPainter oldDelegate) {
+    return oldDelegate.t != t;
   }
 }

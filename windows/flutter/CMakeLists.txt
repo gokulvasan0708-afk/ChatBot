@@ -11,8 +11,8 @@ include(${EPHEMERAL_DIR}/generated_config.cmake)
 set(WRAPPER_ROOT "${EPHEMERAL_DIR}/cpp_client_wrapper")
 
 # Set fallback configurations for older versions of the flutter tool.
-if (NOT DEFINED FLUTTER_TARGET_PLATFORM)
-  set(FLUTTER_TARGET_PLATFORM "windows-x64")
+if (NOT DEFINED FLUTTER_TARGET_Platform)
+  set(FLUTTER_TARGET_Platform "windows-x64")
 endif()
 
 # === Flutter Library ===
@@ -97,7 +97,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
     ${FLUTTER_TOOL_ENVIRONMENT}
     "${FLUTTER_ROOT}/packages/flutter_tools/bin/tool_backend.bat"
-      ${FLUTTER_TARGET_PLATFORM} $<CONFIG>
+      ${FLUTTER_TARGET_Platform} $<CONFIG>
   VERBATIM
 )
 add_custom_target(flutter_assemble DEPENDS

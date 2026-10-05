@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
+import 'app_theme.dart';
+import 'cosmic_background.dart';
 
 class GetStartedPage extends StatelessWidget {
   const GetStartedPage({super.key});
@@ -7,57 +9,116 @@ class GetStartedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // ==========================================
-          // BACKGROUND IMAGE
-          // ==========================================
+      backgroundColor: AppColors.darkBgMid,
+      body: CosmicBackground(
+        child: Stack(
+          children: [
+            // ==========================================
+            // BRAND MARK
+            // ==========================================
 
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/nexus_start.jpeg',
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // ==========================================
-          // GET STARTED BUTTON
-          // ==========================================
-
-          Positioned(
-            left: 55,
-            right: 55,
-            bottom: 40,
-            child: SizedBox(
-              height: 55,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 90),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) =>
+                          AppColors.goldGradient.createShader(bounds),
+                      child: const Text(
+                        'N',
+                        style: TextStyle(
+                          fontSize: 96,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ShaderMask(
+                      shaderCallback: (bounds) =>
+                          AppColors.goldGradient.createShader(bounds),
+                      child: const Text(
+                        'NEXUS',
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'CONNECT • CREATE • EXPLORE',
+                      style: TextStyle(
+                        color: AppColors.tan.withValues(alpha: 0.75),
+                        fontSize: 12,
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+            ),
 
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    _createLoginRoute(context),
-                  );
-                },
+            // ==========================================
+            // GET STARTED BUTTON
+            // ==========================================
 
-                child: const Text(
-                  'LET\'S CHAT',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            Positioned(
+              left: 55,
+              right: 55,
+              bottom: 40,
+              child: SizedBox(
+                height: 55,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: AppColors.goldGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.tan.withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        _createLoginRoute(context),
+                      );
+                    },
+
+                    child: const Text(
+                      'LET\'S CHAT',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

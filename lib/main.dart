@@ -1,171 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
-import 'pages/get_started_page.dart';
-import 'pages/chat_page.dart';
+import 'features/ai_assistant/ai_launcher.dart';
+import 'navigation_key.dart';
+import 'pages/splash_screen.dart';
+import 'pages/app_theme.dart';
+import 'services/call_service.dart';
 import 'services/notification_service.dart';
 
 // ==========================================================
-// FIREBASE MESSAGING BACKGROUND HANDLER
+// BACKGROUND FCM HANDLER
 // ==========================================================
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(
   RemoteMessage message,
 ) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  debugPrint(
-    'Background notification received: ${message.messageId}',
-  );
-
-  debugPrint(
-    'Background notification data: ${message.data}',
-  );
-}
-
-// ==========================================================
-// SAVE FCM TOKEN
-// ==========================================================
-
-Future<void> saveFcmToken() async {
   try {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      debugPrint('No logged-in user. FCM token not saved.');
-      return;
-    }
-
-    final token = await FirebaseMessaging.instance.getToken();
-
-    if (token == null || token.isEmpty) {
-      debugPrint('FCM token is null or empty.');
-      return;
-    }
-
-    debugPrint('======================================');
-    debugPrint('FCM TOKEN: $token');
-    debugPrint('======================================');
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .set(
-      {
-        'fcmToken': token,
-      },
-      SetOptions(merge: true),
+    await Firebase.initializeApp(
+      options:
+          DefaultFirebaseOptions.currentPlatform,
     );
 
-    debugPrint('FCM token saved to Firestore.');
+    debugPrint(
+      '======================================',
+    );
+
+    debugPrint(
+      'BACKGROUND FCM MESSAGE',
+    );
+
+    debugPrint(
+      'Message ID: '
+      '${message.messageId}',
+    );
+
+    debugPrint(
+      'Title: '
+      '${message.notification?.title}',
+    );
+
+    debugPrint(
+      'Body: '
+      '${message.notification?.body}',
+    );
+
+    debugPrint(
+      'Data: '
+      '${message.data}',
+    );
+
+    debugPrint(
+      '======================================',
+    );
   } catch (e) {
-    debugPrint('Save FCM token error: $e');
+    debugPrint(
+      'Background FCM handler error: $e',
+    );
   }
-}
-
-// ==========================================================
-// TOKEN REFRESH
-// ==========================================================
-
-void setupTokenRefreshListener() {
-  FirebaseMessaging.instance.onTokenRefresh.listen(
-    (newToken) async {
-      debugPrint('FCM TOKEN UPDATED: $newToken');
-
-      try {
-        final user = FirebaseAuth.instance.currentUser;
-
-        if (user == null) {
-          debugPrint(
-            'No logged-in user. Updated token not saved.',
-          );
-          return;
-        }
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .set(
-          {
-            'fcmToken': newToken,
-          },
-          SetOptions(merge: true),
-        );
-
-        debugPrint('Updated FCM token saved.');
-      } catch (e) {
-        debugPrint(
-          'FCM token refresh save error: $e',
-        );
-      }
-    },
-  );
-}
-
-// ==========================================================
-// FOREGROUND MESSAGE
-// ==========================================================
-
-void setupForegroundMessageHandler() {
-  FirebaseMessaging.onMessage.listen(
-    (RemoteMessage message) {
-      debugPrint(
-        '======================================',
-      );
-
-      debugPrint(
-        'FOREGROUND FCM MESSAGE',
-      );
-
-      debugPrint(
-        'Message ID: ${message.messageId}',
-      );
-
-      debugPrint(
-        'Title: ${message.notification?.title}',
-      );
-
-      debugPrint(
-        'Body: ${message.notification?.body}',
-      );
-
-      debugPrint(
-        'Data: ${message.data}',
-      );
-
-      debugPrint(
-        '======================================',
-      );
-    },
-  );
-}
-
-// ==========================================================
-// NOTIFICATION TAP HANDLER
-// ==========================================================
-
-void setupNotificationTapHandler() {
-  FirebaseMessaging.onMessageOpenedApp.listen(
-    (RemoteMessage message) {
-      debugPrint(
-        'Notification tapped from background.',
-      );
-
-      debugPrint(
-        'Notification data: ${message.data}',
-      );
-
-      // Later:
-      // You can open ChatScreen here using message.data.
-    },
-  );
 }
 
 // ==========================================================
@@ -180,7 +74,8 @@ Future<void> main() async {
   // ========================================================
 
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options:
+        DefaultFirebaseOptions.currentPlatform,
   );
 
   // ========================================================
@@ -192,103 +87,158 @@ Future<void> main() async {
   );
 
   // ========================================================
-  // LOCAL NOTIFICATION INITIALIZATION
+  // FCM INITIALIZATION
   // ========================================================
 
-  await NotificationService.initialize();
+  await NotificationService.instance
+      .initialize();
 
   // ========================================================
-  // NOTIFICATION PERMISSION
+  // CALL SERVICE INITIALIZATION
+  // ----------------------------------------------------------
+  // Wires itself to FirebaseAuth's auth-state stream internally, so
+  // it starts/stops its real-time incoming-call listener automatically
+  // as the signed-in account changes (login, logout, account switch).
   // ========================================================
 
-  final messaging = FirebaseMessaging.instance;
-
-  final notificationSettings =
-      await messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-
-  debugPrint(
-    'Notification permission: '
-    '${notificationSettings.authorizationStatus}',
-  );
-
-  // ========================================================
-  // GET INITIAL MESSAGE
-  // ========================================================
-  //
-  // This checks whether the app was opened by tapping
-  // a notification while the app was completely closed.
-  // ========================================================
-
-  final initialMessage =
-      await FirebaseMessaging.instance.getInitialMessage();
-
-  if (initialMessage != null) {
-    debugPrint(
-      'App opened from notification.',
-    );
-
-    debugPrint(
-      'Initial notification data: '
-      '${initialMessage.data}',
-    );
-  }
-
-  // ========================================================
-  // FCM TOKEN
-  // ========================================================
-
-  await saveFcmToken();
-
-  // ========================================================
-  // TOKEN REFRESH LISTENER
-  // ========================================================
-
-  setupTokenRefreshListener();
-
-  // ========================================================
-  // FOREGROUND MESSAGE LISTENER
-  // ========================================================
-
-  setupForegroundMessageHandler();
-
-  // ========================================================
-  // NOTIFICATION TAP LISTENER
-  // ========================================================
-
-  setupNotificationTapHandler();
+  CallService.instance.initialize();
 
   // ========================================================
   // RUN APP
   // ========================================================
-  //
-  // IMPORTANT:
-  // runApp() ONLY ONCE.
-  // ========================================================
 
-  runApp(const chatbotApp());
+  runApp(
+    const ChatbotApp(),
+  );
 }
 
 // ==========================================================
-// chatbot APP
+// CHATBOT APP
+// ----------------------------------------------------------
+// Wrapped in a ValueListenableBuilder that watches
+// ThemeController.instance so that switching Dark/Light Mode
+// from Me Page -> Settings rebuilds the WHOLE app instantly,
+// on every screen, with no extra plumbing required.
+//
+// Also a WidgetsBindingObserver: whenever the app is fully
+// backgrounded (paused) or closed (detached) for 3 minutes or
+// more and then reopened, it pushes the Splash Screen back on
+// top of whatever screen was showing. The Splash Screen's own
+// timer + pushAndRemoveUntil logic (see splash_screen.dart) then
+// lands the user back on the correct page (Chats or Get Started)
+// with a single clean route, so normal navigation/back-stack
+// behavior on a fresh launch is completely unaffected — this only
+// adds behavior for the "left the app for a while" case.
 // ==========================================================
 
-class chatbotApp extends StatelessWidget {
-  const chatbotApp({super.key});
+class ChatbotApp extends StatefulWidget {
+  const ChatbotApp({super.key});
+
+  @override
+  State<ChatbotApp> createState() => _ChatbotAppState();
+}
+
+class _ChatbotAppState extends State<ChatbotApp> with WidgetsBindingObserver {
+  static const Duration _splashReentryThreshold = Duration(minutes: 3);
+
+  DateTime? _pausedAt;
+  bool _splashReentryPending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      // Remember the FIRST moment we left the foreground — don't let a
+      // later paused/detached callback (e.g. transient state changes
+      // during a permission dialog) reset the clock.
+      _pausedAt ??= DateTime.now();
+    } else if (state == AppLifecycleState.resumed) {
+      final pausedAt = _pausedAt;
+      _pausedAt = null;
+
+      if (pausedAt == null) return;
+
+      final awayFor = DateTime.now().difference(pausedAt);
+
+      if (awayFor >= _splashReentryThreshold) {
+        _showSplashAgain();
+      }
+    }
+  }
+
+  void _showSplashAgain() {
+    if (_splashReentryPending) return;
+
+    // Don't cover an incoming/outgoing/active call screen with the
+    // splash re-entry screen -- if a call is ringing or connected right
+    // now, leave the navigator alone so the call screen (and its
+    // Accept/Decline/Cancel buttons) stays reachable. Once the call
+    // resolves, normal navigation continues as usual.
+    if (CallService.instance.isCallInProgress) return;
+
+    _splashReentryPending = true;
+
+    // Defer to the next frame so the navigator is guaranteed ready.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = rootNavigatorKey.currentState;
+
+      if (navigator == null) {
+        _splashReentryPending = false;
+        return;
+      }
+
+      navigator
+          .push(
+            PageRouteBuilder<void>(
+              transitionDuration: const Duration(milliseconds: 400),
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const SplashScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+            ),
+          )
+          .then((_) {
+            _splashReentryPending = false;
+          });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          navigatorKey: rootNavigatorKey,
 
-      title: 'Nexus',
+          debugShowCheckedModeBanner: false,
 
-      home: FirebaseAuth.instance.currentUser != null
-          ? const ChatPage()
-          : const GetStartedPage(),
+          title: 'Nexus',
+          builder: (context, child) => AiOverlayHost(child: child),
+
+          themeMode: mode,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }

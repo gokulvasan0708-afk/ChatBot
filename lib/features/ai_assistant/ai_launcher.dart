@@ -1,0 +1,173 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+import '../../pages/app_theme.dart';
+import 'ai_chat_controller.dart';
+import 'ai_chat_panel.dart';
+
+/// Global floating chat button + inline popup panel.
+/// Mounted once in MaterialApp.builder, so it sits above every page.
+class AiLauncher extends StatefulWidget {
+  const AiLauncher({super.key});
+
+  /// Set true once the splash is finished.
+  static final ValueNotifier<bool> ready = ValueNotifier(false);
+
+  /// Any page can set true to hide the assistant (e.g. fullscreen player).
+  static final ValueNotifier<bool> suppressed = ValueNotifier(false);
+
+  static int _holds = 0;
+
+  /// Ref-counted hide: call [hold] when a screen needs the button hidden and
+  /// [release] when it goes away. Prefer the [AiLauncherHide] mixin.
+  static void hold() {
+    _holds++;
+    suppressed.value = true;
+  }
+
+  static void release() {
+    if (_holds > 0) _holds--;
+    suppressed.value = _holds > 0;
+  }
+
+  @override
+  State<AiLauncher> createState() => _AiLauncherState();
+}
+
+class _AiLauncherState extends State<AiLauncher> {
+  bool _open = false;
+  bool _signedIn = FirebaseAuth.instance.currentUser != null;
+  String? _uid = FirebaseAuth.instance.currentUser?.uid;
+  StreamSubscription<User?>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = FirebaseAuth.instance.authStateChanges().listen((u) {
+      if (!mounted) return;
+      // sign-out OR account switch -> never leak the old account's chat
+      if (u?.uid != _uid) AiChatController.instance.clear(force: true);
+      _uid = u?.uid;
+      setState(() {
+        _signedIn = u != null;
+        if (u == null) _open = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([AiLauncher.ready, AiLauncher.suppressed]),
+      builder: (context, _) {
+        final mq = MediaQuery.of(context);
+        // Hide only on short screens (phone landscape). Desktop/web stays visible.
+        final tooShort = mq.size.height < 420;
+        final visible = _signedIn &&
+            AiLauncher.ready.value &&
+            !AiLauncher.suppressed.value &&
+            !tooShort;
+        if (!visible) return const SizedBox.shrink();
+
+        final wide = mq.size.width >= 600;
+        final size = AiChatPanel.sizeFor(mq);
+        final double bottom =
+            12.0 + math.max(mq.viewInsets.bottom, mq.padding.bottom);
+
+        return Stack(
+          children: [
+            if (_open)
+              Positioned(
+                right: wide ? 24 : 12,
+                bottom: bottom,
+                width: size.width,
+                height: size.height,
+                child: AiChatPanel(onClose: () => setState(() => _open = false)),
+              )
+            else
+              Positioned(
+                right: wide ? 24 : 16,
+                // sits above the bottom nav bar
+                bottom: 90 + mq.padding.bottom,
+                child: _fab(context),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _fab(BuildContext context) {
+    final c = AppColors.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final a = dark ? AppColors.tan : AppColors.saddleBrown;
+    return Tooltip(
+        message: 'Nexus AI',
+        child: Material(
+          color: c.card,
+          elevation: 8,
+          shape: CircleBorder(side: BorderSide(color: a.withAlpha(128))),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => setState(() => _open = true),
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: Icon(Icons.auto_awesome, color: a, size: 24),
+            ),
+          ),
+        ),
+      );
+  }
+}
+
+/// Add to a screen's State (`with AiLauncherHide`) to hide the floating AI
+/// button while that screen is alive (chat input bars, call screens, splash).
+mixin AiLauncherHide<T extends StatefulWidget> on State<T> {
+  @override
+  void initState() {
+    super.initState();
+    // post-frame: notifier must not change during build
+    WidgetsBinding.instance.addPostFrameCallback((_) => AiLauncher.hold());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => AiLauncher.release());
+    super.dispose();
+  }
+}
+
+/// Use in MaterialApp.builder: keeps the app on its own Overlay layer and puts
+/// the AI launcher above every route.
+class AiOverlayHost extends StatefulWidget {
+  final Widget? child;
+  const AiOverlayHost({super.key, this.child});
+
+  @override
+  State<AiOverlayHost> createState() => _AiOverlayHostState();
+}
+
+class _AiOverlayHostState extends State<AiOverlayHost> {
+  late final OverlayEntry _app =
+      OverlayEntry(builder: (_) => widget.child ?? const SizedBox.shrink());
+  late final OverlayEntry _ai = OverlayEntry(builder: (_) => const AiLauncher());
+
+  @override
+  void didUpdateWidget(AiOverlayHost old) {
+    super.didUpdateWidget(old);
+    if (old.child != widget.child) _app.markNeedsBuild();
+  }
+
+  @override
+  Widget build(BuildContext context) => Overlay(initialEntries: [_app, _ai]);
+}

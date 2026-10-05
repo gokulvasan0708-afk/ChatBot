@@ -22,6 +22,12 @@ dependencies:
   firebase_messaging: ^16.5.0
   flutter_local_notifications: ^22.3.0
   image_picker: ^1.2.1
+  emoji_picker_flutter: ^4.3.0
+  record: ^7.1.1
+  just_audio: ^0.10.6
+  path_provider: ^2.1.6
+  file_picker: ^12.2.0
+  flutter_webrtc: ^1.6.1
 
 dev_dependencies:
   flutter_test:
@@ -33,10 +39,19 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/nexus_start.jpeg
+    - assets/images/chats_header.png
     - assets/images/profile/profile1.jpg
     - assets/images/profile/profile2.jpg
-    - assets/images/profile/profile3.jpg
+    - assets/images/profile/profile3.png
+    - assets/images/profile/profile4.png
+    - assets/images/profile/profile5.png
+    - assets/images/profile/profile6.png
+    - assets/images/profile/profile7.png
+    - assets/images/profile/profile8.png
+    - assets/images/profile/profile9.png
+    - assets/images/profile/profile10.png
+    - assets/audio/call_incoming_ringtone.mp3
+    - assets/audio/call_outgoing_ringback.mp3
 
 flutter_launcher_icons:
   android: "launcher_icon"

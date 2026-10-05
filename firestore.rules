@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================
+    // CALLS
+    // =========================
+    match /calls/{callId} {
+
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.callerId
+        && request.resource.data.status == 'ringing';
+
+      allow read, update: if request.auth != null
+        && (
+          request.auth.uid == resource.data.callerId ||
+          request.auth.uid == resource.data.receiverId
+        );
+
+      match /callerCandidates/{candidateId} {
+        allow read, create: if request.auth != null
+          && (
+            request.auth.uid ==
+              get(
+                /databases/$(database)/documents/calls/$(callId)
+              ).data.callerId
+            ||
+            request.auth.uid ==
+              get(
+                /databases/$(database)/documents/calls/$(callId)
+              ).data.receiverId
+          );
+      }
+
+      match /calleeCandidates/{candidateId} {
+        allow read, create: if request.auth != null
+          && (
+            request.auth.uid ==
+              get(
+                /databases/$(database)/documents/calls/$(callId)
+              ).data.callerId
+            ||
+            request.auth.uid ==
+              get(
+                /databases/$(database)/documents/calls/$(callId)
+              ).data.receiverId
+          );
+      }
+    }
+
+
+    // =========================
+    // EXISTING APP DATA
+    // =========================
+
+    // Temporary existing access.
+    // Keep your current app working while testing calls.
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2026, 9, 21);
+    }
+  }
+}

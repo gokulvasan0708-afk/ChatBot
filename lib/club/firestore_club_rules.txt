@@ -1,0 +1,138 @@
+CLUB FIRESTORE SECURITY RULES — MERGE INTO YOUR EXISTING firestore.rules
+
+These rules are intentionally supplied as a merge/reference section so they do not overwrite unrelated app collections.
+
+helpers:
+  isSignedIn = request.auth != null
+  club = get(/databases/$(database)/documents/clubs/$(clubId)).data
+  isOwner = isSignedIn && club.ownerUid == request.auth.uid
+  isModerator = isSignedIn && request.auth.uid in club.moderators
+  isLeader = isSignedIn && request.auth.uid in club.leaders
+  canModerate = isOwner || isModerator || isLeader
+
+Clubs are STANDALONE: a club is not tied to a Community or a Group, so none of
+these rules look at `communityDocId` (old clubs may still carry the field; it
+is ignored).
+
+Recommended match blocks:
+
+// The club document itself. REFERENCE ONLY -- adapt to your existing rules and
+// test in the Firebase Emulator (the app does joins/leaves/approvals with
+// direct client writes, so the self-service branch below matters).
+match /clubs/{clubId} {
+  allow read: if isSignedIn;
+
+  // Creator becomes the first owner + leader + member.
+  allow create: if isSignedIn
+      && request.resource.data.ownerUid == request.auth.uid
+      && request.resource.data.createdBy == request.auth.uid
+      && request.resource.data.members == [request.auth.uid]
+      && request.resource.data.leaders == [request.auth.uid];
+
+  allow update: if isSignedIn && (
+      // Owner / leader / moderator: anything except identity fields.
+      ((resource.data.ownerUid == request.auth.uid
+          || request.auth.uid in resource.data.leaders
+          || request.auth.uid in resource.data.moderators)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['ownerUid', 'createdBy', 'clubId', 'ownerAccountId']))
+      ||
+      // Any signed-in user: join / leave / request / cancel request for
+      // THEMSELVES only (never touch other people's uid, never add a leader).
+      (request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['members', 'membersCount', 'pendingRequests', 'leaders'])
+        && request.resource.data.members.toSet().difference(resource.data.members.toSet())
+              .hasOnly([request.auth.uid])
+        && resource.data.members.toSet().difference(request.resource.data.members.toSet())
+              .hasOnly([request.auth.uid])
+        && request.resource.data.pendingRequests.toSet().difference(resource.data.pendingRequests.toSet())
+              .hasOnly([request.auth.uid])
+        && resource.data.pendingRequests.toSet().difference(request.resource.data.pendingRequests.toSet())
+              .hasOnly([request.auth.uid])
+        && request.resource.data.leaders.toSet().difference(resource.data.leaders.toSet()).size() == 0)
+  );
+
+  allow delete: if isSignedIn && resource.data.ownerUid == request.auth.uid;
+}
+
+// One doc per Club ID ever claimed. createClub() writes it together with the
+// club in a transaction, which is what makes the ID unique atomically.
+match /clubIds/{clubIdKey} {
+  allow read: if isSignedIn;
+  allow create: if isSignedIn && request.resource.data.ownerUid == request.auth.uid;
+  allow update, delete: if false;
+}
+
+// Recruitment applications (no communityDocId needed).
+match /clubApplications/{applicationId} {
+  allow create: if isSignedIn && request.resource.data.applicantUid == request.auth.uid;
+  allow read: if isSignedIn && (
+      resource.data.applicantUid == request.auth.uid
+      || request.auth.uid in get(/databases/$(database)/documents/clubs/$(resource.data.clubDocId)).data.leaders);
+  allow update: if isSignedIn
+      && request.auth.uid in get(/databases/$(database)/documents/clubs/$(resource.data.clubDocId)).data.leaders;
+}
+
+match /clubs/{clubId}/posts/{postId} {
+  allow read: if true;
+  allow create: if isSignedIn && request.resource.data.authorUid == request.auth.uid;
+  allow update: if isSignedIn && (
+      resource.data.authorUid == request.auth.uid || canModerate);
+  allow delete: if isSignedIn && (
+      resource.data.authorUid == request.auth.uid || canModerate);
+}
+
+match /clubs/{clubId}/posts/{postId}/comments/{commentId} {
+  allow read: if true;
+  allow create: if isSignedIn && request.resource.data.authorUid == request.auth.uid;
+  allow update: if isSignedIn && (
+      resource.data.authorUid == request.auth.uid || canModerate);
+  allow delete: if isSignedIn && (
+      resource.data.authorUid == request.auth.uid || canModerate);
+}
+
+match /clubs/{clubId}/announcements/{announcementId} {
+  allow read: if true;
+  allow create, update, delete: if canModerate;
+}
+
+match /clubs/{clubId}/polls/{pollId} {
+  allow read: if true;
+  allow create, update, delete: if canModerate;
+}
+
+match /clubs/{clubId}/activities/{activityId} {
+  allow read: if true;
+  allow create, update, delete: if canModerate;
+}
+
+match /clubs/{clubId}/watchlists/{uid}/items/{contentId} {
+  allow read, write: if isSignedIn && request.auth.uid == uid;
+}
+
+match /users/{uid}/clubNotifications/{notificationId} {
+  allow read, update, delete: if isSignedIn && request.auth.uid == uid;
+  allow create: if isSignedIn;
+}
+
+match /clubReports/{reportId} {
+  allow create: if isSignedIn && request.resource.data.reporterUid == request.auth.uid;
+  allow read, update, delete: if isSignedIn && (
+      exists(/databases/$(database)/documents/clubs/$(resource.data.clubId)) &&
+      get(/databases/$(database)/documents/clubs/$(resource.data.clubId)).data.ownerUid == request.auth.uid ||
+      exists(/databases/$(database)/documents/clubs/$(resource.data.clubId)) &&
+      request.auth.uid in get(/databases/$(database)/documents/clubs/$(resource.data.clubId)).data.moderators ||
+      exists(/databases/$(database)/documents/clubs/$(resource.data.clubId)) &&
+      request.auth.uid in get(/databases/$(database)/documents/clubs/$(resource.data.clubId)).data.leaders
+  );
+}
+
+match /clubs/{clubId}/moderation/{uid} {
+  allow read: if isSignedIn && (canModerate || request.auth.uid == uid);
+  allow write: if canModerate;
+}
+
+IMPORTANT:
+- Merge the top-level `match /clubs/{clubId}` block above with any existing clubs rule (do not keep two), then merge the nested blocks into the same ruleset.
+- Do not deploy this text file by itself unless you have also preserved all unrelated application rules.
+- Test with the Firebase Emulator before production deployment.
