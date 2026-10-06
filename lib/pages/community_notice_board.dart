@@ -4,11 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'college_notice_sheet.dart';
 import 'community_announcements_page.dart';
 import 'create_notice_post_sheet.dart';
 import 'community_polls_page.dart';
 import 'community_post_detail_page.dart';
 import 'event_detail_page.dart';
+import '../services/college_notice_service.dart';
 import '../services/community_feed_service.dart';
 import '../services/community_media_service.dart';
 import '../services/community_poll_service.dart';
@@ -58,6 +60,16 @@ import '../widgets/top_alert.dart';
 //   Hidden notices are stored per member in
 //   users/{uid}.noticeHidden.{communityDocId}.
 //
+// OTHER COLLEGE ICON (header, next to the eye; college communities):
+//   tap         -> shows the notices other colleges posted with
+//                  "Show to all College" (they are added after this
+//                  community's own notices and the board jumps to them)
+//   tap again   -> hides them again. They are NOT shown by default.
+//   A red dot on the icon = a new notice from another college that the
+//   member has not looked at yet. Opening the icon clears the dot; the
+//   notices stay under the icon until they end or are deleted.
+//   (seen keys are stored in users/{uid}.noticeSeen.{communityDocId})
+//
 // Never shown: expired polls / events, resolved posts, cancelled
 // events, posts the viewer has reported.
 //
@@ -76,6 +88,10 @@ const int kNoticeMaxAgeDays = 7;
 /// An "Event" feed post only stores a start time; it counts as live for
 /// this many hours after it.
 const int kEventPostLiveHours = 3;
+
+/// The board moves to the next notice by itself after this many seconds
+/// (and starts again from the first one after the last).
+const int kNoticeAutoSlideSeconds = 5;
 
 /// Height of one notice card (full width of the page).
 const double kNoticeBoardHeight = 224;
@@ -103,6 +119,25 @@ class _Notice {
   /// Shows a play button over the cover (video notice posts).
   final bool isVideo;
 
+  /// "College name · Location" of another college's notice
+  /// (Show to all College). '' for this community's own notices.
+  final String sourceLine;
+
+  /// Profile image (logo) of the college that posted it. Shown in the
+  /// top-right corner of the card. '' for this community's own notices.
+  final String sourceLogoUrl;
+
+  /// Cover image of the college that posted it (used as the background
+  /// when the shared notice has no image of its own).
+  final String sourceCoverUrl;
+
+  /// True when imageUrl is the college cover (not the notice's own image):
+  /// it is drawn softer so the text stays readable.
+  final bool coverBg;
+
+  /// True for a notice shared by another college.
+  bool get isExternal => sourceLine.isNotEmpty || sourceLogoUrl.isNotEmpty;
+
   const _Notice({
     required this.key,
     required this.label,
@@ -116,7 +151,31 @@ class _Notice {
     this.onceKey,
     this.imageUrl = '',
     this.isVideo = false,
+    this.sourceLine = '',
+    this.sourceLogoUrl = '',
+    this.sourceCoverUrl = '',
+    this.coverBg = false,
   });
+
+  /// Same notice with a different cover image.
+  _Notice withImage(String url) => _Notice(
+        key: key,
+        label: label,
+        icon: icon,
+        color: color,
+        title: title,
+        subtitle: subtitle,
+        priority: priority,
+        sortTime: sortTime,
+        onTap: onTap,
+        onceKey: onceKey,
+        imageUrl: url,
+        isVideo: isVideo,
+        sourceLine: sourceLine,
+        sourceLogoUrl: sourceLogoUrl,
+        sourceCoverUrl: sourceCoverUrl,
+        coverBg: true,
+      );
 }
 
 class CommunityNoticeBoard extends StatefulWidget {
@@ -159,6 +218,10 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
   Set<String> _hidden = {};
   bool _showHidden = false;
 
+  // ---- other colleges' notices: only shown after the "other" icon is tapped ----
+  bool _showOthers = false;
+  bool _jumpToOthers = false;
+
   // ---- notice posts ----
   StreamSubscription<List<Map<String, dynamic>>>? _postSub;
   List<Map<String, dynamic>> _noticePosts = [];
@@ -166,8 +229,35 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
   bool _viewerLoaded = false;
   Timer? _tick;
 
+  // ---- notices other colleges shared (Show to all College) ----
+  StreamSubscription<List<Map<String, dynamic>>>? _sharedSub;
+  List<Map<String, dynamic>> _shared = [];
+
   final PageController _pager = PageController();
   int _page = 0;
+
+  // ---- auto slide (next notice every kNoticeAutoSlideSeconds, looping) ----
+  Timer? _auto;
+  int _itemCount = 0;
+
+  void _startAuto() {
+    _auto?.cancel();
+    _auto = Timer.periodic(const Duration(seconds: kNoticeAutoSlideSeconds),
+        (_) {
+      if (!mounted || _itemCount < 2 || !_pager.hasClients) return;
+      final next = _page + 1;
+      if (next >= _itemCount) {
+        // Last notice -> start again from the first.
+        _pager.jumpToPage(0);
+      } else {
+        _pager.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
 
   String get _id => widget.communityDocId;
   String get _uid => widget.uid;
@@ -177,9 +267,41 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
   bool get _isManager =>
       CommunityService.isPrivileged(widget.community, _uid);
 
+  bool get _isCollege => (widget.community['type'] ?? '').toString() == 'college';
+
+  /// This college's cover image ('' = none / not a college).
+  String get _ownCover =>
+      _isCollege ? (widget.community['coverUrl'] ?? '').toString() : '';
+
+  /// College communities also list what other colleges shared with
+  /// "Show to all College". Started / stopped as the community loads.
+  void _syncShared() {
+    if (_isCollege && _sharedSub == null) {
+      _sharedSub =
+          CollegeNoticeService.watchShared(excludeCommunityDocId: _id).listen(
+        (list) {
+          if (mounted) setState(() => _shared = list);
+        },
+        onError: (Object e) => debugPrint('Shared notices error: $e'),
+      );
+    } else if (!_isCollege && _sharedSub != null) {
+      _sharedSub?.cancel();
+      _sharedSub = null;
+      _shared = [];
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CommunityNoticeBoard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncShared();
+  }
+
   @override
   void initState() {
     super.initState();
+    _syncShared();
+    _startAuto();
 
     // Notice posts (own stream) + who I am in this community.
     _postSub = NoticePostService.watchPosts(_id).listen((list) {
@@ -234,7 +356,9 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
   void dispose() {
     _sub?.cancel();
     _postSub?.cancel();
+    _sharedSub?.cancel();
     _tick?.cancel();
+    _auto?.cancel();
     _pager.dispose();
     super.dispose();
   }
@@ -324,6 +448,48 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
     if (k != null) _session.add(k);
     _setHidden([n.key], hide: false);
     showTopAlert(context, 'Notice restored');
+  }
+
+  /// Keys of the live notices other colleges shared. A key leaves this
+  /// list when the notice ends or is deleted.
+  List<String> _otherKeys() {
+    if (!_isCollege) return const <String>[];
+    final now = DateTime.now();
+    final out = <String>[];
+    for (final item in _shared) {
+      if ((item['sourceId'] ?? '').toString() == _id) continue;
+      final id = (item['id'] ?? '').toString();
+      if (id.isEmpty) continue;
+      if (!CollegeNoticeService.isLive(item, now)) continue;
+      out.add('ext_${(item['kind'] ?? '').toString()}_$id');
+    }
+    return out;
+  }
+
+  int _otherCount() => _otherKeys().length;
+
+  /// Marks every other-college notice as seen (the dot on the icon goes).
+  void _markOthersSeen() {
+    final fresh = _otherKeys().where((k) => !_seen.contains(k)).toList();
+    if (fresh.isEmpty) return;
+    _seen = {..._seen, ...fresh};
+    _markSeen(fresh);
+  }
+
+  /// "Other" icon: show / hide the notices of other colleges.
+  void _onOthersTap() {
+    if (!_showOthers && _otherCount() == 0) {
+      showTopAlert(context, 'No notices from other colleges');
+      return;
+    }
+    setState(() {
+      _showOthers = !_showOthers;
+      _showHidden = false;
+      _page = 0;
+      _jumpToOthers = _showOthers;
+    });
+    if (_showOthers) _markOthersSeen();
+    if (!_showOthers && _pager.hasClients) _pager.jumpToPage(0);
   }
 
   Future<void> _openPostSheet() async {
@@ -691,6 +857,118 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
       ));
     }
 
+    // ---- Shared by other colleges (Show to all College) ----
+    // Listed after this community's own notices; tapping one opens a
+    // read-only detail with the posting community's logo + name.
+    if (_isCollege && _showOthers) {
+      for (final item in _shared) {
+        if ((item['sourceId'] ?? '').toString() == communityDocId) continue;
+        if (!CollegeNoticeService.isLive(item, now)) continue;
+
+        final kind = (item['kind'] ?? '').toString();
+        final d = item['data'] is Map
+            ? Map<String, dynamic>.from(item['data'] as Map)
+            : <String, dynamic>{};
+        final src = item['source'] is Map
+            ? Map<String, dynamic>.from(item['source'] as Map)
+            : <String, dynamic>{};
+        final id = (item['id'] ?? '').toString();
+        if (id.isEmpty) continue;
+
+        final sourceLine = [
+          (src['collegeName'] ?? '').toString().trim(),
+          (src['location'] ?? '').toString().trim(),
+        ].where((s) => s.isNotEmpty).join(' · ');
+
+        String label;
+        IconData icon;
+        Color color;
+        String title;
+        String subtitle;
+        String cover = '';
+        var isVideo = false;
+        DateTime sortTime;
+
+        switch (kind) {
+          case 'announcement':
+            label = 'COLLEGE ANNOUNCEMENT';
+            icon = Icons.campaign_rounded;
+            color = const Color(0xFFFFB300);
+            title = _clip((d['title'] ?? 'Announcement').toString());
+            subtitle = _clip((d['body'] ?? '').toString(), 60);
+            if ((d['type'] ?? '').toString() == 'image') {
+              cover = (d['mediaUrl'] ?? '').toString();
+            }
+            sortTime = _dt(d['publishedAt']) ?? _dt(d['createdAt']) ?? now;
+            break;
+          case 'event':
+            final evStart = _dt(d['startAt']);
+            final evEnd = _dt(d['endAt']);
+            final live = evStart != null && !now.isBefore(evStart);
+            label = live ? 'COLLEGE LIVE EVENT' : 'COLLEGE EVENT';
+            icon = live ? Icons.sensors_rounded : Icons.event_rounded;
+            color = live ? const Color(0xFFFF5252) : const Color(0xFF66BB6A);
+            title = _clip((d['title'] ?? 'Event').toString());
+            subtitle = live
+                ? (evEnd == null ? 'Happening now' : 'Ends in ${_left(evEnd.difference(now))}')
+                : (evStart == null ? 'Tap to view' : 'Starts ${communityFormatDateTime(evStart)}');
+            cover = (d['coverImageUrl'] ?? '').toString();
+            sortTime = evStart ?? _dt(d['createdAt']) ?? now;
+            break;
+          default:
+            final t = (d['title'] ?? '').toString().trim();
+            final x = (d['text'] ?? '').toString().trim();
+            final mediaUrl = (d['mediaUrl'] ?? '').toString();
+            isVideo = (d['mediaType'] ?? '').toString() == 'video';
+            if (mediaUrl.startsWith('http')) {
+              cover = isVideo
+                  ? CommunityMediaService.videoThumbnailUrl(mediaUrl)
+                  : mediaUrl;
+            }
+            label = 'COLLEGE NOTICE';
+            icon = Icons.push_pin_rounded;
+            color = const Color(0xFFE0A96D);
+            title = _clip(t.isNotEmpty
+                ? t
+                : (x.isNotEmpty ? x : (isVideo ? 'Video notice' : 'Photo notice')));
+            final noticeEnd = NoticePostService.endOf(d);
+            subtitle = [
+              if (t.isNotEmpty && x.isNotEmpty) _clip(x, 70),
+              if (noticeEnd != null) 'Ends in ${_left(noticeEnd.difference(now))}',
+            ].join(' · ');
+            sortTime = _dt(d['createdAt']) ?? now;
+        }
+
+        out.add(_Notice(
+          key: 'ext_${kind}_$id',
+          label: label,
+          icon: icon,
+          color: color,
+          title: title,
+          subtitle: subtitle,
+          priority: 5,
+          sortTime: sortTime,
+          onTap: () => CollegeNoticeSheet.show(context, item),
+          imageUrl: cover,
+          isVideo: isVideo,
+          sourceLine: sourceLine,
+          sourceLogoUrl: (src['logoUrl'] ?? '').toString(),
+          sourceCoverUrl: (src['coverUrl'] ?? '').toString(),
+        ));
+      }
+    }
+
+    // A notice that has no image of its own gets the college cover image
+    // as its background (this college's own cover; for a notice shared
+    // by another college, that college's cover).
+    final ownCover = _ownCover;
+    for (var i = 0; i < out.length; i++) {
+      final n = out[i];
+      if (n.imageUrl.startsWith('http')) continue;
+      final fallback = n.isExternal ? n.sourceCoverUrl : ownCover;
+      if (fallback.startsWith('http')) out[i] = n.withImage(fallback);
+    }
+
     out.sort((a, b) {
       final r = a.priority.compareTo(b.priority);
       return r != 0 ? r : b.sortTime.compareTo(a.sortTime);
@@ -704,6 +982,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
     VoidCallback? onLongPress,
     bool active = false,
     int badge = 0,
+    bool dot = false,
     String? semanticLabel,
   }) {
     return Semantics(
@@ -722,6 +1001,21 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
               clipBehavior: Clip.none,
               children: [
                 Icon(icon, color: _tan, size: 22),
+                if (dot)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF5252),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: const Color(0xFF1B120A), width: 1.2),
+                      ),
+                    ),
+                  ),
                 if (badge > 0)
                   Positioned(
                     right: -6,
@@ -785,10 +1079,40 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
     if (_showHidden && hiddenItems.isEmpty) _showHidden = false;
 
     final items = _showHidden ? hiddenItems : visible;
+    _itemCount = items.length;
     final canPost = _canPost;
 
-    if (items.isEmpty && hiddenItems.isEmpty && !canPost) {
+    // New notice from another college that the member has not looked at.
+    final otherHasNew = _seenLoaded &&
+        !_showOthers &&
+        _otherKeys().any((k) => !_seen.contains(k));
+    // Other notices are on screen -> they count as seen (also new ones
+    // that arrive while the member is looking).
+    if (_showOthers) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _showOthers) _markOthersSeen();
+      });
+    }
+    // Always there in a college community (even when nothing is shared).
+    final showOthersIcon = _isCollege;
+
+    if (items.isEmpty &&
+        hiddenItems.isEmpty &&
+        !canPost &&
+        !showOthersIcon) {
       return const SizedBox.shrink();
+    }
+
+    // "Other" icon was just turned on -> jump to the first other
+    // college notice.
+    if (_jumpToOthers) {
+      _jumpToOthers = false;
+      final idx = items.indexWhere((n) => n.isExternal);
+      final target = idx < 0 ? 0 : idx;
+      _page = target;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pager.hasClients) _pager.jumpToPage(target);
+      });
     }
 
     // Keep the page index valid when notices disappear.
@@ -860,6 +1184,19 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
                   onTap: () => _onEyeTap(visible),
                   onLongPress: () => _onEyeLongPress(hiddenItems),
                 ),
+                // Other colleges' notices: tap = show, tap again = hide.
+                if (showOthersIcon)
+                  _headerIconButton(
+                    icon: _showOthers
+                        ? Icons.school_rounded
+                        : Icons.school_outlined,
+                    active: _showOthers,
+                    dot: otherHasNew,
+                    semanticLabel: _showOthers
+                        ? 'Hide notices from other colleges'
+                        : 'Show notices from other colleges',
+                    onTap: _onOthersTap,
+                  ),
                 if (canPost)
                   _headerIconButton(
                     icon: Icons.post_add_rounded,
@@ -881,7 +1218,22 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-              child: Container(
+              child: _isCollege
+                  ? _CollegeCoverCard(
+                      coverUrl: _ownCover,
+                      logoUrl: (widget.community['logoUrl'] ?? '').toString(),
+                      collegeName: ((widget.community['collegeName'] ?? '')
+                                  .toString()
+                                  .trim()
+                                  .isNotEmpty
+                              ? widget.community['collegeName']
+                              : widget.community['name'] ?? '')
+                          .toString(),
+                      note: hiddenItems.isNotEmpty
+                          ? 'All notices are hidden. Press and hold the eye to see them.'
+                          : '',
+                    )
+                  : Container(
                 width: double.infinity,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
@@ -907,7 +1259,11 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
                 key: ValueKey(_showHidden),
                 controller: _pager,
                 itemCount: items.length,
-                onPageChanged: (i) => setState(() => _page = i),
+                onPageChanged: (i) {
+                  setState(() => _page = i);
+                  // Swiped by hand (or slid) -> wait a full interval again.
+                  _startAuto();
+                },
                 itemBuilder: (context, i) {
                   final n = items[i];
                   return Padding(
@@ -998,7 +1354,9 @@ class _NoticeCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // Cover image (when the post / event has one).
-            if (hasImage)
+            if (hasImage && notice.coverBg)
+              _SoftCoverImage(url: notice.imageUrl)
+            else if (hasImage)
               Image.network(
                 notice.imageUrl,
                 fit: BoxFit.cover,
@@ -1014,8 +1372,10 @@ class _NoticeCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: hasImage
                         ? [
-                            Colors.black.withValues(alpha: .20),
-                            Colors.black.withValues(alpha: .88),
+                            Colors.black.withValues(
+                                alpha: notice.coverBg ? .45 : .20),
+                            Colors.black.withValues(
+                                alpha: notice.coverBg ? .90 : .88),
                           ]
                         : [
                             c.withValues(alpha: .14),
@@ -1081,14 +1441,46 @@ class _NoticeCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
+                  // Another college's notice: college name + location.
+                  if (notice.sourceLine.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.school_rounded,
+                            color: _tan, size: 14),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            notice.sourceLine,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFFFFE9B0),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
 
+            // Another college's notice: that college's profile image,
+            // top-right corner.
+            if (notice.isExternal)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: _CollegeLogo(url: notice.sourceLogoUrl),
+              ),
+
             if (hiddenMode)
               Positioned(
                 top: 14,
-                right: 14,
+                right: notice.isExternal ? 62 : 14,
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1118,6 +1510,188 @@ class _NoticeCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// College cover image drawn with LOW contrast (flatter, darker) so the
+/// card text and logo are easy to read on top of it.
+class _SoftCoverImage extends StatelessWidget {
+  final String url;
+  const _SoftCoverImage({required this.url});
+
+  // Contrast 0.55 (+ a little less brightness), and slightly desaturated.
+  static const List<double> _matrix = <double>[
+    0.50, 0.12, 0.02, 0, 40, //
+    0.06, 0.55, 0.02, 0, 40, //
+    0.06, 0.12, 0.46, 0, 40, //
+    0, 0, 0, 1, 0,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(_matrix),
+      child: Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      ),
+    );
+  }
+}
+
+/// Shown on the board when there is no notice (college communities):
+/// the college cover image, the college profile image (round, centre)
+/// and the institution name under it.
+class _CollegeCoverCard extends StatelessWidget {
+  final String coverUrl;
+  final String logoUrl;
+  final String collegeName;
+  final String note;
+
+  const _CollegeCoverCard({
+    required this.coverUrl,
+    required this.logoUrl,
+    required this.collegeName,
+    this.note = '',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCover = coverUrl.startsWith('http');
+    final hasLogo = logoUrl.startsWith('http');
+    return Container(
+      height: kNoticeBoardHeight,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B120A),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _tan.withValues(alpha: .6), width: 1.5),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (hasCover) _SoftCoverImage(url: coverUrl),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: hasCover
+                    ? [
+                        Colors.black.withValues(alpha: .50),
+                        Colors.black.withValues(alpha: .86),
+                      ]
+                    : [
+                        _tan.withValues(alpha: .10),
+                        Colors.transparent,
+                      ],
+              ),
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF2A1B0E),
+                      border: Border.all(color: _tan, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: .5),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: hasLogo
+                        ? Image.network(
+                            logoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Icon(
+                                Icons.school_rounded,
+                                color: _tan,
+                                size: 34),
+                          )
+                        : const Icon(Icons.school_rounded,
+                            color: _tan, size: 34),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    collegeName,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      shadows: [Shadow(color: Colors.black87, blurRadius: 6)],
+                    ),
+                  ),
+                  if (note.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      note,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 11.5),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Round profile image of the college that posted a shared notice.
+class _CollegeLogo extends StatelessWidget {
+  final String url;
+  const _CollegeLogo({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 40.0;
+    Widget fallback() => const Center(
+          child: Icon(Icons.school_rounded, color: _tan, size: 22),
+        );
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF1B120A),
+        border: Border.all(color: _tan.withValues(alpha: .9), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .45),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: url.startsWith('http')
+          ? Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => fallback(),
+            )
+          : fallback(),
     );
   }
 }

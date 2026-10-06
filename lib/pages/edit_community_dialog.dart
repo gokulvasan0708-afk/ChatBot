@@ -7,13 +7,14 @@ import 'package:image_picker/image_picker.dart';
 
 import 'app_theme.dart';
 import '../services/community_service.dart';
+import '../widgets/community_about_section.dart';
 import '../widgets/top_alert.dart';
 
 // ================================================================
 // EDIT COMMUNITY DIALOG
 // ----------------------------------------------------------------
 // Same fields as Create Community -- logo, name, type (Normal /
-// College), college name and description -- pre-filled with the
+// College), college name, vision, mission and location -- pre-filled with the
 // community's current values. The Community ID is shown but can't be
 // changed. Opened from "Edit Community" in the community details sheet
 // (Controller / Principal only). Pops with `true` once saved.
@@ -24,8 +25,12 @@ class EditCommunityDialog extends StatefulWidget {
   final String name;
   final String type;
   final String collegeName;
-  final String description;
+  final String vision;
+  final String mission;
+  final String location;
+  final String locationLink;
   final String logoUrl;
+  final String coverUrl;
 
   const EditCommunityDialog({
     super.key,
@@ -34,8 +39,12 @@ class EditCommunityDialog extends StatefulWidget {
     required this.name,
     required this.type,
     required this.collegeName,
-    required this.description,
+    this.vision = '',
+    this.mission = '',
+    this.location = '',
+    this.locationLink = '',
     required this.logoUrl,
+    this.coverUrl = '',
   });
 
   @override
@@ -51,19 +60,37 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
       TextEditingController(text: widget.name);
   late final TextEditingController _collegeController =
       TextEditingController(text: widget.collegeName);
-  late final TextEditingController _descriptionController =
-      TextEditingController(text: widget.description);
+  late final TextEditingController _visionController =
+      TextEditingController(text: widget.vision);
+  late final TextEditingController _missionController =
+      TextEditingController(text: widget.mission);
+  late final TextEditingController _locationController =
+      TextEditingController(text: widget.location);
+  late final TextEditingController _locationLinkController =
+      TextEditingController(text: widget.locationLink);
 
   late String _logoUrl = widget.logoUrl;
+  late String _coverUrl = widget.coverUrl;
+  bool _uploadingCover = false;
   late String _type = widget.type == 'college' ? 'college' : 'normal';
   bool _uploadingImage = false;
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    // The location link field only appears once a location is typed.
+    _locationController.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _collegeController.dispose();
-    _descriptionController.dispose();
+    _visionController.dispose();
+    _missionController.dispose();
+    _locationController.dispose();
+    _locationLinkController.dispose();
     super.dispose();
   }
 
@@ -113,6 +140,56 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
     }
   }
 
+
+  // ==========================================================
+  // COLLEGE COVER IMAGE (wide) -- same Cloudinary flow as the logo.
+  // ==========================================================
+  Future<void> _pickCover() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
+      if (image == null) return;
+      if (!mounted) return;
+
+      setState(() => _uploadingCover = true);
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload'),
+      );
+      request.fields['upload_preset'] = _uploadPreset;
+      request.files.add(await http.MultipartFile.fromPath('file', image.path));
+
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      if (!mounted) return;
+
+      if (response.statusCode != 200) {
+        setState(() => _uploadingCover = false);
+        showTopAlert(context, 'Cover image upload failed.', isError: true);
+        return;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(responseBody);
+      final String imageUrl = (data['secure_url'] ?? '').toString();
+      if (imageUrl.isEmpty) throw Exception('Cloudinary URL not received.');
+
+      setState(() {
+        _coverUrl = imageUrl;
+        _uploadingCover = false;
+      });
+    } catch (e) {
+      debugPrint('Community cover pick/upload error: $e');
+      if (!mounted) return;
+      setState(() => _uploadingCover = false);
+      showTopAlert(context, 'Cover image upload failed.', isError: true);
+    }
+  }
+
   Future<void> _save() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -128,6 +205,12 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
       return;
     }
 
+    if (_locationController.text.trim().isNotEmpty &&
+        !isValidCommunityLink(_locationLinkController.text)) {
+      showTopAlert(context, 'Enter a valid location link', isError: true);
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       await CommunityService.updateCommunity(
@@ -136,8 +219,12 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
         name: name,
         type: _type,
         collegeName: _collegeController.text,
-        description: _descriptionController.text,
+        vision: _visionController.text,
+        mission: _missionController.text,
+        location: _locationController.text,
+        locationLink: normalizeCommunityLink(_locationLinkController.text),
         logoUrl: _logoUrl,
+        coverUrl: _type == 'college' ? _coverUrl : '',
       );
       if (!mounted) return;
       final root = Navigator.of(context, rootNavigator: true).context;
@@ -153,7 +240,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final busy = _saving || _uploadingImage;
+    final busy = _saving || _uploadingImage || _uploadingCover;
     return Dialog(
       backgroundColor: const Color(0xFF1B120A),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -313,17 +400,108 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                   controller: _collegeController,
                   hint: 'e.g. Anna University',
                 ),
+                const SizedBox(height: 16),
+                const _EditLabel('College Cover Image (optional)'),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: _uploadingCover ? null : _pickCover,
+                  child: Container(
+                    height: 130,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A1B0E),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFD2B48C).withValues(alpha: .6),
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: _uploadingCover
+                        ? const Center(
+                            child: SizedBox(
+                              width: 26,
+                              height: 26,
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFD2B48C),
+                                strokeWidth: 2.4,
+                              ),
+                            ),
+                          )
+                        : _coverUrl.isNotEmpty
+                            ? Image.network(
+                                _coverUrl,
+                                width: double.infinity,
+                                height: 130,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const SizedBox(),
+                              )
+                            : const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      color: Color(0xFFD2B48C), size: 30),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    'Tap to add a cover image',
+                                    style: TextStyle(
+                                        color: Colors.white54, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                  ),
+                ),
+                if (_coverUrl.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _uploadingCover
+                          ? null
+                          : () => setState(() => _coverUrl = ''),
+                      child: const Text('Remove cover image',
+                          style:
+                              TextStyle(color: Colors.white54, fontSize: 12)),
+                    ),
+                  ),
               ],
 
               const SizedBox(height: 16),
 
-              const _EditLabel('Description'),
+              const _EditLabel('Vision (optional)'),
               const SizedBox(height: 6),
               _EditField(
-                controller: _descriptionController,
-                hint: 'What is this community about?',
+                controller: _visionController,
+                hint: 'Where do you want this community to go?',
                 maxLines: 3,
               ),
+
+              const SizedBox(height: 16),
+
+              const _EditLabel('Mission (optional)'),
+              const SizedBox(height: 6),
+              _EditField(
+                controller: _missionController,
+                hint: 'What will this community do to get there?',
+                maxLines: 3,
+              ),
+
+              const SizedBox(height: 16),
+
+              const _EditLabel('Location (optional)'),
+              const SizedBox(height: 6),
+              _EditField(
+                controller: _locationController,
+                hint: 'e.g. Coimbatore, Tamil Nadu',
+                maxLines: 2,
+              ),
+
+              if (_locationController.text.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const _EditLabel('Location Link (optional)'),
+                const SizedBox(height: 6),
+                _EditField(
+                  controller: _locationLinkController,
+                  hint: 'Paste a Google Maps link',
+                ),
+              ],
 
               const SizedBox(height: 22),
 

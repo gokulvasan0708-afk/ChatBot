@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 
 import 'app_theme.dart';
 import '../services/event_service.dart';
+import '../widgets/community_about_section.dart';
+import '../widgets/show_to_all_colleges_toggle.dart';
 import '../widgets/top_alert.dart';
 
 // ================================================================
@@ -38,12 +40,14 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _linkController = TextEditingController();
+  final TextEditingController _locationLinkController = TextEditingController();
   final TextEditingController _maxController = TextEditingController();
 
   String? _coverUrl;
   bool _uploadingImage = false;
   bool _creating = false;
   bool _isOnline = false;
+  bool _showToAllColleges = false;
 
   DateTime? _date;
   TimeOfDay? _startTime;
@@ -56,6 +60,7 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
     _categoryController.dispose();
     _locationController.dispose();
     _linkController.dispose();
+    _locationLinkController.dispose();
     _maxController.dispose();
     super.dispose();
   }
@@ -167,6 +172,11 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
       return;
     }
 
+    if (!_isOnline && !isValidCommunityLink(_locationLinkController.text)) {
+      showTopAlert(context, 'Enter a valid location link', isError: true);
+      return;
+    }
+
     final startAt = _combine(_date, _startTime)!;
     final endAt = _combine(_date, _endTime)!;
     if (!endAt.isAfter(startAt)) {
@@ -196,6 +206,8 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
         organizerUid: user.uid,
         organizerName: (userData['publicName'] ?? 'Member').toString(),
         organizerAvatarUrl: (userData['publicImage'] ?? '').toString(),
+        showToAllColleges: _showToAllColleges,
+        locationLink: normalizeCommunityLink(_locationLinkController.text),
       );
 
       if (!mounted) return;
@@ -249,6 +261,13 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
                 ),
               ),
               const SizedBox(height: 18),
+
+              // Top option: also show this on other colleges' Notice Boards.
+              ShowToAllCollegesToggle(
+                communityDocId: widget.communityDocId,
+                value: _showToAllColleges,
+                onChanged: (v) => setState(() => _showToAllColleges = v),
+              ),
 
               // -------- Cover image --------
               GestureDetector(
@@ -388,6 +407,13 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
                 _Label('Location'),
                 const SizedBox(height: 6),
                 _TextField(controller: _locationController, hint: 'e.g. Main Auditorium'),
+                const SizedBox(height: 12),
+                _Label('Location Link (optional)'),
+                const SizedBox(height: 6),
+                _TextField(
+                  controller: _locationLinkController,
+                  hint: 'Paste a Google Maps link',
+                ),
               ],
 
               const SizedBox(height: 14),

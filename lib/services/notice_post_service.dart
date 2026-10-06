@@ -162,6 +162,8 @@ class NoticePostService {
     required List<String> departments,
     required List<String> years,
     required DateTime endAt,
+    // "Show to all College": also listed on other colleges' Notice Boards.
+    bool showToAllColleges = false,
   }) async {
     if (!NoticePostType.all.contains(type)) {
       throw Exception('Unknown post type.');
@@ -193,6 +195,7 @@ class NoticePostService {
       'departments': NoticeAudience.needsDepartments(kinds) ? departments : <String>[],
       'years': NoticeAudience.needsYears(kinds) ? years : <String>[],
       'endAt': Timestamp.fromDate(endAt),
+      'showToAllColleges': showToAllColleges,
       'createdAt': FieldValue.serverTimestamp(),
     });
     return ref.id;
@@ -210,6 +213,7 @@ class NoticePostService {
     required List<String> departments,
     required List<String> years,
     required DateTime endAt,
+    bool showToAllColleges = false,
   }) async {
     if (!endAt.isAfter(DateTime.now())) {
       throw Exception('The end time must be in the future.');
@@ -238,6 +242,7 @@ class NoticePostService {
       'departments': NoticeAudience.needsDepartments(kinds) ? departments : <String>[],
       'years': NoticeAudience.needsYears(kinds) ? years : <String>[],
       'endAt': Timestamp.fromDate(endAt),
+      'showToAllColleges': showToAllColleges,
       'editedAt': FieldValue.serverTimestamp(),
     });
   }

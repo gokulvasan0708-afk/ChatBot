@@ -109,10 +109,17 @@ class CommunityService {
     required String name,
     required String type, // 'normal' | 'college'
     required String collegeName,
-    required String description,
     required String logoUrl,
     required String ownerUid,
     required String ownerAccountId,
+    // Optional community details.
+    String vision = '',
+    String mission = '',
+    String location = '',
+    String locationLink = '',
+    // College communities only: wide cover image (home background,
+    // notice board, community profile).
+    String coverUrl = '',
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -133,8 +140,13 @@ class CommunityService {
       'name': trimmedName,
       'type': type,
       'collegeName': type == 'college' ? collegeName.trim() : '',
-      'description': description.trim(),
+      'vision': vision.trim(),
+      'mission': mission.trim(),
+      'location': location.trim(),
+      // A link only makes sense together with a location.
+      'locationLink': location.trim().isEmpty ? '' : locationLink.trim(),
       'logoUrl': logoUrl,
+      'coverUrl': type == 'college' ? coverUrl.trim() : '',
       'ownerUid': ownerUid,
       'ownerAccountId': ownerAccountId,
       'admins': <String>[],
@@ -509,8 +521,14 @@ class CommunityService {
     required String name,
     required String type,
     required String collegeName,
-    required String description,
     required String logoUrl,
+    // Optional community details.
+    String vision = '',
+    String mission = '',
+    String location = '',
+    String locationLink = '',
+    // null = leave the cover image as it is.
+    String? coverUrl,
   }) async {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty) {
@@ -545,8 +563,14 @@ class CommunityService {
       'name': trimmedName,
       'type': type,
       'collegeName': type == 'college' ? collegeName.trim() : '',
-      'description': description.trim(),
+      'vision': vision.trim(),
+      'mission': mission.trim(),
+      'location': location.trim(),
+      'locationLink': location.trim().isEmpty ? '' : locationLink.trim(),
       'logoUrl': logoUrl,
+      'coverUrl': type == 'college'
+          ? (coverUrl ?? (data['coverUrl'] ?? '').toString()).trim()
+          : '',
     });
     if (groupRef != null && groupSnap?.exists == true) {
       batch.update(groupRef, {

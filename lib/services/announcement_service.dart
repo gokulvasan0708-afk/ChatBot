@@ -67,6 +67,8 @@ class AnnouncementService {
     String audienceValue = '', // e.g. "2nd Year" / "IT"
     bool isUrgent = false,
     DateTime? scheduledFor,
+    // "Show to all College": also listed on other colleges' Notice Boards.
+    bool showToAllColleges = false,
   }) async {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) {
@@ -90,6 +92,7 @@ class AnnouncementService {
       'audienceKind': audienceKinds.contains(audienceKind) ? audienceKind : 'community',
       'audienceValue': audienceValue.trim(),
       'isUrgent': isUrgent,
+      'showToAllColleges': showToAllColleges,
       'isPinned': false,
       'isScheduled': isScheduled,
       'scheduledFor': isScheduled ? Timestamp.fromDate(scheduledFor) : null,

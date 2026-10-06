@@ -254,7 +254,7 @@ class _AiChatPanelState extends State<AiChatPanel> {
             const SizedBox(width: 4),
             ListenableBuilder(
               listenable: _input,
-              builder: (_, __) => IconButton(
+              builder: (_, _) => IconButton(
                 tooltip: 'Send',
                 onPressed: (_c.loading || _input.text.trim().isEmpty)
                     ? null

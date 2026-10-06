@@ -29,6 +29,7 @@ import '../services/community_group_service.dart';
 import '../services/community_poll_service.dart';
 import '../services/event_service.dart';
 import '../services/announcement_service.dart';
+import '../widgets/community_about_section.dart';
 import '../widgets/community_widgets.dart';
 import '../widgets/top_alert.dart';
 
@@ -369,8 +370,14 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
             final communityId = (data['communityId'] ?? '').toString();
             final type = (data['type'] ?? 'normal').toString();
             final collegeName = (data['collegeName'] ?? '').toString();
-            final description = (data['description'] ?? '').toString();
+            final vision = (data['vision'] ?? '').toString();
+            final mission = (data['mission'] ?? '').toString();
+            final location = (data['location'] ?? '').toString();
+            final locationLink = (data['locationLink'] ?? '').toString();
             final logoUrl = (data['logoUrl'] ?? '').toString();
+            // College communities can have a wide cover image.
+            final coverUrl =
+                type == 'college' ? (data['coverUrl'] ?? '').toString() : '';
             final membersCount = (data['membersCount'] is int)
                 ? data['membersCount'] as int
                 : (data['members'] is List
@@ -379,7 +386,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
             final groupDocId = (data['groupDocId'] ?? '').toString();
             final privileged = CommunityService.isPrivileged(data, uid);
 
-            return CustomScrollView(
+            final page = CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
@@ -403,8 +410,12 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                               communityId: communityId,
                               type: type,
                               collegeName: collegeName,
-                              description: description,
+                              vision: vision,
+                              mission: mission,
+                              location: location,
+                              locationLink: locationLink,
                               logoUrl: logoUrl,
+                              coverUrl: coverUrl,
                               membersCount: membersCount,
                             ),
                             child: Padding(
@@ -757,6 +768,8 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                 SliverToBoxAdapter(child: const SizedBox(height: 40)),
               ],
             );
+
+            return page;
           },
         ),
       ),
@@ -769,8 +782,12 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
     required String communityId,
     required String type,
     required String collegeName,
-    required String description,
+    required String vision,
+    required String mission,
+    required String location,
+    required String locationLink,
     required String logoUrl,
+    String coverUrl = '',
     required int membersCount,
   }) {
     showModalBottomSheet(
@@ -780,7 +797,9 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (sheetContext) => SafeArea(
+      builder: (sheetContext) => _CoverBackdrop(
+        coverUrl: coverUrl,
+        child: SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(sheetContext).size.height * 0.8,
@@ -847,18 +866,15 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                   '$membersCount member${membersCount == 1 ? '' : 's'}',
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
-                if (description.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  Text(
-                    description,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
+                SizedBox(
+                  width: double.infinity,
+                  child: CommunityAboutSection(
+                    vision: vision,
+                    mission: mission,
+                    location: location,
+                    locationLink: locationLink,
                   ),
-                ],
+                ),
 
                 // Community management actions are limited to the active
                 // Controller or Principal profile.
@@ -886,8 +902,12 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                                 name: name,
                                 type: type,
                                 collegeName: collegeName,
-                                description: description,
+                                vision: vision,
+                                mission: mission,
+                                location: location,
+                                locationLink: locationLink,
                                 logoUrl: logoUrl,
+                                coverUrl: coverUrl,
                               ),
                               icon: const Icon(Icons.edit_rounded, size: 20),
                               label: const Text('Edit Community'),
@@ -938,6 +958,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -947,8 +968,12 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
     required String name,
     required String type,
     required String collegeName,
-    required String description,
+    required String vision,
+    required String mission,
+    required String location,
+    required String locationLink,
     required String logoUrl,
+    String coverUrl = '',
   }) async {
     final updated = await showDialog<bool>(
       context: sheetContext,
@@ -958,8 +983,12 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
         name: name,
         type: type,
         collegeName: collegeName,
-        description: description,
+        vision: vision,
+        mission: mission,
+        location: location,
+        locationLink: locationLink,
         logoUrl: logoUrl,
+        coverUrl: coverUrl,
       ),
     );
     if (updated == true && sheetContext.mounted) {
@@ -1039,6 +1068,55 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
       // The profile in use may have been switched -> refresh the avatar.
       setState(() {});
     }
+  }
+}
+
+/// Cover image behind the top of the community profile sheet, fading
+/// into the sheet colour.
+class _CoverBackdrop extends StatelessWidget {
+  final String coverUrl;
+  final Widget child;
+  const _CoverBackdrop({required this.coverUrl, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (coverUrl.isEmpty) return child;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 300,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  coverUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: .35),
+                        const Color(0xFF1B120A),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
   }
 }
 

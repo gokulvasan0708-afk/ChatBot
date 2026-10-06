@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'app_theme.dart';
 import '../services/event_service.dart';
+import '../widgets/community_about_section.dart';
 import '../widgets/top_alert.dart';
 
 // ================================================================
@@ -80,6 +82,7 @@ class _EventBodyState extends State<_EventBody> {
     final isOnline = event['isOnline'] == true;
     final location = (event['location'] ?? '').toString();
     final onlineLink = (event['onlineLink'] ?? '').toString();
+    final locationLink = (event['locationLink'] ?? '').toString();
     final start = (event['startAt'] as Timestamp?)?.toDate();
     final end = (event['endAt'] as Timestamp?)?.toDate();
     final organizerName = (event['organizerName'] ?? 'Member').toString();
@@ -147,6 +150,45 @@ class _EventBodyState extends State<_EventBody> {
                       ? (onlineLink.isEmpty ? 'Online event' : onlineLink)
                       : (location.isEmpty ? 'Location not set' : location),
                 ),
+                if (!isOnline && locationLink.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24, bottom: 8),
+                    child: InkWell(
+                      onTap: () async {
+                        final uri =
+                            Uri.tryParse(normalizeCommunityLink(locationLink));
+                        var ok = false;
+                        if (uri != null) {
+                          try {
+                            ok = await launchUrl(uri,
+                                mode: LaunchMode.externalApplication);
+                          } catch (_) {}
+                        }
+                        if (!ok && context.mounted) {
+                          showTopAlert(context, 'Unable to open the location link.',
+                              isError: true);
+                        }
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.open_in_new_rounded,
+                              size: 15, color: Color(0xFFFFE9B0)),
+                          SizedBox(width: 6),
+                          Text(
+                            'Open location link',
+                            style: TextStyle(
+                              color: Color(0xFFFFE9B0),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Color(0xFFFFE9B0),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 _InfoRow(icon: Icons.person_rounded, text: 'Organized by $organizerName'),
                 if (category.isNotEmpty)
                   _InfoRow(icon: Icons.sell_rounded, text: category),

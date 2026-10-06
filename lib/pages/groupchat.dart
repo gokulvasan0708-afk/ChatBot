@@ -1200,6 +1200,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
         : <String, dynamic>{};
     final bool voiceCall = callsEnabledBy['voice_$uid'] != false;
     final bool videoCall = callsEnabledBy['video_$uid'] != false;
+    // Community Chat has no voice/video calling at all.
+    final bool isCommunityChat = groupData['isCommunityChat'] == true;
 
     final DateTime? currentSleepUntil = groupData['sleepUntil'] is Timestamp
         ? (groupData['sleepUntil'] as Timestamp).toDate()
@@ -1252,16 +1254,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             // everyone by default (see the `!= false` reads above);
             // tapping here just lets a user switch their own header
             // call icon off, or back on again, for this group.
-            ListTile(
-              leading: Icon(voiceCall ? Icons.call_rounded : Icons.call_end_rounded, color: const Color(0xFFD2B48C)),
-              title: Text(voiceCall ? 'Disable Voice Call' : 'Enable Voice Call', style: const TextStyle(color: Colors.white)),
-              onTap: () => Navigator.pop(sheetContext, 'voice'),
-            ),
-            ListTile(
-              leading: Icon(videoCall ? Icons.videocam_rounded : Icons.videocam_off_rounded, color: const Color(0xFFD2B48C)),
-              title: Text(videoCall ? 'Disable Video Call' : 'Enable Video Call', style: const TextStyle(color: Colors.white)),
-              onTap: () => Navigator.pop(sheetContext, 'video'),
-            ),
+            if (!isCommunityChat) ...[
+              ListTile(
+                leading: Icon(voiceCall ? Icons.call_rounded : Icons.call_end_rounded, color: const Color(0xFFD2B48C)),
+                title: Text(voiceCall ? 'Disable Voice Call' : 'Enable Voice Call', style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(sheetContext, 'voice'),
+              ),
+              ListTile(
+                leading: Icon(videoCall ? Icons.videocam_rounded : Icons.videocam_off_rounded, color: const Color(0xFFD2B48C)),
+                title: Text(videoCall ? 'Disable Video Call' : 'Enable Video Call', style: const TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(sheetContext, 'video'),
+              ),
+            ],
             // Deliberately last in the sheet, per spec.
             if (isAdmin)
               ListTile(
@@ -1397,6 +1401,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             stream: groupStream,
             builder: (context, snapshot) {
               final data = snapshot.data?.data() ?? {};
+              // Community Chat: no voice/video call icons in the header.
+              if (data['isCommunityChat'] == true) {
+                return const SizedBox.shrink();
+              }
               final callsEnabledBy = data['callsEnabledBy'] is Map
                   ? Map<String, dynamic>.from(data['callsEnabledBy'] as Map)
                   : <String, dynamic>{};

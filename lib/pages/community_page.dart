@@ -13,6 +13,7 @@ import 'community_home_page.dart';
 import 'create_club_dialog.dart';
 import 'club_detail_page.dart';
 import '../services/community_service.dart';
+import '../widgets/community_about_section.dart';
 import '../club/club_icons.dart';
 import '../services/club_service.dart';
 
@@ -425,9 +426,14 @@ class _CommunityTabPageState extends State<_CommunityTabPage> {
 
   Future<void> _openJoinSuggestion(Map<String, dynamic> community) async {
     _searchFocusNode.unfocus();
-    // Opens straight at the join requirements (department, year,
-    // register number ...) when the community's owner has set them.
-    await showJoinCommunitySheet(context, initialCommunity: community);
+    // Opens the community's details page; "Join" (top right) there
+    // opens the join requirements (department, year, register number
+    // ...) when the community's owner has set them.
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _CommunityPreviewPage(community: community),
+      ),
+    );
 
     // The user may have just joined -> refresh so that community moves
     // out of "Communities you can join" and into "Your communities".
@@ -452,135 +458,383 @@ class _CommunityTabPageState extends State<_CommunityTabPage> {
       );
     }
 
-    return GestureDetector(
-      // Tapping empty space drops focus and closes the keyboard, same
-      // as the Groups tab. Translucent so it never blocks taps below.
-      behavior: HitTestBehavior.translucent,
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ---------- Search (top) + "+" (next to search) ----------
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _myStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return _CommunityEmptyState(
+            icon: Icons.wifi_off_rounded,
+            title: 'Unable to load Community',
+            subtitle: 'Check your connection and try again.',
+            primaryLabel: 'Join Community',
+            onPrimary: widget.onJoin,
+            secondaryLabel: 'Create Community',
+            onSecondary: widget.onCreate,
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        // No community on the home page -> ONLY Join / Create
+        // (no search bar).
+        if (docs.isEmpty) {
+          return _CommunityEmptyState(
+            icon: Icons.public_rounded,
+            title: 'No community yet',
+            subtitle: 'Join a community to see it here, or start your own.',
+            primaryLabel: 'Join Community',
+            onPrimary: widget.onJoin,
+            secondaryLabel: 'Create Community',
+            onSecondary: widget.onCreate,
+          );
+        }
+
+        final query = _searchQuery.trim().toLowerCase();
+
+        // Own communities, filtered by name / institution / ID.
+        final mine = query.isEmpty
+            ? docs
+            : docs.where((doc) {
+                final d = doc.data();
+                final name = (d['name'] ?? '').toString().toLowerCase();
+                final college =
+                    (d['collegeName'] ?? '').toString().toLowerCase();
+                final cid = (d['communityId'] ?? '').toString().toLowerCase();
+                return name.contains(query) ||
+                    college.contains(query) ||
+                    cid.contains(query);
+              }).toList();
+
+        final showSuggestions = query.isNotEmpty && _suggestions.isNotEmpty;
+        final nothing =
+            query.isNotEmpty && mine.isEmpty && _suggestions.isEmpty;
+
+        return GestureDetector(
+          // Tapping empty space drops focus and closes the keyboard, same
+          // as the Groups tab. Translucent so it never blocks taps below.
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ---------- Search (top) + "+" (next to search) ----------
+              // Shown as soon as there is at least ONE community.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _CommunitySearchField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        onChanged: _onSearchChanged,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _AddCommunityButton(onTap: widget.onCreate),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: nothing
+                    ? const Center(
+                        child: Text(
+                          'No communities match your search',
+                          style: TextStyle(color: Colors.white54),
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                        children: [
+                          if (showSuggestions) ...[
+                            const _CommunitySectionLabel(
+                                'Communities you can join'),
+                            ..._suggestions.map(
+                              (c) => _CommunitySuggestionTile(
+                                community: c,
+                                onTap: () => _openJoinSuggestion(c),
+                              ),
+                            ),
+                            if (mine.isNotEmpty)
+                              const _CommunitySectionLabel(
+                                  'Your communities'),
+                          ],
+                          ...mine.map((doc) {
+                            final data = doc.data();
+                            return _CommunityListCard(
+                              name: (data['name'] ?? '').toString(),
+                              communityId:
+                                  (data['communityId'] ?? '').toString(),
+                              logoUrl: (data['logoUrl'] ?? '').toString(),
+                              membersCount: (data['membersCount'] is int)
+                                  ? data['membersCount'] as int
+                                  : 0,
+                              onTap: () {
+                                _searchFocusNode.unfocus();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => CommunityHomePage(
+                                        communityDocId: doc.id),
+                                  ),
+                                );
+                              },
+                            );
+                          }),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ================================================================
+// COMMUNITY PREVIEW (a community the member has not joined)
+// ----------------------------------------------------------------
+// Opened by tapping a search result. Shows the community's details
+// (logo, name, ID, college, members, vision / mission / location)
+// with a "Join" button in the top-right corner. Join opens the
+// join requirements sheet; once the member has joined, this page
+// closes.
+// ================================================================
+class _CommunityPreviewPage extends StatefulWidget {
+  final Map<String, dynamic> community;
+  const _CommunityPreviewPage({required this.community});
+
+  @override
+  State<_CommunityPreviewPage> createState() => _CommunityPreviewPageState();
+}
+
+class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
+  bool _joining = false;
+
+  String _s(String key) => (widget.community[key] ?? '').toString();
+
+  Future<void> _join() async {
+    if (_joining) return;
+    setState(() => _joining = true);
+    await showJoinCommunitySheet(context, initialCommunity: widget.community);
+    if (!mounted) return;
+
+    // Joined (the member list now has this user)? -> leave this page.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final docId = _s('docId');
+    var joined = false;
+    if (uid != null && docId.isNotEmpty) {
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('communities')
+            .doc(docId)
+            .get();
+        final members = snap.data()?['members'];
+        joined = members is List && members.contains(uid);
+      } catch (e) {
+        debugPrint('Community preview join check error: $e');
+      }
+    }
+    if (!mounted) return;
+    if (joined) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() => _joining = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = _s('name');
+    final communityId = _s('communityId');
+    final type = _s('type');
+    final collegeName = _s('collegeName');
+    final logoUrl = _s('logoUrl');
+    final coverUrl = type == 'college' ? _s('coverUrl') : '';
+    final members = widget.community['members'];
+    final membersCount = widget.community['membersCount'] is int
+        ? widget.community['membersCount'] as int
+        : (members is List ? members.length : 0);
+    final hasCover = coverUrl.startsWith('http');
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF120C07),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Community',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
+        ),
+        actions: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _CommunitySearchField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: _onSearchChanged,
+            padding: const EdgeInsets.only(right: 14),
+            child: Center(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: AppColors.goldGradient,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: _joining ? null : _join,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      child: _joining
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF1B120A),
+                              ),
+                            )
+                          : const Text(
+                              'Join',
+                              style: TextStyle(
+                                color: Color(0xFF1B120A),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                _AddCommunityButton(onTap: widget.onCreate),
-              ],
+              ),
             ),
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _myStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return _CommunityEmptyState(
-                    icon: Icons.wifi_off_rounded,
-                    title: 'Unable to load Community',
-                    subtitle: 'Check your connection and try again.',
-                    primaryLabel: 'Join Community',
-                    onPrimary: widget.onJoin,
-                    secondaryLabel: 'Create Community',
-                    onSecondary: widget.onCreate,
-                  );
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-                final query = _searchQuery.trim().toLowerCase();
-
-                // Nothing joined and nothing typed -> Join / Create.
-                if (docs.isEmpty && query.isEmpty) {
-                  return _CommunityEmptyState(
-                    icon: Icons.public_rounded,
-                    title: 'No community yet',
-                    subtitle:
-                        'Join a community to see it here, or start your own.',
-                    primaryLabel: 'Join Community',
-                    onPrimary: widget.onJoin,
-                    secondaryLabel: 'Create Community',
-                    onSecondary: widget.onCreate,
-                  );
-                }
-
-                // Own communities, filtered by name / institution / ID.
-                final mine = query.isEmpty
-                    ? docs
-                    : docs.where((doc) {
-                        final d = doc.data();
-                        final name = (d['name'] ?? '').toString().toLowerCase();
-                        final college =
-                            (d['collegeName'] ?? '').toString().toLowerCase();
-                        final cid =
-                            (d['communityId'] ?? '').toString().toLowerCase();
-                        return name.contains(query) ||
-                            college.contains(query) ||
-                            cid.contains(query);
-                      }).toList();
-
-                final showSuggestions = query.isNotEmpty && _suggestions.isNotEmpty;
-                final nothing =
-                    query.isNotEmpty && mine.isEmpty && _suggestions.isEmpty;
-
-                if (nothing) {
-                  return const Center(
-                    child: Text(
-                      'No communities match your search',
-                      style: TextStyle(color: Colors.white54),
-                    ),
-                  );
-                }
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                  children: [
-                    if (showSuggestions) ...[
-                      const _CommunitySectionLabel('Communities you can join'),
-                      ..._suggestions.map(
-                        (c) => _CommunitySuggestionTile(
-                          community: c,
-                          onTap: () => _openJoinSuggestion(c),
-                        ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (hasCover)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: 300,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    coverUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: .45),
+                          const Color(0xFF120C07),
+                        ],
                       ),
-                      if (mine.isNotEmpty)
-                        const _CommunitySectionLabel('Your communities'),
-                    ],
-                    ...mine.map((doc) {
-                      final data = doc.data();
-                      return _CommunityListCard(
-                        name: (data['name'] ?? '').toString(),
-                        communityId: (data['communityId'] ?? '').toString(),
-                        logoUrl: (data['logoUrl'] ?? '').toString(),
-                        membersCount: (data['membersCount'] is int)
-                            ? data['membersCount'] as int
-                            : 0,
-                        onTap: () {
-                          _searchFocusNode.unfocus();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  CommunityHomePage(communityDocId: doc.id),
-                            ),
-                          );
-                        },
-                      );
-                    }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
+              child: Column(
+                children: [
+                  Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF2A1B0E),
+                      border: Border.all(
+                          color: const Color(0xFFD2B48C), width: 2),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: logoUrl.startsWith('http')
+                        ? Image.network(
+                            logoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Icon(
+                                Icons.public_rounded,
+                                color: Color(0xFFD2B48C),
+                                size: 40),
+                          )
+                        : const Icon(Icons.public_rounded,
+                            color: Color(0xFFD2B48C), size: 40),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    name.isEmpty ? 'Community' : name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (communityId.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      communityId,
+                      style: const TextStyle(
+                        color: Color(0xFFFFE9B0),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
-                );
-              },
+                  if (type == 'college' && collegeName.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.school_rounded,
+                            color: Colors.white54, size: 15),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            collegeName,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Colors.white60, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Text(
+                    '$membersCount member${membersCount == 1 ? '' : 's'}',
+                    style:
+                        const TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: CommunityAboutSection(
+                      vision: _s('vision'),
+                      mission: _s('mission'),
+                      location: _s('location'),
+                      locationLink: _s('locationLink'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -16,6 +16,7 @@ import 'chat_screen.dart';
 import 'private_chat_screen.dart';
 import 'groupchat.dart';
 
+import '../widgets/community_about_section.dart';
 import '../widgets/top_alert.dart';
 // ================================================================
 // PROFILE IMAGE PROVIDER
@@ -1053,13 +1054,23 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
         backgroundColor: const Color(0xFF120B06),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Group Profile',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
+        title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('groups')
+              .doc(widget.groupDocId)
+              .snapshots(),
+          builder: (context, snap) {
+            final bool isCommunityChat =
+                snap.data?.data()?['isCommunityChat'] == true;
+            return Text(
+              isCommunityChat ? 'Community Profile' : 'Group Profile',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 17,
+              ),
+            );
+          },
         ),
         actions: [
           _GroupIdButton(groupDocId: widget.groupDocId),
@@ -1121,6 +1132,13 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                     adminUid.isNotEmpty && adminUid == user.uid;
                 final bool currentUserIsCoAdmin =
                     coAdminUids.contains(user.uid);
+                // Community Chat has no voice/video call tabs.
+                final bool isCommunityChat =
+                    groupData['isCommunityChat'] == true;
+                // The owning community's doc id (set on the community
+                // chat's group doc when the community is created).
+                final String communityDocId =
+                    (groupData['communityId'] ?? '').toString();
 
                 return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   // Connected accounts -- drives whether each member
@@ -1200,6 +1218,13 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            // Community Profile only: community logo icon
+                            // (live -- follows logo changes). Tap = college /
+                            // community information.
+                            if (isCommunityChat && communityDocId.isNotEmpty) ...[
+                              _CommunityInfoIcon(communityDocId: communityDocId),
+                              const SizedBox(width: 10),
+                            ],
                             _tabIcon(
                               icon: Icons.folder_rounded,
                               selected: _tab == _GroupProfileTab.files,
@@ -1213,18 +1238,20 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                               onTap: () => setState(
                                   () => _tab = _GroupProfileTab.members),
                             ),
-                            const SizedBox(width: 10),
-                            _tabIcon(
-                              icon: Icons.call_rounded,
-                              selected: false,
-                              onTap: () => _callComingSoon('voice'),
-                            ),
-                            const SizedBox(width: 10),
-                            _tabIcon(
-                              icon: Icons.videocam_rounded,
-                              selected: false,
-                              onTap: () => _callComingSoon('video'),
-                            ),
+                            if (!isCommunityChat) ...[
+                              const SizedBox(width: 10),
+                              _tabIcon(
+                                icon: Icons.call_rounded,
+                                selected: false,
+                                onTap: () => _callComingSoon('voice'),
+                              ),
+                              const SizedBox(width: 10),
+                              _tabIcon(
+                                icon: Icons.videocam_rounded,
+                                selected: false,
+                                onTap: () => _callComingSoon('video'),
+                              ),
+                            ],
                           ],
                         ),
 
@@ -1272,6 +1299,187 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
             ),
     );
   }
+}
+
+// ================================================================
+// COMMUNITY INFO ICON (Community Profile page only)
+// ----------------------------------------------------------------
+// Sits before the Files tab icon. Shows the community's logo
+// (streamed from the community doc, so it updates the moment the
+// logo is changed) and opens a sheet with the community / college
+// information when tapped.
+// ================================================================
+class _CommunityInfoIcon extends StatelessWidget {
+  final String communityDocId;
+
+  const _CommunityInfoIcon({required this.communityDocId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('communities')
+          .doc(communityDocId)
+          .snapshots(),
+      builder: (context, snap) {
+        final data = snap.data?.data() ?? <String, dynamic>{};
+        final String logo = (data['logoUrl'] ?? '').toString();
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _showCommunityInfoSheet(context, communityDocId),
+          child: Container(
+            width: 52,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B120A),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFD2B48C).withValues(alpha: .3),
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundImage: _profileImageProvider(logo),
+              child: logo.isEmpty
+                  ? const Icon(Icons.school_rounded,
+                      color: Color(0xFFD2B48C), size: 18)
+                  : null,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+void _showCommunityInfoSheet(BuildContext context, String communityDocId) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: const Color(0xFF1B120A),
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('communities')
+            .doc(communityDocId)
+            .snapshots(),
+        builder: (context, snap) {
+          final data = snap.data?.data();
+          if (data == null) {
+            return const SizedBox(
+              height: 160,
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+              ),
+            );
+          }
+
+          final String name = (data['name'] ?? '').toString();
+          final String logo = (data['logoUrl'] ?? '').toString();
+          final String communityId = (data['communityId'] ?? '').toString();
+          final String type = (data['type'] ?? 'normal').toString();
+          final String collegeName = (data['collegeName'] ?? '').toString();
+          final String vision = (data['vision'] ?? '').toString();
+          final String mission = (data['mission'] ?? '').toString();
+          final String location = (data['location'] ?? '').toString();
+          final String locationLink = (data['locationLink'] ?? '').toString();
+          final int membersCount = (data['membersCount'] is int)
+              ? data['membersCount'] as int
+              : (data['members'] is List ? (data['members'] as List).length : 0);
+
+          Widget row(IconData icon, String label, String value) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, color: const Color(0xFFD2B48C), size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label,
+                            style: const TextStyle(
+                                color: Colors.white38, fontSize: 11.5)),
+                        const SizedBox(height: 2),
+                        Text(value,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14.5)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 26),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 42,
+                    backgroundColor: const Color(0xFF2A1B0E),
+                    backgroundImage: _profileImageProvider(logo),
+                    child: logo.isEmpty
+                        ? const Icon(Icons.school_rounded,
+                            color: Colors.white70, size: 38)
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (communityId.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Text(communityId,
+                        style: const TextStyle(
+                            color: Color(0xFFFFE9B0),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                if (type == 'college' && collegeName.isNotEmpty)
+                  row(Icons.school_rounded, 'College / Institution', collegeName),
+                row(
+                  Icons.people_alt_rounded,
+                  'Members',
+                  '$membersCount member${membersCount == 1 ? '' : 's'}',
+                ),
+                CommunityAboutSection(
+                  vision: vision,
+                  mission: mission,
+                  location: location,
+                  locationLink: locationLink,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    ),
+  );
 }
 
 // ================================================================
@@ -1461,6 +1669,10 @@ class _GroupIdButton extends StatelessWidget {
           .doc(groupDocId)
           .snapshots(),
       builder: (context, snapshot) {
+        // Community Profile has no link icon (Group Profile keeps it).
+        if (snapshot.data?.data()?['isCommunityChat'] == true) {
+          return const SizedBox.shrink();
+        }
         final groupId = (snapshot.data?.data()?['groupId'] ?? '').toString();
 
         return IconButton(

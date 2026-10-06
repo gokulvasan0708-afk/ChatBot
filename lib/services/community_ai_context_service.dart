@@ -367,10 +367,14 @@ class CommunityAiContext {
     final name = (c['name'] ?? '').toString();
     final type = (c['type'] ?? '').toString();
     final college = (c['collegeName'] ?? '').toString();
-    final description = (c['description'] ?? '').toString().trim();
+    final vision = (c['vision'] ?? '').toString().trim();
+    final mission = (c['mission'] ?? '').toString().trim();
+    final location = (c['location'] ?? '').toString().trim();
     if (name.isNotEmpty) b.writeln('Community: $name');
     if (type == 'college' && college.isNotEmpty) b.writeln('College: $college');
-    if (description.isNotEmpty) b.writeln('About: $description');
+    if (vision.isNotEmpty) b.writeln('Vision: $vision');
+    if (mission.isNotEmpty) b.writeln('Mission: $mission');
+    if (location.isNotEmpty) b.writeln('Location: $location');
 
     final pinned = corpus.announcements.where((a) => a['isPinned'] == true);
     if (pinned.isNotEmpty) {

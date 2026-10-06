@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'app_theme.dart';
 import '../services/announcement_service.dart';
+import '../widgets/show_to_all_colleges_toggle.dart';
 import '../widgets/top_alert.dart';
 
 // ================================================================
@@ -49,6 +50,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
   String _type = 'text';
   String _audienceKind = 'community';
   bool _isUrgent = false;
+  bool _showToAllColleges = false;
   bool _posting = false;
   bool _uploadingImage = false;
   String? _imageUrl;
@@ -145,6 +147,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
         audienceKind: _audienceKind,
         audienceValue: _audienceKind == 'community' ? '' : _audienceValueController.text,
         isUrgent: _isUrgent,
+        showToAllColleges: _showToAllColleges,
       );
 
       if (!mounted) return;
@@ -189,6 +192,13 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 18),
+
+                // Top option: also show this on other colleges' Notice Boards.
+                ShowToAllCollegesToggle(
+                  communityDocId: widget.communityDocId,
+                  value: _showToAllColleges,
+                  onChanged: (v) => setState(() => _showToAllColleges = v),
+                ),
 
                 _Label('Type'),
                 const SizedBox(height: 8),

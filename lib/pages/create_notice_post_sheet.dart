@@ -11,6 +11,7 @@ import 'community_members_directory_page.dart'
 import '../services/community_media_service.dart';
 import '../services/notice_post_service.dart';
 import '../widgets/community_widgets.dart';
+import '../widgets/show_to_all_colleges_toggle.dart';
 import '../widgets/top_alert.dart';
 
 // ================================================================
@@ -77,6 +78,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
   final Set<String> _years = {};
 
   bool _posting = false;
+  bool _showToAllColleges = false;
   String _status = '';
 
   /// Media already on the post being edited (kept unless replaced).
@@ -107,6 +109,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
       ..addAll(kinds.isEmpty ? [NoticeAudience.community] : kinds);
     _departments.addAll(list(e['departments']));
     _years.addAll(list(e['years']));
+    _showToAllColleges = e['showToAllColleges'] == true;
   }
 
   @override
@@ -276,6 +279,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
           departments: _departments.toList(),
           years: _years.toList(),
           endAt: _endAt!,
+          showToAllColleges: _showToAllColleges,
         );
         if (!mounted) return;
         Navigator.of(context).pop();
@@ -301,6 +305,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
         departments: _departments.toList(),
         years: _years.toList(),
         endAt: _endAt!,
+        showToAllColleges: _showToAllColleges,
       );
 
       if (!mounted) return;
@@ -496,6 +501,13 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
             ],
           ),
           const SizedBox(height: 12),
+
+          // Top option: also show this on other colleges' Notice Boards.
+          ShowToAllCollegesToggle(
+            communityDocId: widget.communityDocId,
+            value: _showToAllColleges,
+            onChanged: (v) => setState(() => _showToAllColleges = v),
+          ),
 
           _label('Title (optional)'),
           const SizedBox(height: 6),

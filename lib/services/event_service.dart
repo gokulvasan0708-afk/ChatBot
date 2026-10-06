@@ -59,6 +59,10 @@ class EventService {
     required String organizerUid,
     required String organizerName,
     required String organizerAvatarUrl,
+    // "Show to all College": also listed on other colleges' Notice Boards.
+    bool showToAllColleges = false,
+    // Offline events only: optional map / location link.
+    String locationLink = '',
   }) async {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) {
@@ -77,6 +81,7 @@ class EventService {
       'category': category.trim(),
       'isOnline': isOnline,
       'location': isOnline ? '' : location.trim(),
+      'locationLink': isOnline ? '' : locationLink.trim(),
       'onlineLink': isOnline ? onlineLink.trim() : '',
       'startAt': Timestamp.fromDate(startAt),
       'endAt': Timestamp.fromDate(endAt),
@@ -90,6 +95,7 @@ class EventService {
       'checkedInUids': <String>[],
       'checkInCode': _newCheckInCode(),
       'cancelled': false,
+      'showToAllColleges': showToAllColleges,
       'createdAt': FieldValue.serverTimestamp(),
     });
     return ref.id;
