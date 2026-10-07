@@ -108,7 +108,7 @@ class CallAvatar extends StatelessWidget {
     final provider = callProfileImageProvider(imagePath);
     return CircleAvatar(
       radius: radius,
-      backgroundColor: const Color(0xFF2A1B0E),
+      backgroundColor: const Color(0xFF20202A),
       backgroundImage: provider,
       child: provider == null
           ? Icon(Icons.person_rounded,

@@ -60,7 +60,7 @@ class CreateNoticePostSheet extends StatefulWidget {
 }
 
 class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
-  static const Color _tan = Color(0xFFD2B48C);
+  static const Color _tan = Color(0xFFA78BFA);
 
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _title = TextEditingController();
@@ -334,7 +334,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
           maxHeight: MediaQuery.of(context).size.height * .92,
         ),
         decoration: const BoxDecoration(
-          color: Color(0xFF1B120A),
+          color: Color(0xFF18181F),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -412,7 +412,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Material(
-                color: const Color(0xFF2A1B0E),
+                color: const Color(0xFF20202A),
                 borderRadius: BorderRadius.circular(14),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
@@ -670,20 +670,20 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
                                 height: 18,
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2.2,
-                                    color: Color(0xFF1B120A)),
+                                    color: Color(0xFF18181F)),
                               ),
                               if (_status.isNotEmpty) ...[
                                 const SizedBox(width: 10),
                                 Text(_status,
                                     style: const TextStyle(
-                                        color: Color(0xFF1B120A),
+                                        color: Color(0xFF18181F),
                                         fontWeight: FontWeight.w600)),
                               ],
                             ],
                           )
                         : Text(_editing ? 'Save changes' : 'Post',
                             style: TextStyle(
-                                color: Color(0xFF1B120A),
+                                color: Color(0xFF18181F),
                                 fontWeight: FontWeight.bold)),
                   ),
                 ),
@@ -712,7 +712,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
-        fillColor: const Color(0xFF2A1B0E),
+        fillColor: const Color(0xFF20202A),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -731,7 +731,7 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
         height: height,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: const Color(0xFF2A1B0E),
+          color: const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: _tan.withValues(alpha: .4)),
         ),
@@ -748,14 +748,14 @@ class _CreateNoticePostSheetState extends State<CreateNoticePostSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           gradient: selected ? AppColors.goldGradient : null,
-          color: selected ? null : const Color(0xFF2A1B0E),
+          color: selected ? null : const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: _tan.withValues(alpha: selected ? 1 : .4)),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? const Color(0xFF1B120A) : Colors.white70,
+            color: selected ? const Color(0xFF18181F) : Colors.white70,
             fontWeight: FontWeight.w600,
             fontSize: 12.5,
           ),
@@ -776,7 +776,7 @@ class _MediaPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: const Color(0xFFD2B48C), size: 30),
+          Icon(icon, color: const Color(0xFFA78BFA), size: 30),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),

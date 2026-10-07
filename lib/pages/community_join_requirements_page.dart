@@ -15,8 +15,8 @@ import '../services/community_join_service.dart';
 // Join is enforced with these rules in Phase 5.
 // ================================================================
 
-const Color _tan = Color(0xFFD2B48C);
-const Color _brown = Color(0xFF8B4513);
+const Color _tan = Color(0xFFA78BFA);
+const Color _brown = Color(0xFF7C3AED);
 
 class CommunityJoinRequirementsPage extends StatefulWidget {
   final String communityDocId;
@@ -245,7 +245,7 @@ class _CommunityJoinRequirementsPageState
                     hint: 'e.g. 7112252050301',
                     emptyText: 'No extra permissions',
                     numbers: req.extraAllowedNumbers,
-                    chipColor: Colors.greenAccent,
+                    chipColor: Color(0xFF10B981),
                     onAdd: _addExtra,
                     onRemove: _removeExtra,
                   ),
@@ -276,7 +276,7 @@ class _CommunityJoinRequirementsPageState
                       hintText: 'e.g. 711225205001',
                       hintStyle: const TextStyle(color: Colors.white30),
                       filled: true,
-                      fillColor: const Color(0xFF14100B),
+                      fillColor: const Color(0xFF18181F),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.check_rounded, color: _tan),
                         onPressed: () => _runTry(req),
@@ -299,7 +299,7 @@ class _CommunityJoinRequirementsPageState
                       _tryMessage!,
                       style: TextStyle(
                         color: _tryOk
-                            ? Colors.greenAccent
+                            ? Color(0xFF10B981)
                             : Colors.redAccent.shade100,
                         fontSize: 13,
                       ),
@@ -342,7 +342,7 @@ class _FieldOptionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? _brown.withValues(alpha: .25)
-              : const Color(0xFF14100B),
+              : const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? _tan : _tan.withValues(alpha: .25),
@@ -390,7 +390,7 @@ InputDecoration _fieldDecoration(String hint) => InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white30),
       filled: true,
-      fillColor: const Color(0xFF14100B),
+      fillColor: const Color(0xFF18181F),
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       enabledBorder: OutlineInputBorder(
@@ -673,7 +673,7 @@ class _NumberListSectionState extends State<_NumberListSection> {
                     n,
                     style: TextStyle(color: widget.chipColor, fontSize: 12),
                   ),
-                  backgroundColor: const Color(0xFF14100B),
+                  backgroundColor: const Color(0xFF18181F),
                   side: BorderSide(
                     color: widget.chipColor.withValues(alpha: .5),
                   ),

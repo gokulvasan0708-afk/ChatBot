@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../widgets/top_alert.dart';
 import 'translator_service.dart';
 
-const _bg = Color(0xFF1B120A);
-const _chipBg = Color(0xFF2A1B0E);
-const _tan = Color(0xFFD2B48C);
-const _brown = Color(0xFF8B4513);
+const _bg = Color(0xFF18181F);
+const _chipBg = Color(0xFF20202A);
+const _tan = Color(0xFFA78BFA);
+const _brown = Color(0xFF7C3AED);
 
 Future<void> _show(BuildContext context, Widget sheet) => showModalBottomSheet(
       context: context,

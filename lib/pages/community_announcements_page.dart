@@ -33,7 +33,7 @@ class CommunityAnnouncementsPage extends StatelessWidget {
           stream: CommunityService.watchCommunity(communityDocId),
           builder: (context, communitySnap) {
             if (communitySnap.connectionState == ConnectionState.waiting) {
-              return const _Center(child: CircularProgressIndicator(color: Color(0xFFD2B48C)));
+              return const _Center(child: CircularProgressIndicator(color: Color(0xFFA78BFA)));
             }
             final community = communitySnap.data?.data();
             if (community == null) {
@@ -67,7 +67,7 @@ class CommunityAnnouncementsPage extends StatelessWidget {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const _Center(
-                          child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+                          child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
                         );
                       }
                       if (snapshot.hasError) {
@@ -138,7 +138,7 @@ class _Header extends StatelessWidget {
           if (onCreate != null)
             IconButton(
               onPressed: onCreate,
-              icon: const Icon(Icons.add_circle_rounded, color: Color(0xFFD2B48C), size: 26),
+              icon: const Icon(Icons.add_circle_rounded, color: Color(0xFFA78BFA), size: 26),
             ),
         ],
       ),
@@ -190,12 +190,12 @@ class _AnnouncementCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isUrgent
               ? Colors.redAccent.withValues(alpha: .6)
-              : const Color(0xFFD2B48C).withValues(alpha: read ? .2 : .45),
+              : const Color(0xFFA78BFA).withValues(alpha: read ? .2 : .45),
         ),
       ),
       child: Column(
@@ -204,7 +204,7 @@ class _AnnouncementCard extends StatelessWidget {
           Row(
             children: [
               if (isPinned) ...[
-                const Icon(Icons.push_pin_rounded, color: Color(0xFFFFE9B0), size: 15),
+                const Icon(Icons.push_pin_rounded, color: Color(0xFFC4B5FD), size: 15),
                 const SizedBox(width: 5),
               ],
               if (isUrgent) ...[
@@ -232,7 +232,7 @@ class _AnnouncementCard extends StatelessWidget {
               ),
               if (privileged || isAuthor)
                 PopupMenuButton<String>(
-                  color: const Color(0xFF2A1B0E),
+                  color: const Color(0xFF20202A),
                   icon: const Icon(Icons.more_vert_rounded, color: Colors.white54, size: 18),
                   onSelected: (value) => _handleMenu(context, value),
                   itemBuilder: (_) => [
@@ -270,16 +270,16 @@ class _AnnouncementCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF2A1B0E),
+                color: const Color(0xFF20202A),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.link_rounded, color: Color(0xFFD2B48C), size: 15),
+                  const Icon(Icons.link_rounded, color: Color(0xFFA78BFA), size: 15),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(linkUrl,
-                        style: const TextStyle(color: Color(0xFFFFE9B0), fontSize: 12),
+                        style: const TextStyle(color: Color(0xFFC4B5FD), fontSize: 12),
                         overflow: TextOverflow.ellipsis),
                   ),
                 ],
@@ -383,7 +383,7 @@ class _StateMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 14),
             Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),

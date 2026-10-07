@@ -14,8 +14,8 @@ import '../services/community_join_service.dart';
 // (case and extra spaces are ignored).
 // ================================================================
 
-const Color _tan = Color(0xFFD2B48C);
-const Color _brown = Color(0xFF8B4513);
+const Color _tan = Color(0xFFA78BFA);
+const Color _brown = Color(0xFF7C3AED);
 
 class CommunityRoleRequirementsPage extends StatefulWidget {
   final String communityDocId;
@@ -100,7 +100,7 @@ class _CommunityRoleRequirementsPageState
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
-        fillColor: const Color(0xFF14100B),
+        fillColor: const Color(0xFF18181F),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
@@ -245,7 +245,7 @@ class _CommunityRoleRequirementsPageState
                       n,
                       style: const TextStyle(color: _tan, fontSize: 13),
                     ),
-                    backgroundColor: const Color(0xFF14100B),
+                    backgroundColor: const Color(0xFF18181F),
                     side: BorderSide(color: _tan.withValues(alpha: .5)),
                     deleteIconColor: Colors.white54,
                     onDeleted: _busy ? null : () => _remove(n),

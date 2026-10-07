@@ -154,7 +154,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with AiLauncher
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         body: SafeArea(
           child: _isVideo ? _buildVideoBody() : _buildVoiceBody(),
         ),
@@ -198,13 +198,13 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with AiLauncher
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               CallActionButton(
-                color: Colors.red,
+                color: Color(0xFFEF4444),
                 icon: Icons.call_end_rounded,
                 label: 'Decline',
                 onTap: _decline,
               ),
               CallActionButton(
-                color: Colors.green,
+                color: Color(0xFF10B981),
                 icon: Icons.call_rounded,
                 label: 'Accept',
                 onTap: _accept,
@@ -239,7 +239,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with AiLauncher
                   mirror: true,
                   objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                 )
-              : Container(color: const Color(0xFF1B120A)),
+              : Container(color: const Color(0xFF18181F)),
         ),
 
         if (!previewReady)
@@ -313,13 +313,13 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> with AiLauncher
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 CallActionButton(
-                  color: Colors.red,
+                  color: Color(0xFFEF4444),
                   icon: Icons.call_end_rounded,
                   label: 'Decline',
                   onTap: _decline,
                 ),
                 CallActionButton(
-                  color: Colors.green,
+                  color: Color(0xFF10B981),
                   icon: Icons.call_rounded,
                   label: 'Accept',
                   onTap: _accept,

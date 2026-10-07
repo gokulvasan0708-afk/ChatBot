@@ -118,7 +118,7 @@ class _ReportCard extends StatelessWidget {
     if (target.isEmpty) return;
     final choice = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       builder: (_) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Padding(padding: EdgeInsets.all(18), child: Text('Mute member', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))),
@@ -145,7 +145,7 @@ class _ReportCard extends StatelessWidget {
     return showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         title: Text(title, style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
@@ -165,7 +165,7 @@ class _ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = _status();
     return Card(
-      color: const Color(0xFF1B120A),
+      color: const Color(0xFF18181F),
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(

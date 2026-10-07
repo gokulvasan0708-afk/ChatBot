@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 // Small, dependency-free building blocks reused by every new
 // Community screen (Feed, Polls, Resources, Activities, Search,
 // Contributions). Uses exactly the same palette the existing
-// Community pages already hard-code (tan / glow / dark-brown cards)
+// Community pages use (purple / lavender / dark cards)
 // so the new screens look native next to Announcements, Clubs,
 // Events and Groups.
 // ================================================================
@@ -15,12 +15,38 @@ import 'package:flutter/material.dart';
 class CommunityColors {
   CommunityColors._();
 
-  static const Color tan = Color(0xFFD2B48C);
-  static const Color glow = Color(0xFFFFE9B0);
-  static const Color card = Color(0xFF1B120A);
-  static const Color avatarBg = Color(0xFF2A1B0E);
-  static const Color danger = Colors.redAccent;
-  static const Color success = Color(0xFF7BC67B);
+  static const Color tan = Color(0xFFA78BFA);
+  static const Color glow = Color(0xFFC4B5FD);
+  static const Color card = Color(0xFF18181F);
+  static const Color avatarBg = Color(0xFF20202A);
+  static const Color danger = Color(0xFFEF4444);
+  static const Color success = Color(0xFF10B981);
+}
+
+/// Club category colours from the Nexus UI colour system.
+/// Technology cyan, Cultural gold, Sports orange, Arts pink,
+/// Entrepreneurship green, Academic violet, anything else purple.
+Color clubCategoryColor(String category) {
+  final c = category.toLowerCase();
+  if (c.contains('tech') || c.contains('coding') || c.contains('robot')) {
+    return const Color(0xFF22D3EE);
+  }
+  if (c.contains('cultur') || c.contains('music') || c.contains('dance')) {
+    return const Color(0xFFF5B942);
+  }
+  if (c.contains('sport') || c.contains('game') || c.contains('fitness')) {
+    return const Color(0xFFF97316);
+  }
+  if (c.contains('art') || c.contains('design') || c.contains('photo')) {
+    return const Color(0xFFEC4899);
+  }
+  if (c.contains('entrepren') || c.contains('business') || c.contains('startup')) {
+    return const Color(0xFF10B981);
+  }
+  if (c.contains('academ') || c.contains('study') || c.contains('science')) {
+    return const Color(0xFF8B5CF6);
+  }
+  return const Color(0xFF7C3AED);
 }
 
 // ----------------------------------------------------------------
@@ -219,7 +245,7 @@ class CommunityOfflineBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-      color: const Color(0xFF3A2A12),
+      color: const Color(0xFF2A2438),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -308,7 +334,7 @@ InputDecoration communityInputDecoration(String hint, {String? label}) {
     hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
     labelStyle: const TextStyle(color: CommunityColors.tan),
     filled: true,
-    fillColor: const Color(0xFF120C07),
+    fillColor: const Color(0xFF18181F),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),

@@ -71,7 +71,7 @@ class _CommunityClubsPageState extends State<CommunityClubsPage> {
                   IconButton(
                     onPressed: _create,
                     icon: const Icon(Icons.add_circle_rounded,
-                        color: Color(0xFFD2B48C), size: 26),
+                        color: Color(0xFFA78BFA), size: 26),
                   ),
                 ],
               ),
@@ -83,7 +83,7 @@ class _CommunityClubsPageState extends State<CommunityClubsPage> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
-                          color: Color(0xFFD2B48C)),
+                          color: Color(0xFFA78BFA)),
                     );
                   }
                   if (snapshot.hasError) {
@@ -188,7 +188,7 @@ class _ClubCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -205,7 +205,7 @@ class _ClubCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFD2B48C).withValues(alpha: .3),
+                color: const Color(0xFFA78BFA).withValues(alpha: .3),
               ),
             ),
             child: Row(
@@ -215,21 +215,21 @@ class _ClubCard extends StatelessWidget {
                   height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF2A1B0E),
+                    color: const Color(0xFF20202A),
                     border: Border.all(
-                      color: const Color(0xFFD2B48C).withValues(alpha: .6),
+                      color: const Color(0xFFA78BFA).withValues(alpha: .6),
                     ),
                   ),
                   child: logoUrl.isEmpty
                       ? const Icon(ClubIcons.club,
-                          color: Color(0xFFD2B48C), size: 22)
+                          color: Color(0xFFA78BFA), size: 22)
                       : ClipOval(
                           child: Image.network(
                             logoUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (_, _, _) => const Icon(
                                 ClubIcons.club,
-                                color: Color(0xFFD2B48C),
+                                color: Color(0xFFA78BFA),
                                 size: 22),
                           ),
                         ),
@@ -264,13 +264,13 @@ class _ClubCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B4513).withValues(alpha: .45),
+                            color: const Color(0xFF7C3AED).withValues(alpha: .45),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             tag,
                             style: const TextStyle(
-                              color: Color(0xFFFFE9B0),
+                              color: Color(0xFFC4B5FD),
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -313,7 +313,7 @@ class _ClubsMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 14),
             Text(
               title,
@@ -334,14 +334,14 @@ class _ClubsMessage extends StatelessWidget {
               OutlinedButton(
                 onPressed: onAction,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD2B48C)),
+                  side: const BorderSide(color: Color(0xFFA78BFA)),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 child: Text(actionLabel!,
-                    style: const TextStyle(color: Color(0xFFFFE9B0))),
+                    style: const TextStyle(color: Color(0xFFC4B5FD))),
               ),
             ],
           ],

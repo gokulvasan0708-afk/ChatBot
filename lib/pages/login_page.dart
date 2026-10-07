@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_profile_service.dart';
 import '../services/account_switch_service.dart';
 import 'nexus_logo.dart';
+import 'app_theme.dart';
 
 import '../widgets/top_alert.dart';
 class LoginPage extends StatefulWidget {
@@ -444,59 +445,84 @@ class _LoginPageState extends State<LoginPage>
   // ==========================================================
 
   Widget _buildLogo() {
-    // Same brand mark, same gradient, same tagline as the Splash
-    // Screen — only the sizing is tuned to sit above the login card.
+    // Same brand mark as the Splash Screen — only the sizing is tuned
+    // to sit above the login card.
     return const NexusLogo(
-      nSize: 96,
-      wordSize: 36,
+      nSize: 92,
+      wordSize: 34,
       letterSpacing: 9,
       taglineSize: 11.5,
     );
   }
 
+  // ----------------------------------------------------------
+  // Shared input-field shell: #18181F fill, #343440 border,
+  // #7C3AED border while focused (dark mode); white / #DDD7E8 in
+  // light mode.
+  // ----------------------------------------------------------
+  Widget _fieldShell({
+    required FocusNode focusNode,
+    required Widget child,
+  }) {
+    final c = AppColors.of(context);
+
+    return ListenableBuilder(
+      listenable: focusNode,
+      builder: (context, _) {
+        final focused = focusNode.hasFocus;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 60,
+          decoration: BoxDecoration(
+            color: c.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: focused ? AppColors.primary : c.inputBorder,
+              width: focused ? 1.6 : 1,
+            ),
+            boxShadow: focused
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.28),
+                      blurRadius: 14,
+                    ),
+                  ]
+                : const [],
+          ),
+          child: child,
+        );
+      },
+    );
+  }
+
   Widget _buildEmailField() {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: const Color(0xFF130C07)
-            .withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF9C7B54)
-              .withValues(alpha: 0.55),
-          width: 1,
-        ),
-      ),
+    final c = AppColors.of(context);
+
+    return _fieldShell(
+      focusNode: emailFocusNode,
       child: TextField(
         controller: emailController,
         focusNode: emailFocusNode,
         keyboardType: TextInputType.emailAddress,
         textInputAction: TextInputAction.next,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
-        cursorColor: const Color(0xFFD2B48C),
+        style: TextStyle(color: c.textPrimary, fontSize: 16),
+        cursorColor: AppColors.primaryLight,
         onSubmitted: (_) {
-          FocusScope.of(context).requestFocus(
-            passwordFocusNode,
-          );
+          FocusScope.of(context).requestFocus(passwordFocusNode);
         },
-        decoration: const InputDecoration(
-          hintText: 'Email Address',
-          hintStyle: TextStyle(
-            color: Color(0xFFC2A883),
-            fontSize: 16,
-          ),
+        decoration: InputDecoration(
+          hintText: 'Email address',
+          hintStyle: TextStyle(color: c.textMuted, fontSize: 16),
           prefixIcon: Icon(
             Icons.mail_outline_rounded,
-            color: Color(0xFFF3E6CE),
-            size: 26,
+            color: c.icon,
+            size: 24,
           ),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
+          contentPadding: const EdgeInsets.symmetric(
             horizontal: 18,
-            vertical: 20,
+            vertical: 18,
           ),
         ),
       ),
@@ -504,28 +530,17 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildPasswordField() {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        color: const Color(0xFF130C07)
-            .withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF9C7B54)
-              .withValues(alpha: 0.55),
-          width: 1,
-        ),
-      ),
+    final c = AppColors.of(context);
+
+    return _fieldShell(
+      focusNode: passwordFocusNode,
       child: TextField(
         controller: passwordController,
         focusNode: passwordFocusNode,
         obscureText: obscurePassword,
         textInputAction: TextInputAction.done,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
-        cursorColor: const Color(0xFFD2B48C),
+        style: TextStyle(color: c.textPrimary, fontSize: 16),
+        cursorColor: AppColors.primaryLight,
         onSubmitted: (_) {
           if (!loading) {
             login();
@@ -533,14 +548,11 @@ class _LoginPageState extends State<LoginPage>
         },
         decoration: InputDecoration(
           hintText: 'Password',
-          hintStyle: const TextStyle(
-            color: Color(0xFFC2A883),
-            fontSize: 16,
-          ),
-          prefixIcon: const Icon(
+          hintStyle: TextStyle(color: c.textMuted, fontSize: 16),
+          prefixIcon: Icon(
             Icons.lock_outline_rounded,
-            color: Color(0xFFF3E6CE),
-            size: 26,
+            color: c.icon,
+            size: 24,
           ),
           suffixIcon: IconButton(
             onPressed: () {
@@ -552,16 +564,71 @@ class _LoginPageState extends State<LoginPage>
               obscurePassword
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: const Color(0xFFE8D4B0),
+              color: c.textMuted,
             ),
-            tooltip: obscurePassword
-                ? 'Show password'
-                : 'Hide password',
+            tooltip: obscurePassword ? 'Show password' : 'Hide password',
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 18,
-            vertical: 20,
+            vertical: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ----------------------------------------------------------
+  // FORGOT PASSWORD  (sends a Firebase password-reset email to the
+  // address typed in the email field)
+  // ----------------------------------------------------------
+  Future<void> _forgotPassword() async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      showTopAlert(context, 'Enter your email address first');
+      emailFocusNode.requestFocus();
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      if (!mounted) return;
+
+      showTopAlert(context, 'Password reset link sent to $email');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      showTopAlert(
+        context,
+        e.code == 'invalid-email'
+            ? 'Invalid email address'
+            : (e.message ?? 'Could not send reset email'),
+        isError: true,
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      showTopAlert(context, 'Could not send reset email', isError: true);
+    }
+  }
+
+  Widget _buildForgotPassword() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _forgotPassword,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            'Forgot password?',
+            style: TextStyle(
+              color: AppColors.primaryLight,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -571,24 +638,16 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildLoginButton() {
     return Container(
       width: double.infinity,
-      height: 62,
+      height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color(0xFFC9A063),
-            Color(0xFFB8874A),
-            Color(0xFF8B4513),
-          ],
-        ),
+        gradient: AppColors.primaryGradient,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD2B48C)
-                .withValues(alpha: 0.35),
+            color: AppColors.primary.withValues(alpha: 0.42),
             blurRadius: 20,
             spreadRadius: 1,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -600,25 +659,26 @@ class _LoginPageState extends State<LoginPage>
           shadowColor: Colors.transparent,
           foregroundColor: Colors.white,
           disabledForegroundColor: Colors.white,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
         ),
         child: loading
             ? const SizedBox(
-                width: 25,
-                height: 25,
+                width: 24,
+                height: 24,
                 child: CircularProgressIndicator(
                   color: Colors.white,
                   strokeWidth: 2.5,
                 ),
               )
             : const Text(
-                'LOGIN',
+                'Login',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
+                  letterSpacing: 0.8,
                 ),
               ),
       ),
@@ -626,17 +686,20 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildGoogleButton() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox(
       width: double.infinity,
-      height: 60,
+      height: 56,
       child: OutlinedButton(
-        onPressed:
-            googleLoading ? null : loginWithGoogle,
+        onPressed: googleLoading ? null : loginWithGoogle,
         style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFF0D0805),
-          foregroundColor: Colors.white,
-          side: const BorderSide(
-            color: Color(0xFFD2B48C),
+          // Google button: #FFFFFF in both modes (as per the UI spec).
+          backgroundColor: Colors.white,
+          disabledBackgroundColor: Colors.white.withValues(alpha: 0.7),
+          foregroundColor: const Color(0xFF17141F),
+          side: BorderSide(
+            color: isDark ? Colors.white : AppColors.lightCardBorder,
             width: 1,
           ),
           shape: RoundedRectangleBorder(
@@ -648,13 +711,12 @@ class _LoginPageState extends State<LoginPage>
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: Color(0xFFD2B48C),
+                  color: AppColors.primary,
                   strokeWidth: 2,
                 ),
               )
             : Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Google style G
                   ShaderMask(
@@ -671,20 +733,20 @@ class _LoginPageState extends State<LoginPage>
                     child: const Text(
                       'G',
                       style: TextStyle(
-                        fontSize: 27,
+                        fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
                     ),
                   ),
 
-                  const SizedBox(width: 18),
+                  const SizedBox(width: 14),
 
                   const Text(
                     'Continue with Google',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                      color: Color(0xFF17141F),
+                      fontSize: 15.5,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -695,57 +757,44 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildDivider() {
+    final c = AppColors.of(context);
+
     return Row(
       children: [
-        Expanded(
-          child: Container(
-            height: 1,
-            color: const Color(0xFF8A6A45)
-                .withValues(alpha: 0.55),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 18,
-          ),
+        Expanded(child: Container(height: 1, color: c.cardBorder)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'OR',
             style: TextStyle(
-              color: Color(0xFFE0CFAE),
-              fontSize: 13,
+              color: c.textMuted,
+              fontSize: 12.5,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
             ),
           ),
         ),
-        Expanded(
-          child: Container(
-            height: 1,
-            color: const Color(0xFF8A6A45)
-                .withValues(alpha: 0.55),
-          ),
-        ),
+        Expanded(child: Container(height: 1, color: c.cardBorder)),
       ],
     );
   }
 
   Widget _buildCreateAccount() {
+    final c = AppColors.of(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           "Don't have an account? ",
-          style: TextStyle(
-            color: Color(0xFFD8C6A5),
-            fontSize: 14,
-          ),
+          style: TextStyle(color: c.textSecondary, fontSize: 14),
         ),
         GestureDetector(
           onTap: createGoogleAccount,
           child: const Text(
             'Sign Up',
             style: TextStyle(
-              color: Color(0xFFD2B48C),
+              color: AppColors.primaryLight,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
@@ -761,8 +810,11 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF060402),
+      backgroundColor: c.bgMid,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
@@ -772,20 +824,12 @@ class _LoginPageState extends State<LoginPage>
 
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.2,
-                  colors: [
-                    Color(0xFF1D1208),
-                    Color(0xFF0A0704),
-                    Color(0xFF000000),
-                  ],
-                  stops: [
-                    0.0,
-                    0.55,
-                    1.0,
-                  ],
+                  center: const Alignment(0, -0.5),
+                  radius: 1.25,
+                  colors: [c.bgTop, c.bgMid, c.bgBottom],
+                  stops: const [0.0, 0.6, 1.0],
                 ),
               ),
             ),
@@ -798,54 +842,58 @@ class _LoginPageState extends State<LoginPage>
           Positioned.fill(
             child: FadeTransition(
               opacity: _starController,
-              child: const _LoginStarField(),
+              child: _LoginStarField(starColor: c.starColor),
             ),
           ),
 
           // ==================================================
-          // BLUE GLOW
+          // PURPLE GLOW (top-left)
           // ==================================================
 
           Positioned(
             top: -150,
             left: -100,
-            child: Container(
-              width: 330,
-              height: 330,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8B4513)
-                        .withValues(alpha: 0.12),
-                    blurRadius: 120,
-                    spreadRadius: 50,
-                  ),
-                ],
+            child: IgnorePointer(
+              child: Container(
+                width: 330,
+                height: 330,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary
+                          .withValues(alpha: isDark ? 0.24 : 0.14),
+                      blurRadius: 120,
+                      spreadRadius: 50,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
           // ==================================================
-          // PURPLE GLOW
+          // CYAN GLOW (bottom-right)
           // ==================================================
 
           Positioned(
             bottom: -100,
             right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8B4513)
-                        .withValues(alpha: 0.13),
-                    blurRadius: 120,
-                    spreadRadius: 40,
-                  ),
-                ],
+            child: IgnorePointer(
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cyanAccent
+                          .withValues(alpha: isDark ? 0.10 : 0.10),
+                      blurRadius: 120,
+                      spreadRadius: 40,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -866,9 +914,7 @@ class _LoginPageState extends State<LoginPage>
                     vertical: 28,
                   ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: 640,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: 640),
                     child: Column(
                       children: [
                         // ==================================================
@@ -885,32 +931,21 @@ class _LoginPageState extends State<LoginPage>
 
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(
-                            22,
-                            28,
-                            22,
-                            28,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(22, 28, 22, 24),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0A0704)
-                                .withValues(alpha: 0.91),
-                            borderRadius:
-                                BorderRadius.circular(28),
-                            border: Border.all(
-                              color: const Color(0xFFE0C29A)
-                                  .withValues(alpha: 0.72),
-                              width: 1.3,
-                            ),
+                            color: c.card.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(color: c.cardBorder, width: 1),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD2B48C)
-                                    .withValues(alpha: 0.18),
+                                color: AppColors.primary
+                                    .withValues(alpha: isDark ? 0.14 : 0.10),
                                 blurRadius: 30,
                                 spreadRadius: 1,
                               ),
                               BoxShadow(
                                 color: Colors.black
-                                    .withValues(alpha: 0.6),
+                                    .withValues(alpha: isDark ? 0.5 : 0.06),
                                 blurRadius: 35,
                                 offset: const Offset(0, 18),
                               ),
@@ -922,29 +957,29 @@ class _LoginPageState extends State<LoginPage>
                               // WELCOME
                               // ==================================================
 
-                              const Text(
-                                'WELCOME BACK',
+                              Text(
+                                'Welcome back',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: c.textPrimary,
                                   fontSize: 25,
                                   fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.1,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
 
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
 
-                              const Text(
-                                'Connect to the next layer of intelligence.',
+                              Text(
+                                'Log in to connect with your college community.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Color(0xFFE3D2B0),
+                                  color: c.textSecondary,
                                   fontSize: 14,
                                 ),
                               ),
 
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 26),
 
                               // ==================================================
                               // EMAIL
@@ -960,7 +995,11 @@ class _LoginPageState extends State<LoginPage>
 
                               _buildPasswordField(),
 
-                              const SizedBox(height: 22),
+                              const SizedBox(height: 8),
+
+                              _buildForgotPassword(),
+
+                              const SizedBox(height: 14),
 
                               // ==================================================
                               // LOGIN
@@ -968,15 +1007,7 @@ class _LoginPageState extends State<LoginPage>
 
                               _buildLoginButton(),
 
-                              const SizedBox(height: 18),
-
-                              // ==================================================
-                              // GOOGLE
-                              // ==================================================
-
-                              _buildGoogleButton(),
-
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 22),
 
                               // ==================================================
                               // OR
@@ -985,6 +1016,14 @@ class _LoginPageState extends State<LoginPage>
                               _buildDivider(),
 
                               const SizedBox(height: 22),
+
+                              // ==================================================
+                              // GOOGLE
+                              // ==================================================
+
+                              _buildGoogleButton(),
+
+                              const SizedBox(height: 24),
 
                               // ==================================================
                               // SIGN UP
@@ -1002,25 +1041,23 @@ class _LoginPageState extends State<LoginPage>
                         // ==================================================
 
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
                               width: 5,
                               height: 5,
-                              decoration:
-                                  const BoxDecoration(
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Color(0xFFD2B48C),
+                                color: AppColors.primaryLight,
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'NEXUS AI',
+                            Text(
+                              'NEXUS  ·  MORE THAN JUST A COLLEGE APP',
                               style: TextStyle(
-                                color: Color(0xFFAB8A63),
+                                color: c.textMuted,
                                 fontSize: 10,
-                                letterSpacing: 2.5,
+                                letterSpacing: 2,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1028,10 +1065,9 @@ class _LoginPageState extends State<LoginPage>
                             Container(
                               width: 5,
                               height: 5,
-                              decoration:
-                                  const BoxDecoration(
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Color(0xFFD2B48C),
+                                color: AppColors.primaryLight,
                               ),
                             ),
                           ],
@@ -1095,7 +1131,9 @@ class _LoginStarSeed {
 }
 
 class _LoginStarField extends StatefulWidget {
-  const _LoginStarField();
+  final Color starColor;
+
+  const _LoginStarField({required this.starColor});
 
   @override
   State<_LoginStarField> createState() => _LoginStarFieldState();
@@ -1156,6 +1194,7 @@ class _LoginStarFieldState extends State<_LoginStarField>
             painter: _LoginStarFieldPainter(
               t: _controller.value,
               stars: _stars,
+              starColor: widget.starColor,
             ),
           );
         },
@@ -1167,10 +1206,12 @@ class _LoginStarFieldState extends State<_LoginStarField>
 class _LoginStarFieldPainter extends CustomPainter {
   final double t;
   final List<_LoginStarSeed> stars;
+  final Color starColor;
 
   _LoginStarFieldPainter({
     required this.t,
     required this.stars,
+    required this.starColor,
   });
 
   @override
@@ -1190,7 +1231,7 @@ class _LoginStarFieldPainter extends CustomPainter {
           (star.minAlpha + (star.maxAlpha - star.minAlpha) * fadeUnit)
               .clamp(0.0, 1.0);
 
-      final color = star.isGold ? const Color(0xFFFFE9B0) : Colors.white;
+      final color = star.isGold ? AppColors.primaryLight : starColor;
 
       final point = Offset(dx, dy);
 
@@ -1209,6 +1250,6 @@ class _LoginStarFieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LoginStarFieldPainter oldDelegate) {
-    return oldDelegate.t != t;
+    return oldDelegate.t != t || oldDelegate.starColor != starColor;
   }
 }

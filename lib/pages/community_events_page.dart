@@ -46,7 +46,7 @@ class CommunityEventsPage extends StatelessWidget {
                       builder: (_) => CreateEventDialog(communityDocId: communityDocId),
                     ),
                     icon: const Icon(Icons.add_circle_rounded,
-                        color: Color(0xFFD2B48C), size: 26),
+                        color: Color(0xFFA78BFA), size: 26),
                   ),
                 ],
               ),
@@ -57,7 +57,7 @@ class CommunityEventsPage extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                        child: CircularProgressIndicator(color: Color(0xFFD2B48C)));
+                        child: CircularProgressIndicator(color: Color(0xFFA78BFA)));
                   }
                   if (snapshot.hasError) {
                     return const _StateMessage(
@@ -142,7 +142,7 @@ class _EventCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -153,7 +153,7 @@ class _EventCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .3)),
+              border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .3)),
             ),
             child: Row(
               children: [
@@ -162,11 +162,11 @@ class _EventCard extends StatelessWidget {
                   height: 52,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFF2A1B0E),
-                    border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .6)),
+                    color: const Color(0xFF20202A),
+                    border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .6)),
                   ),
                   child: coverUrl.isEmpty
-                      ? const Icon(Icons.event_rounded, color: Color(0xFFD2B48C), size: 22)
+                      ? const Icon(Icons.event_rounded, color: Color(0xFFA78BFA), size: 22)
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.network(coverUrl, fit: BoxFit.cover),
@@ -259,7 +259,7 @@ class _StatusPill extends StatelessWidget {
         label = 'Cancelled';
         break;
       default:
-        color = const Color(0xFFD2B48C);
+        color = const Color(0xFF10B981);
         label = 'Upcoming';
     }
     return Container(
@@ -301,7 +301,7 @@ class _StateMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 14),
             Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
@@ -314,11 +314,11 @@ class _StateMessage extends StatelessWidget {
               OutlinedButton(
                 onPressed: onAction,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD2B48C)),
+                  side: const BorderSide(color: Color(0xFFA78BFA)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: Text(actionLabel!, style: const TextStyle(color: Color(0xFFFFE9B0))),
+                child: Text(actionLabel!, style: const TextStyle(color: Color(0xFFC4B5FD))),
               ),
             ],
           ],

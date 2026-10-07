@@ -22,7 +22,7 @@ class ClubAnnouncementsPage extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       builder: (sheet) => Padding(
         padding: EdgeInsets.fromLTRB(18, 18, 18, MediaQuery.of(sheet).viewInsets.bottom + 18),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -58,7 +58,7 @@ class ClubAnnouncementsPage extends StatelessWidget {
 
   static InputDecoration _decoration(String hint) => InputDecoration(
     hintText: hint, hintStyle: const TextStyle(color: Colors.white38),
-    filled: true, fillColor: const Color(0xFF261B11),
+    filled: true, fillColor: const Color(0xFF20202A),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
   );
 
@@ -91,7 +91,7 @@ class ClubAnnouncementsPage extends StatelessWidget {
                 final unread = !readBy.contains(uid);
                 final ts = data['createdAt'] as Timestamp?;
                 return Card(
-                  color: const Color(0xFF1B120A), margin: const EdgeInsets.only(bottom: 10),
+                  color: const Color(0xFF18181F), margin: const EdgeInsets.only(bottom: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: BorderSide(color: unread ? AppColors.tan.withValues(alpha: .5) : Colors.white10)),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
@@ -102,7 +102,7 @@ class ClubAnnouncementsPage extends StatelessWidget {
                         if (data['isPinned'] == true) const SizedBox(width: 6),
                         Expanded(child: Text(data['title']?.toString() ?? '', style: TextStyle(color: Colors.white, fontWeight: unread ? FontWeight.w800 : FontWeight.w600, fontSize: 16))),
                         if (unread) Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.tan, shape: BoxShape.circle)),
-                        if (canModerate) PopupMenuButton<String>(color: const Color(0xFF2A1C10), onSelected: (v) async {
+                        if (canModerate) PopupMenuButton<String>(color: const Color(0xFF20202A), onSelected: (v) async {
                           if (v == 'pin') await ClubAnnouncementService.setPinned(clubId: clubDocId, announcementId: doc.id, pinned: data['isPinned'] != true);
                           if (v == 'delete') await ClubAnnouncementService.delete(clubId: clubDocId, announcementId: doc.id);
                         }, itemBuilder: (_) => [

@@ -70,7 +70,7 @@ class CommunityAboutSection extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFFD2B48C), size: 20),
+          Icon(icon, color: const Color(0xFFA78BFA), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -115,16 +115,16 @@ class CommunityAboutSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.open_in_new_rounded,
-                        color: Color(0xFFFFE9B0), size: 16),
+                        color: Color(0xFFC4B5FD), size: 16),
                     SizedBox(width: 6),
                     Text(
                       'Open location link',
                       style: TextStyle(
-                        color: Color(0xFFFFE9B0),
+                        color: Color(0xFFC4B5FD),
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
-                        decorationColor: Color(0xFFFFE9B0),
+                        decorationColor: Color(0xFFC4B5FD),
                       ),
                     ),
                   ],

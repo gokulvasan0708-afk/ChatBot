@@ -48,7 +48,7 @@ const List<String> kCommunityYears = [
   '4th Year',
 ];
 
-const Color _tan = Color(0xFFD2B48C);
+const Color _tan = Color(0xFFA78BFA);
 
 AppBar _bar(String title) => AppBar(
       backgroundColor: Colors.black,
@@ -97,7 +97,7 @@ class _NavTile extends StatelessWidget {
         width: 42,
         height: 42,
         decoration: BoxDecoration(
-          color: const Color(0xFF2A1B0E),
+          color: const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _tan.withValues(alpha: .4)),
         ),
@@ -138,7 +138,7 @@ class _PersonTile extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         radius: 22,
-        backgroundColor: const Color(0xFF2A1B0E),
+        backgroundColor: const Color(0xFF20202A),
         backgroundImage: hasImage ? NetworkImage(image) : null,
         // No photo -> first letter of the shown name (or role).
         child: hasImage
@@ -146,7 +146,7 @@ class _PersonTile extends StatelessWidget {
             : Text(
                 shown.isEmpty ? '?' : shown[0].toUpperCase(),
                 style: const TextStyle(
-                  color: Color(0xFFFFE0B2),
+                  color: Color(0xFFFDE68A),
                   fontWeight: FontWeight.bold,
                   fontSize: 19.8,
                 ),
@@ -206,7 +206,7 @@ class _CommunityRoleListPageState extends State<CommunityRoleListPage> {
               return Container(
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B4513).withValues(alpha: .25),
+                  color: const Color(0xFF7C3AED).withValues(alpha: .25),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: _tan.withValues(alpha: .5)),
                 ),
@@ -438,7 +438,7 @@ class CommunityYearStudentsPage extends StatelessWidget {
               return Container(
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B4513).withValues(alpha: .25),
+                  color: const Color(0xFF7C3AED).withValues(alpha: .25),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: _tan.withValues(alpha: .5)),
                 ),

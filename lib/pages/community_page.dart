@@ -235,10 +235,10 @@ class _HubsTabSwitcher extends StatelessWidget {
       // so three segments sit comfortably under the title.
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFD2B48C).withValues(alpha: .35),
+          color: const Color(0xFFA78BFA).withValues(alpha: .35),
         ),
       ),
       child: LayoutBuilder(
@@ -284,7 +284,7 @@ class _HubsTabSwitcher extends StatelessWidget {
                             curve: Curves.easeOutBack,
                             style: TextStyle(
                               color: selected
-                                  ? const Color(0xFF1B120A)
+                                  ? const Color(0xFF18181F)
                                   : Colors.white70,
                               fontWeight: FontWeight.w700,
                               fontSize: 12.5,
@@ -474,7 +474,7 @@ class _CommunityTabPageState extends State<_CommunityTabPage> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+            child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
           );
         }
 
@@ -675,7 +675,7 @@ class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
     final hasCover = coverUrl.startsWith('http');
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120C07),
+      backgroundColor: const Color(0xFF18181F),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -712,13 +712,13 @@ class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Color(0xFF1B120A),
+                                color: Color(0xFF18181F),
                               ),
                             )
                           : const Text(
                               'Join',
                               style: TextStyle(
-                                color: Color(0xFF1B120A),
+                                color: Color(0xFF18181F),
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14,
                               ),
@@ -754,7 +754,7 @@ class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.black.withValues(alpha: .45),
-                          const Color(0xFF120C07),
+                          const Color(0xFF18181F),
                         ],
                       ),
                     ),
@@ -772,9 +772,9 @@ class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
                     height: 104,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF2A1B0E),
+                      color: const Color(0xFF20202A),
                       border: Border.all(
-                          color: const Color(0xFFD2B48C), width: 2),
+                          color: const Color(0xFFA78BFA), width: 2),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: logoUrl.startsWith('http')
@@ -783,11 +783,11 @@ class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
                             fit: BoxFit.cover,
                             errorBuilder: (_, _, _) => const Icon(
                                 Icons.public_rounded,
-                                color: Color(0xFFD2B48C),
+                                color: Color(0xFFA78BFA),
                                 size: 40),
                           )
                         : const Icon(Icons.public_rounded,
-                            color: Color(0xFFD2B48C), size: 40),
+                            color: Color(0xFFA78BFA), size: 40),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -804,7 +804,7 @@ class _CommunityPreviewPageState extends State<_CommunityPreviewPage> {
                     Text(
                       communityId,
                       style: const TextStyle(
-                        color: Color(0xFFFFE9B0),
+                        color: Color(0xFFC4B5FD),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -877,10 +877,10 @@ class _CommunitySearchField extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFD2B48C).withValues(alpha: .35),
+          color: const Color(0xFFA78BFA).withValues(alpha: .35),
         ),
       ),
       child: Row(
@@ -946,7 +946,7 @@ class _AddCommunityButton extends StatelessWidget {
             child: const SizedBox(
               width: 44,
               height: 44,
-              child: Icon(Icons.add_rounded, color: Color(0xFF1B120A), size: 24),
+              child: Icon(Icons.add_rounded, color: Color(0xFF18181F), size: 24),
             ),
           ),
         ),
@@ -996,7 +996,7 @@ class _CommunitySuggestionTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -1006,14 +1006,14 @@ class _CommunitySuggestionTile extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFD2B48C).withValues(alpha: .5),
+                color: const Color(0xFFA78BFA).withValues(alpha: .5),
               ),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: const Color(0xFF2A1B0E),
+                  backgroundColor: const Color(0xFF20202A),
                   backgroundImage:
                       logoUrl.startsWith('http') ? NetworkImage(logoUrl) : null,
                   child: logoUrl.startsWith('http')
@@ -1056,14 +1056,14 @@ class _CommunitySuggestionTile extends StatelessWidget {
                 const Text(
                   'View',
                   style: TextStyle(
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
                 ),
                 const SizedBox(width: 4),
                 const Icon(Icons.arrow_forward_ios_rounded,
-                    color: Color(0xFFD2B48C), size: 13),
+                    color: Color(0xFFA78BFA), size: 13),
               ],
             ),
           ),
@@ -1097,7 +1097,7 @@ class _CommunityListCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
@@ -1107,7 +1107,7 @@ class _CommunityListCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFD2B48C).withValues(alpha: .3),
+                color: const Color(0xFFA78BFA).withValues(alpha: .3),
               ),
             ),
             child: Row(
@@ -1117,14 +1117,14 @@ class _CommunityListCard extends StatelessWidget {
                   height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF2A1B0E),
+                    color: const Color(0xFF20202A),
                     border: Border.all(
-                      color: const Color(0xFFD2B48C).withValues(alpha: .6),
+                      color: const Color(0xFFA78BFA).withValues(alpha: .6),
                     ),
                   ),
                   child: logoUrl.isEmpty
                       ? const Icon(Icons.public_rounded,
-                          color: Color(0xFFD2B48C), size: 22)
+                          color: Color(0xFFA78BFA), size: 22)
                       : ClipOval(
                           child: Image.network(logoUrl, fit: BoxFit.cover),
                         ),
@@ -1197,16 +1197,16 @@ class _ClubsPageState extends State<_ClubsPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFD2B48C),
+        backgroundColor: const Color(0xFFA78BFA),
         onPressed: () => _createClub(context),
-        child: const Icon(Icons.add_rounded, color: Color(0xFF1B120A)),
+        child: const Icon(Icons.add_rounded, color: Color(0xFF18181F)),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _clubsStream,
         builder: (context, clubsSnap) {
           if (clubsSnap.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+              child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
             );
           }
           if (clubsSnap.hasError) {
@@ -1272,7 +1272,7 @@ class _ClubListCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
@@ -1281,7 +1281,7 @@ class _ClubListCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .3)),
+              border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .3)),
             ),
             child: Row(
               children: [
@@ -1290,11 +1290,11 @@ class _ClubListCard extends StatelessWidget {
                   height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF2A1B0E),
-                    border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .6)),
+                    color: const Color(0xFF20202A),
+                    border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .6)),
                   ),
                   child: logoUrl.isEmpty
-                      ? const Icon(ClubIcons.club, color: Color(0xFFD2B48C), size: 22)
+                      ? const Icon(ClubIcons.club, color: Color(0xFFA78BFA), size: 22)
                       : ClipOval(child: Image.network(logoUrl, fit: BoxFit.cover)),
                 ),
                 const SizedBox(width: 14),
@@ -1349,7 +1349,7 @@ class _ClubsMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 14),
             Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
@@ -1362,11 +1362,11 @@ class _ClubsMessage extends StatelessWidget {
               OutlinedButton(
                 onPressed: onAction,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD2B48C)),
+                  side: const BorderSide(color: Color(0xFFA78BFA)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: Text(actionLabel!, style: const TextStyle(color: Color(0xFFFFE9B0))),
+                child: Text(actionLabel!, style: const TextStyle(color: Color(0xFFC4B5FD))),
               ),
             ],
           ],
@@ -1419,12 +1419,12 @@ class _CommunityEmptyState extends StatelessWidget {
               height: 88,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF8B4513).withValues(alpha: .22),
+                color: const Color(0xFF7C3AED).withValues(alpha: .22),
                 border: Border.all(
-                  color: const Color(0xFFD2B48C).withValues(alpha: .45),
+                  color: const Color(0xFFA78BFA).withValues(alpha: .45),
                 ),
               ),
-              child: Icon(icon, size: 40, color: const Color(0xFFFFE9B0)),
+              child: Icon(icon, size: 40, color: const Color(0xFFC4B5FD)),
             ),
             const SizedBox(height: 20),
             Text(
@@ -1466,7 +1466,7 @@ class _CommunityEmptyState extends StatelessWidget {
                         child: Text(
                           primaryLabel,
                           style: const TextStyle(
-                            color: Color(0xFF1B120A),
+                            color: Color(0xFF18181F),
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -1488,7 +1488,7 @@ class _CommunityEmptyState extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   side: const BorderSide(
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                     width: 1.2,
                   ),
                   shape: RoundedRectangleBorder(
@@ -1498,7 +1498,7 @@ class _CommunityEmptyState extends StatelessWidget {
                 child: Text(
                   secondaryLabel,
                   style: const TextStyle(
-                    color: Color(0xFFFFE9B0),
+                    color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),

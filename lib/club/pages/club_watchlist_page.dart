@@ -22,7 +22,7 @@ class _ClubWatchlistPageState extends State<ClubWatchlistPage> {
     final progress = TextEditingController();
     final id = TextEditingController();
     final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       title: const Text('Add to Watchlist', style: TextStyle(color: Colors.white)),
       content: SingleChildScrollView(child: Column(children: [
         _field(id, 'Content ID'), _field(title, 'Title'), _field(thumb, 'Thumbnail URL'), _field(progress, 'Progress (optional)'),
@@ -56,17 +56,17 @@ class _ClubWatchlistPageState extends State<ClubWatchlistPage> {
         if (docs.isEmpty) return const Center(child: Text('No saved content', style: TextStyle(color: Colors.white54)));
         return ListView.builder(padding: const EdgeInsets.fromLTRB(16, 0, 16, 20), itemCount: docs.length, itemBuilder: (_, i) {
           final d = docs[i]; final x = d.data();
-          return Container(margin: const EdgeInsets.only(bottom: 10), decoration: BoxDecoration(color: const Color(0xFF1B120A), borderRadius: BorderRadius.circular(16)), child: ListTile(
+          return Container(margin: const EdgeInsets.only(bottom: 10), decoration: BoxDecoration(color: const Color(0xFF18181F), borderRadius: BorderRadius.circular(16)), child: ListTile(
             leading: ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 72, height: 54, child: _thumb(x['thumbnailUrl']?.toString() ?? ''))),
             title: Text(x['title']?.toString() ?? 'Untitled', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             subtitle: Text('${x['progress']?.toString().isNotEmpty == true ? x['progress'] : 'No progress'} • ${x['status'] ?? 'Saved'}', style: const TextStyle(color: Colors.white54)),
-            trailing: PopupMenuButton<String>(color: const Color(0xFF1B120A), onSelected: (v) async { if (v == 'remove') await ClubWatchlistService.remove(clubId: widget.clubDocId, uid: uid, itemId: d.id); if (v == 'done') await ClubWatchlistService.update(clubId: widget.clubDocId, uid: uid, itemId: d.id, status: 'Completed'); }, itemBuilder: (_) => const [PopupMenuItem(value:'done', child: Text('Mark completed', style: TextStyle(color: Colors.white))), PopupMenuItem(value:'remove', child: Text('Remove', style: TextStyle(color: Colors.redAccent)))]),
+            trailing: PopupMenuButton<String>(color: const Color(0xFF18181F), onSelected: (v) async { if (v == 'remove') await ClubWatchlistService.remove(clubId: widget.clubDocId, uid: uid, itemId: d.id); if (v == 'done') await ClubWatchlistService.update(clubId: widget.clubDocId, uid: uid, itemId: d.id, status: 'Completed'); }, itemBuilder: (_) => const [PopupMenuItem(value:'done', child: Text('Mark completed', style: TextStyle(color: Colors.white))), PopupMenuItem(value:'remove', child: Text('Remove', style: TextStyle(color: Colors.redAccent)))]),
           ));
         });
       }))
     ]);
   }
-  InputDecoration _decoration(String hint, IconData icon) => InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white38), prefixIcon: Icon(icon, color: AppColors.tan), filled: true, fillColor: const Color(0xFF1B120A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none));
-  Widget _field(TextEditingController c, String label) => Padding(padding: const EdgeInsets.only(bottom: 10), child: TextField(controller:c, style:const TextStyle(color:Colors.white), decoration: InputDecoration(labelText:label,labelStyle:const TextStyle(color:Colors.white54), filled:true, fillColor:const Color(0xFF24180D), border:OutlineInputBorder(borderRadius:BorderRadius.all(Radius.circular(12))))));
-  Widget _thumb(String url) => url.isEmpty ? const ColoredBox(color: Color(0xFF2A1D12), child: Icon(Icons.movie_rounded, color: Colors.white38)) : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF2A1D12), child: Icon(Icons.broken_image_rounded, color: Colors.white38)));
+  InputDecoration _decoration(String hint, IconData icon) => InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white38), prefixIcon: Icon(icon, color: AppColors.tan), filled: true, fillColor: const Color(0xFF18181F), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none));
+  Widget _field(TextEditingController c, String label) => Padding(padding: const EdgeInsets.only(bottom: 10), child: TextField(controller:c, style:const TextStyle(color:Colors.white), decoration: InputDecoration(labelText:label,labelStyle:const TextStyle(color:Colors.white54), filled:true, fillColor:const Color(0xFF20202A), border:OutlineInputBorder(borderRadius:BorderRadius.all(Radius.circular(12))))));
+  Widget _thumb(String url) => url.isEmpty ? const ColoredBox(color: Color(0xFF20202A), child: Icon(Icons.movie_rounded, color: Colors.white38)) : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF20202A), child: Icon(Icons.broken_image_rounded, color: Colors.white38)));
 }

@@ -174,7 +174,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> with AiLauncher
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         body: SafeArea(
           child: _isVideo ? _buildVideoBody() : _buildVoiceBody(),
         ),
@@ -218,7 +218,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> with AiLauncher
           const Spacer(),
           Center(
             child: CallActionButton(
-              color: Colors.red,
+              color: Color(0xFFEF4444),
               icon: Icons.call_end_rounded,
               label: 'Cancel',
               onTap: _cancel,
@@ -253,7 +253,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> with AiLauncher
                   mirror: true,
                   objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                 )
-              : Container(color: const Color(0xFF1B120A)),
+              : Container(color: const Color(0xFF18181F)),
         ),
 
         if (!previewReady)
@@ -334,7 +334,7 @@ class _OutgoingCallScreenState extends State<OutgoingCallScreen> with AiLauncher
             ),
             child: Center(
               child: CallActionButton(
-                color: Colors.red,
+                color: Color(0xFFEF4444),
                 icon: Icons.call_end_rounded,
                 label: 'Cancel',
                 onTap: _cancel,

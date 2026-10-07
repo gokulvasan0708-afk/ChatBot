@@ -48,7 +48,7 @@ Future<Map<String, dynamic>?> showJoinCommunitySheet(
 }) async {
   return showModalBottomSheet<Map<String, dynamic>>(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
@@ -352,7 +352,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocal) => AlertDialog(
-          backgroundColor: const Color(0xFF1B120A),
+          backgroundColor: const Color(0xFF18181F),
           title: const Text('Password required',
               style: TextStyle(color: Colors.white)),
           content: Column(
@@ -381,7 +381,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                   hintText: 'Password',
                   hintStyle: const TextStyle(color: Colors.white38),
                   filled: true,
-                  fillColor: const Color(0xFF120C07),
+                  fillColor: const Color(0xFF18181F),
                   suffixIcon: IconButton(
                     onPressed: () => setLocal(() => hide = !hide),
                     icon: Icon(
@@ -594,7 +594,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
-        fillColor: const Color(0xFF2A1B0E),
+        fillColor: const Color(0xFF20202A),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
@@ -612,14 +612,14 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A1B0E),
+        color: const Color(0xFF20202A),
         borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          dropdownColor: const Color(0xFF2A1B0E),
+          dropdownColor: const Color(0xFF20202A),
           iconEnabledColor: Colors.white54,
           hint: Text(hint, style: const TextStyle(color: Colors.white38)),
           style: const TextStyle(color: Colors.white),
@@ -653,13 +653,13 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.2,
-                        color: Color(0xFF1B120A),
+                        color: Color(0xFF18181F),
                       ),
                     )
                   : Text(
                       label,
                       style: const TextStyle(
-                        color: Color(0xFF1B120A),
+                        color: Color(0xFF18181F),
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -681,7 +681,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: const Color(0xFF2A1B0E),
+        color: const Color(0xFF20202A),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -692,7 +692,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: const Color(0xFF1B120A),
+                  backgroundColor: const Color(0xFF18181F),
                   backgroundImage: hasLogo ? NetworkImage(logo) : null,
                   child: hasLogo
                       ? null
@@ -731,14 +731,14 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                   const Text(
                     'View',
                     style: TextStyle(
-                      color: Color(0xFFD2B48C),
+                      color: Color(0xFFA78BFA),
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.arrow_forward_ios_rounded,
-                      color: Color(0xFFD2B48C), size: 13),
+                      color: Color(0xFFA78BFA), size: 13),
                 ] else
                   const Icon(Icons.chevron_right_rounded,
                       color: Colors.white38),
@@ -818,7 +818,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+                  child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
                 ),
               )
             else if (registering) ...[
@@ -835,7 +835,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                 const Text(
                   'Select your role to see what is required.',
                   style: TextStyle(
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -866,7 +866,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                     ? 'Required to join: $_requiredLabel'
                     : 'Select department and year to see what is required.',
                 style: const TextStyle(
-                  color: Color(0xFFD2B48C),
+                  color: Color(0xFFA78BFA),
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -889,7 +889,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                 Text(
                   'Required to join as $_role: your name',
                   style: const TextStyle(
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),

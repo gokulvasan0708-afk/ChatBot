@@ -494,7 +494,7 @@ class _NexusNotifyBarState extends State<_NexusNotifyBar>
           child: Text(
             'Name accepted \u2713',
             style: const TextStyle(
-              color: Color(0xFF4CD964), // green confirmation text
+              color: Color(0xFF10B981), // green confirmation text
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
@@ -1173,11 +1173,11 @@ class _UnseenAlertBarState extends State<_UnseenAlertBar>
                                   width: 9,
                                   height: 9,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFF4CD964),
+                                    color: Color(0xFF10B981),
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Color(0x664CD964),
+                                        color: Color(0x6610B981),
                                         blurRadius: 6,
                                         spreadRadius: 1,
                                       ),

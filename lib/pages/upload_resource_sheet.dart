@@ -240,7 +240,7 @@ class _UploadResourceSheetState extends State<UploadResourceSheet> {
                       onSelected:
                           _uploading ? null : (_) => setState(() => _category = c),
                       selectedColor: CommunityColors.tan,
-                      backgroundColor: const Color(0xFF120C07),
+                      backgroundColor: const Color(0xFF18181F),
                       labelStyle: TextStyle(
                         color: _category == c ? Colors.black : Colors.white70,
                         fontSize: 12.5,

@@ -21,7 +21,7 @@ class NotificationPage extends StatelessWidget {
     if (user == null) {
       return const Scaffold(
         backgroundColor:
-            Color(0xFF0A0704),
+            Color(0xFF0F0F14),
         body: Center(
           child: Text(
             'Please login again.',
@@ -67,7 +67,7 @@ class NotificationPage extends StatelessWidget {
               child:
                   CircularProgressIndicator(
                 color:
-                    Color(0xFFD2B48C),
+                    Color(0xFFA78BFA),
               ),
             );
           }
@@ -113,7 +113,42 @@ class NotificationPage extends StatelessWidget {
                     .where('receiverUid', isEqualTo: user.uid)
                     .snapshots(),
                 builder: (context, storedSnapshot) {
-                  final stored = (storedSnapshot.data?.docs ?? []).where((d) { final e = d.data()['expiresAt']; return e is! Timestamp || e.toDate().isAfter(DateTime.now()); }).toList();
+                  final storedDocs = storedSnapshot.data?.docs ?? [];
+                  final now = DateTime.now();
+
+                  // 7-day retention: anything past expiresAt is removed
+                  // from Firestore (and hidden right away).
+                  _purgeExpired(storedDocs, now);
+
+                  // Request notifications that are still pending are shown
+                  // by their live (actionable) card, so skip the saved copy
+                  // to avoid duplicates. Once the request is answered the
+                  // live card disappears and the saved copy stays for 7 days.
+                  final liveIds = <String>{
+                    ...requests.map((d) => d.id),
+                    ...groupRequests.map((d) => d.id),
+                  };
+                  final seenRequestIds = <String>{};
+                  final stored = storedDocs.where((d) {
+                    final data = d.data();
+                    final e = data['expiresAt'];
+                    if (e is Timestamp && !e.toDate().isAfter(now)) return false;
+                    final rid = (data['requestId'] ?? '').toString();
+                    if (rid.isNotEmpty && liveIds.contains(rid)) return false;
+                    return true;
+                  }).toList()
+                    ..sort((a, b) {
+                      final ta = a.data()['createdAt'];
+                      final tb = b.data()['createdAt'];
+                      final da = ta is Timestamp ? ta.toDate() : now;
+                      final db = tb is Timestamp ? tb.toDate() : now;
+                      return db.compareTo(da);
+                    });
+                  stored.removeWhere((d) {
+                    final rid = (d.data()['requestId'] ?? '').toString();
+                    if (rid.isEmpty) return false;
+                    return !seenRequestIds.add(rid);
+                  });
                   if (requests.isEmpty && groupRequests.isEmpty && stored.isEmpty) {
                     return const Center(child: Text('No notifications', style: TextStyle(color: Colors.white54, fontSize: 16)));
                   }
@@ -155,6 +190,25 @@ class NotificationPage extends StatelessWidget {
 }
 
 // ==========================================================
+// 7-DAY CLEANUP
+// Deletes this user's saved notifications once expiresAt has passed.
+// Uses the already-loaded snapshot (no extra query / index needed).
+// ==========================================================
+void _purgeExpired(
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  DateTime now,
+) {
+  for (final d in docs) {
+    final e = d.data()['expiresAt'];
+    if (e is Timestamp && !e.toDate().isAfter(now)) {
+      d.reference.delete().catchError((Object err) {
+        debugPrint('Expired notification delete failed: $err');
+      });
+    }
+  }
+}
+
+// ==========================================================
 // STORED RESULT NOTIFICATION
 // ==========================================================
 class _StoredNotificationCard extends StatelessWidget {
@@ -166,7 +220,11 @@ class _StoredNotificationCard extends StatelessWidget {
     final type = (data['type'] ?? '').toString();
     final senderName = (data['senderName'] ?? 'User').toString();
     final message = (data['message'] ?? '').toString();
-    final title = type == 'connection_accepted'
+    final title = type == 'connection_request'
+        ? 'Connection Request'
+        : type == 'group_request'
+            ? 'Group Request'
+            : type == 'connection_accepted'
         ? 'Connection Accepted'
         : type == 'connection_declined'
             ? 'Connection Declined'
@@ -178,17 +236,17 @@ class _StoredNotificationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .35)),
+        border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .35)),
       ),
       child: Row(children: [
-        const Icon(Icons.notifications_active_rounded, color: Color(0xFFD2B48C)),
+        const Icon(Icons.notifications_active_rounded, color: Color(0xFFA78BFA)),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(senderName, style: const TextStyle(color: Color(0xFFD2B48C), fontWeight: FontWeight.w600)),
+          Text(senderName, style: const TextStyle(color: Color(0xFFA78BFA), fontWeight: FontWeight.w600)),
           if (message.isNotEmpty) Text(message, style: const TextStyle(color: Colors.white70)),
         ])),
       ]),
@@ -795,7 +853,7 @@ class _ConnectionRequestCardState
                 BoxDecoration(
               color:
                   const Color(
-                0xFF1B120A,
+                0xFF18181F,
               ),
 
               borderRadius:
@@ -808,7 +866,7 @@ class _ConnectionRequestCardState
               child:
                   CircularProgressIndicator(
                 color:
-                    Color(0xFFD2B48C),
+                    Color(0xFFA78BFA),
               ),
             ),
           );
@@ -847,7 +905,7 @@ class _ConnectionRequestCardState
               BoxDecoration(
             color:
                 const Color(
-              0xFF1B120A,
+              0xFF18181F,
             ),
 
             borderRadius:
@@ -858,7 +916,7 @@ class _ConnectionRequestCardState
             border:
                 Border.all(
               color:
-                  const Color(0xFFD2B48C)
+                  const Color(0xFFA78BFA)
                       .withValues(
                 alpha: 0.30,
               ),
@@ -886,7 +944,7 @@ class _ConnectionRequestCardState
                   border:
                       Border.all(
                     color:
-                        const Color(0xFFD2B48C),
+                        const Color(0xFFA78BFA),
                   ),
                 ),
 
@@ -996,13 +1054,13 @@ class _ConnectionRequestCardState
                                 ElevatedButton
                                     .styleFrom(
                               backgroundColor:
-                                  const Color(0xFF8B4513),
+                                  const Color(0xFF7C3AED),
 
                               foregroundColor:
                                   Colors.white,
 
                               disabledBackgroundColor:
-                                  const Color(0xFF8B4513)
+                                  const Color(0xFF7C3AED)
                                       .withValues(
                                 alpha: 0.4,
                               ),
@@ -1560,10 +1618,10 @@ class _GroupRequestCardState extends State<_GroupRequestCard> {
           padding: const EdgeInsets.all(14),
 
           decoration: BoxDecoration(
-            color: const Color(0xFF1B120A),
+            color: const Color(0xFF18181F),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFFD2B48C).withValues(alpha: 0.30),
+              color: const Color(0xFFA78BFA).withValues(alpha: 0.30),
             ),
           ),
 
@@ -1579,7 +1637,7 @@ class _GroupRequestCardState extends State<_GroupRequestCard> {
                 height: 55,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFD2B48C)),
+                  border: Border.all(color: const Color(0xFFA78BFA)),
                 ),
                 child: ClipOval(
                   child: groupImage.isNotEmpty
@@ -1626,7 +1684,7 @@ class _GroupRequestCardState extends State<_GroupRequestCard> {
                       Text(
                         groupId,
                         style: const TextStyle(
-                          color: Color(0xFFD2B48C),
+                          color: Color(0xFFA78BFA),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1670,10 +1728,10 @@ class _GroupRequestCardState extends State<_GroupRequestCard> {
                                     _acceptRequest(context);
                                   },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8B4513),
+                              backgroundColor: const Color(0xFF7C3AED),
                               foregroundColor: Colors.white,
                               disabledBackgroundColor:
-                                  const Color(0xFF8B4513)
+                                  const Color(0xFF7C3AED)
                                       .withValues(alpha: 0.4),
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
@@ -1728,4 +1786,4 @@ class _GroupRequestCardState extends State<_GroupRequestCard> {
       },
     );
   }
-}
+}

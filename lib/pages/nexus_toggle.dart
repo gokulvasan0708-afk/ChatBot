@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_theme.dart';
+
 class NexusToggleButton extends StatelessWidget {
   final bool isPrivate;
   final VoidCallback onTap;
@@ -12,6 +14,8 @@ class NexusToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -20,11 +24,13 @@ class NexusToggleButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
         decoration: BoxDecoration(
           color: isPrivate
-              ? const Color(0xFF8B4513).withValues(alpha: .35)
-              : const Color(0xFF1B120A),
+              ? AppColors.primary.withValues(alpha: .22)
+              : c.card,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(alpha: .55),
+            color: isPrivate
+                ? AppColors.primary.withValues(alpha: .7)
+                : c.cardBorder,
           ),
         ),
         child: Row(
@@ -33,13 +39,13 @@ class NexusToggleButton extends StatelessWidget {
             Icon(
               isPrivate ? Icons.lock_rounded : Icons.public_rounded,
               size: 16,
-              color: const Color(0xFFFFE9B0),
+              color: isPrivate ? c.icon : AppColors.cyanAccent,
             ),
             const SizedBox(width: 8),
             Text(
               isPrivate ? 'Private' : 'Public',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: c.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),

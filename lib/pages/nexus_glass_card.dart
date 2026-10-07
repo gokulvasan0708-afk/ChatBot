@@ -4,15 +4,13 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
 // ================================================================
-// NEXUS GLASS CARD
+// NEXUS GLASS CARD  (purple redesign)
 // ----------------------------------------------------------------
-// Shared frosted-glass container used for profile cards, list rows,
-// and info panels — matching the translucent, blurred, gold-bordered
-// card style from the Nexus brand reference image.
+// Shared card container. Dark mode  -> #18181F card, #292934 border.
+// Light mode -> #FFFFFF card, #DDD7E8 border.
+// Same constructor as before, so every existing usage keeps working.
 //
-//   NexusGlassCard(
-//     child: ...,
-//   )
+//   NexusGlassCard(child: ...)
 // ================================================================
 class NexusGlassCard extends StatelessWidget {
   final Widget child;
@@ -36,6 +34,14 @@ class NexusGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Keep a little translucency (driven by fillOpacity) so the
+    // cosmic background still glows through, but never let the card
+    // get so transparent that text loses contrast.
+    final fillAlpha = (0.55 + fillOpacity).clamp(0.6, 0.95).toDouble();
+
     final content = ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
@@ -43,15 +49,14 @@ class NexusGlassCard extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1F).withValues(alpha: fillOpacity),
+            color: c.card.withValues(alpha: fillAlpha),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: AppColors.tan.withValues(alpha: borderOpacity),
-              width: 1.1,
-            ),
+            border: Border.all(color: c.cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.30)
+                    : AppColors.primary.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -71,9 +76,8 @@ class NexusGlassCard extends StatelessWidget {
   }
 }
 
-/// A single glass-styled settings/list row: leading icon in a soft
-/// gold-tinted circle, title + optional subtitle, trailing chevron.
-/// Drop-in visual replacement for a plain ListTile.
+/// A single settings/list row: leading icon in a soft purple circle,
+/// title + optional subtitle, trailing chevron.
 class NexusGlassRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -94,6 +98,8 @@ class NexusGlassRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: NexusGlassCard(
@@ -107,12 +113,12 @@ class NexusGlassRow extends StatelessWidget {
               height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF3A2416).withValues(alpha: 0.55),
+                color: AppColors.primary.withValues(alpha: 0.16),
                 border: Border.all(
-                  color: AppColors.tan.withValues(alpha: 0.4),
+                  color: AppColors.primary.withValues(alpha: 0.35),
                 ),
               ),
-              child: Icon(icon, size: 19, color: iconColor ?? AppColors.glow),
+              child: Icon(icon, size: 19, color: iconColor ?? c.icon),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -122,8 +128,8 @@ class NexusGlassRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: c.textPrimary,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -133,7 +139,7 @@ class NexusGlassRow extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: c.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -144,7 +150,7 @@ class NexusGlassRow extends StatelessWidget {
             trailing ??
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: Colors.white.withValues(alpha: 0.45),
+                  color: c.textMuted,
                 ),
           ],
         ),

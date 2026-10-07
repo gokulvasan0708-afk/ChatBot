@@ -144,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBgMid,
+      backgroundColor: AppColors.of(context).bgMid,
       body: CosmicBackground(
         child: Center(
           child: FadeTransition(
@@ -206,7 +206,7 @@ class _OrbitRingPainter extends CustomPainter {
     final track = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.4
-      ..color = AppColors.saddleBrown.withValues(alpha: 0.25);
+      ..color = AppColors.primary.withValues(alpha: 0.22);
 
     canvas.drawCircle(center, radius, track);
 
@@ -218,9 +218,11 @@ class _OrbitRingPainter extends CustomPainter {
         startAngle: 0,
         endAngle: 3.14 * 2,
         colors: [
-          AppColors.tan.withValues(alpha: 0),
-          AppColors.tan,
+          AppColors.primary.withValues(alpha: 0),
+          AppColors.primary,
+          AppColors.cyanAccent,
         ],
+        stops: const [0.0, 0.7, 1.0],
         transform: GradientRotation(progress * 2 * 3.14159),
       ).createShader(Rect.fromCircle(center: center, radius: radius));
 

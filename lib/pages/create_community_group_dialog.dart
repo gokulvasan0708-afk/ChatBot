@@ -167,7 +167,7 @@ class _CreateCommunityGroupDialogState extends State<CreateCommunityGroupDialog>
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
@@ -193,20 +193,20 @@ class _CreateCommunityGroupDialogState extends State<CreateCommunityGroupDialog>
                     height: 90,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF2A1B0E),
-                      border: Border.all(color: const Color(0xFFD2B48C), width: 2),
+                      color: const Color(0xFF20202A),
+                      border: Border.all(color: const Color(0xFFA78BFA), width: 2),
                     ),
                     child: _uploadingImage
                         ? const Center(
                             child: SizedBox(
                               width: 26, height: 26,
                               child: CircularProgressIndicator(
-                                  color: Color(0xFFD2B48C), strokeWidth: 2.4),
+                                  color: Color(0xFFA78BFA), strokeWidth: 2.4),
                             ),
                           )
                         : (_imageUrl != null && _imageUrl!.isNotEmpty)
                             ? ClipOval(child: Image.network(_imageUrl!, fit: BoxFit.cover))
-                            : const Icon(Icons.groups_rounded, color: Color(0xFFD2B48C), size: 34),
+                            : const Icon(Icons.groups_rounded, color: Color(0xFFA78BFA), size: 34),
                   ),
                 ),
               ),
@@ -281,13 +281,13 @@ class _CreateCommunityGroupDialogState extends State<CreateCommunityGroupDialog>
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A1B0E),
+                      color: const Color(0xFF20202A),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .4)),
+                      border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .4)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.event_busy_rounded, size: 16, color: Color(0xFFD2B48C)),
+                        const Icon(Icons.event_busy_rounded, size: 16, color: Color(0xFFA78BFA)),
                         const SizedBox(width: 8),
                         Text(_formatExpiry(),
                             style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
@@ -305,10 +305,10 @@ class _CreateCommunityGroupDialogState extends State<CreateCommunityGroupDialog>
                       onPressed: _creating ? null : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 13),
-                        side: const BorderSide(color: Color(0xFFD2B48C)),
+                        side: const BorderSide(color: Color(0xFFA78BFA)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      child: const Text('Cancel', style: TextStyle(color: Color(0xFFFFE9B0))),
+                      child: const Text('Cancel', style: TextStyle(color: Color(0xFFC4B5FD))),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -330,11 +330,11 @@ class _CreateCommunityGroupDialogState extends State<CreateCommunityGroupDialog>
                                   ? const SizedBox(
                                       width: 18, height: 18,
                                       child: CircularProgressIndicator(
-                                          strokeWidth: 2.2, color: Color(0xFF1B120A)),
+                                          strokeWidth: 2.2, color: Color(0xFF18181F)),
                                     )
                                   : const Text('Create',
                                       style: TextStyle(
-                                          color: Color(0xFF1B120A), fontWeight: FontWeight.bold)),
+                                          color: Color(0xFF18181F), fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ),
@@ -379,7 +379,7 @@ class _TextField extends StatelessWidget {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
-        fillColor: const Color(0xFF2A1B0E),
+        fillColor: const Color(0xFF20202A),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       ),
@@ -409,21 +409,21 @@ class _TypeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           gradient: selected ? AppColors.goldGradient : null,
-          color: selected ? null : const Color(0xFF2A1B0E),
+          color: selected ? null : const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(alpha: selected ? 1 : .4),
+            color: const Color(0xFFA78BFA).withValues(alpha: selected ? 1 : .4),
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: selected ? const Color(0xFF1B120A) : const Color(0xFFFFE9B0)),
+            Icon(icon, size: 18, color: selected ? const Color(0xFF18181F) : const Color(0xFFC4B5FD)),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: selected ? const Color(0xFF1B120A) : Colors.white70,
+                color: selected ? const Color(0xFF18181F) : Colors.white70,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),

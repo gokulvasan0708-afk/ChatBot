@@ -31,7 +31,7 @@ class CollegeNoticeSheet extends StatelessWidget {
     );
   }
 
-  static const Color _tan = Color(0xFFD2B48C);
+  static const Color _tan = Color(0xFFA78BFA);
 
   Future<void> _open(BuildContext context, String url) async {
     final uri = Uri.tryParse(normalizeCommunityLink(url));
@@ -70,17 +70,17 @@ class CollegeNoticeSheet extends StatelessWidget {
         onTap: () => _open(context, url),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFFFFE9B0), size: 16),
+            Icon(icon, color: const Color(0xFFC4B5FD), size: 16),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
                 label,
                 style: const TextStyle(
-                  color: Color(0xFFFFE9B0),
+                  color: Color(0xFFC4B5FD),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   decoration: TextDecoration.underline,
-                  decorationColor: Color(0xFFFFE9B0),
+                  decorationColor: Color(0xFFC4B5FD),
                 ),
               ),
             ),
@@ -116,7 +116,7 @@ class CollegeNoticeSheet extends StatelessWidget {
           child: Container(
             height: 200,
             width: double.infinity,
-            color: const Color(0xFF120C07),
+            color: const Color(0xFF18181F),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -255,7 +255,7 @@ class CollegeNoticeSheet extends StatelessWidget {
       constraints:
           BoxConstraints(maxHeight: MediaQuery.of(context).size.height * .9),
       decoration: const BoxDecoration(
-        color: Color(0xFF1B120A),
+        color: Color(0xFF18181F),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(

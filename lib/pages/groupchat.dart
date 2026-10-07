@@ -94,7 +94,7 @@ class _EditMessageDialogState extends State<_EditMessageDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       title: const Text(
         'Edit Message',
         style: TextStyle(color: Colors.white),
@@ -118,7 +118,7 @@ class _EditMessageDialogState extends State<_EditMessageDialog> {
           onPressed: () => Navigator.pop(context, _controller.text.trim()),
           child: const Text(
             'SAVE',
-            style: TextStyle(color: Color(0xFFD2B48C)),
+            style: TextStyle(color: Color(0xFFA78BFA)),
           ),
         ),
       ],
@@ -528,7 +528,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -597,10 +597,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
         width: 42,
         height: 42,
         decoration: const BoxDecoration(
-          color: Color(0xFF2A1B0E),
+          color: Color(0xFF20202A),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: const Color(0xFFD2B48C), size: 22),
+        child: Icon(icon, color: const Color(0xFFA78BFA), size: 22),
       ),
       title: Text(
         title,
@@ -950,7 +950,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
 
       await showModalBottomSheet(
         context: context,
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
         builder: (sheetContext) => StatefulBuilder(
@@ -973,10 +973,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                         final image = connected && (u['privateImage'] ?? '').toString().trim().isNotEmpty ? (u['privateImage'] ?? '').toString() : (u['publicImage'] ?? u['profileImage'] ?? '').toString();
                         final checked = selected.contains(d.id);
                         return ListTile(
-                          leading: CircleAvatar(backgroundColor: const Color(0xFF2A1B0E), backgroundImage: _profileImageProvider(image), child: image.isEmpty ? const Icon(Icons.person, color: Colors.white70) : null),
+                          leading: CircleAvatar(backgroundColor: const Color(0xFF20202A), backgroundImage: _profileImageProvider(image), child: image.isEmpty ? const Icon(Icons.person, color: Colors.white70) : null),
                           title: Text(name, style: const TextStyle(color: Colors.white)),
                           subtitle: Text(connected ? 'Private' : 'Public', style: const TextStyle(color: Colors.white54)),
-                          trailing: Checkbox(value: checked, activeColor: const Color(0xFF8B4513), onChanged: (_) => setModalState(() { if (checked) { selected.remove(d.id); } else { selected.add(d.id); } })),
+                          trailing: Checkbox(value: checked, activeColor: const Color(0xFF7C3AED), onChanged: (_) => setModalState(() { if (checked) { selected.remove(d.id); } else { selected.add(d.id); } })),
                           onTap: () => setModalState(() { if (checked) { selected.remove(d.id); } else { selected.add(d.id); } }),
                         );
                       },
@@ -993,7 +993,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                       },
                       icon: const Icon(Icons.send_rounded),
                       label: Text('Forward${selected.isEmpty ? '' : ' (${selected.length})'}'),
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B4513), foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white),
                     )),
                   ),
                 ]),
@@ -1144,7 +1144,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
   Future<void> _chooseReaction(DocumentSnapshot<Map<String, dynamic>> message) async {
     final emoji = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
@@ -1159,22 +1159,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             config: Config(
               height: 360,
               emojiViewConfig: EmojiViewConfig(
-                backgroundColor: const Color(0xFF1B120A),
+                backgroundColor: const Color(0xFF18181F),
                 columns: 8,
                 emojiSizeMax: 28,
               ),
               categoryViewConfig: const CategoryViewConfig(
-                backgroundColor: Color(0xFF1B120A),
-                indicatorColor: Color(0xFFD2B48C),
-                iconColorSelected: Color(0xFFD2B48C),
+                backgroundColor: Color(0xFF18181F),
+                indicatorColor: Color(0xFFA78BFA),
+                iconColorSelected: Color(0xFFA78BFA),
                 iconColor: Colors.white54,
               ),
               bottomActionBarConfig: const BottomActionBarConfig(
-                backgroundColor: Color(0xFF1B120A),
-                buttonColor: Color(0xFF1B120A),
+                backgroundColor: Color(0xFF18181F),
+                buttonColor: Color(0xFF18181F),
               ),
               searchViewConfig: const SearchViewConfig(
-                backgroundColor: Color(0xFF1B120A),
+                backgroundColor: Color(0xFF18181F),
               ),
             ),
           ),
@@ -1224,7 +1224,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -1235,15 +1235,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             children: [
               const SizedBox(height: 10),
 
+              // Message info: who received / who has read my message.
+              if (isMe)
+                ListTile(
+                  leading: const Icon(Icons.info_outline_rounded, color: Color(0xFFA78BFA)),
+                  title: const Text('Info', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  onTap: () { Navigator.pop(sheetContext); _showMessageInfo(message); },
+                ),
+
               if (isMe && _canEditMessage(data))
                 ListTile(
-                  leading: const Icon(Icons.edit_rounded, color: Color(0xFFD2B48C)),
+                  leading: const Icon(Icons.edit_rounded, color: Color(0xFFA78BFA)),
                   title: const Text('Edit Message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   onTap: () { Navigator.pop(sheetContext); _editMessage(message); },
                 ),
 
               ListTile(
-                leading: const Icon(Icons.send_rounded, color: Color(0xFFD2B48C)),
+                leading: const Icon(Icons.send_rounded, color: Color(0xFFA78BFA)),
                 title: const Text('Forward message', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 onTap: () { Navigator.pop(sheetContext); _forwardMessage(message); },
               ),
@@ -1264,6 +1272,64 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
               const SizedBox(height: 10),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  // ==========================================================
+  // MESSAGE INFO
+  // ----------------------------------------------------------
+  // Long-press my own message -> "Info" shows who it was
+  // delivered to and who has read it. Read state comes from the
+  // existing groups/<id>.lastReadAt[<uid>] marker (markGroupRead):
+  // a member has read the message when their lastReadAt is at or
+  // after the message's sentAt. Members who have not are listed
+  // under "Delivered to".
+  //
+  // Names / photos:
+  //   - Community Chat and groups that belong to a community show
+  //     each person's COMMUNITY PROFILE name + image.
+  //   - Every other group shows the connected (private) name +
+  //     image when I am connected with that person, otherwise
+  //     their public name + image.
+  // ==========================================================
+
+  void _showMessageInfo(DocumentSnapshot<Map<String, dynamic>> message) {
+    final data = message.data();
+    if (data == null) return;
+
+    final type = (data['messageType'] ?? 'text').toString();
+    final preview = switch (type) {
+      'photo' => '📷 Photo',
+      'video' => '🎬 Video',
+      'audio' => '🎵 Audio',
+      'file' => '📎 ${(data['fileName'] ?? 'File').toString()}',
+      _ => (data['text'] ?? '').toString(),
+    };
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF18181F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.65,
+          minChildSize: 0.4,
+          maxChildSize: 0.92,
+          builder: (context, scrollController) {
+            return _MessageInfoSheet(
+              groupDocId: widget.groupDocId,
+              messageRef: message.reference,
+              senderUid: (data['senderUid'] ?? '').toString(),
+              preview: preview,
+              scrollController: scrollController,
+            );
+          },
         );
       },
     );
@@ -1306,7 +1372,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: const Text('Clear all chat?', style: TextStyle(color: Colors.white)),
         content: const Text(
@@ -1415,7 +1481,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
 
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
@@ -1432,7 +1498,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             ListTile(
               leading: Icon(
                 muted ? Icons.notifications_off_rounded : Icons.notifications_active_rounded,
-                color: const Color(0xFFD2B48C),
+                color: const Color(0xFFA78BFA),
               ),
               title: Text(
                 muted ? 'Unmute Message' : 'Mute Message',
@@ -1442,7 +1508,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             ),
             if (canSleep)
               ListTile(
-                leading: const Icon(Icons.bedtime_rounded, color: Color(0xFFD2B48C)),
+                leading: const Icon(Icons.bedtime_rounded, color: Color(0xFFA78BFA)),
                 title: Text(
                   isSleeping ? 'Sleep Mode (active)' : 'Sleep Mode',
                   style: const TextStyle(color: Colors.white),
@@ -1461,12 +1527,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             // call icon off, or back on again, for this group.
             if (!isCommunityChat) ...[
               ListTile(
-                leading: Icon(voiceCall ? Icons.call_rounded : Icons.call_end_rounded, color: const Color(0xFFD2B48C)),
+                leading: Icon(voiceCall ? Icons.call_rounded : Icons.call_end_rounded, color: const Color(0xFFA78BFA)),
                 title: Text(voiceCall ? 'Disable Voice Call' : 'Enable Voice Call', style: const TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(sheetContext, 'voice'),
               ),
               ListTile(
-                leading: Icon(videoCall ? Icons.videocam_rounded : Icons.videocam_off_rounded, color: const Color(0xFFD2B48C)),
+                leading: Icon(videoCall ? Icons.videocam_rounded : Icons.videocam_off_rounded, color: const Color(0xFFA78BFA)),
                 title: Text(videoCall ? 'Disable Video Call' : 'Enable Video Call', style: const TextStyle(color: Colors.white)),
                 onTap: () => Navigator.pop(sheetContext, 'video'),
               ),
@@ -1539,9 +1605,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
         .snapshots();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120B06),
+      backgroundColor: const Color(0xFF18181F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         titleSpacing: 0,
@@ -1567,7 +1633,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: const Color(0xFF2A1B0E),
+                    backgroundColor: const Color(0xFF20202A),
                     backgroundImage: _profileImageProvider(image),
                     child: image.isEmpty
                         ? const Icon(Icons.diversity_3_rounded, color: Colors.white70)
@@ -1686,7 +1752,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                     (_) => _markReadIfNewMessage(newestId),
                   );
                   if (snapshot.connectionState == ConnectionState.waiting && docs.isEmpty) {
-                    return const Center(child: CircularProgressIndicator(color: Color(0xFFD2B48C)));
+                    return const Center(child: CircularProgressIndicator(color: Color(0xFFA78BFA)));
                   }
                   if (docs.isEmpty) {
                     return const Center(
@@ -1844,18 +1910,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
         margin: const EdgeInsets.fromLTRB(10, 5, 10, 0),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: const BoxDecoration(
-          color: Color(0xFF1B120A),
+          color: Color(0xFF18181F),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(15),
             topRight: Radius.circular(15),
           ),
           border: Border(
-            left: BorderSide(color: Color(0xFFD2B48C), width: 3),
+            left: BorderSide(color: Color(0xFFA78BFA), width: 3),
           ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.reply_rounded, color: Color(0xFFD2B48C), size: 22),
+            const Icon(Icons.reply_rounded, color: Color(0xFFA78BFA), size: 22),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -1866,7 +1932,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                       const Text(
                         'Replying to ',
                         style: TextStyle(
-                          color: Color(0xFFD2B48C),
+                          color: Color(0xFFA78BFA),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1875,7 +1941,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                         const Text(
                           'yourself',
                           style: TextStyle(
-                            color: Color(0xFFD2B48C),
+                            color: Color(0xFFA78BFA),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1954,7 +2020,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
       child: Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: const BoxDecoration(
-        color: Color(0xFF1B120A),
+        color: Color(0xFF18181F),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
       child: Row(
@@ -1964,7 +2030,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
             shape: const CircleBorder(),
             child: IconButton(
               onPressed: _isSendingAttachment ? null : _showAttachmentMenu,
-              icon: const Icon(Icons.add_rounded, color: Color(0xFFD2B48C)),
+              icon: const Icon(Icons.add_rounded, color: Color(0xFFA78BFA)),
             ),
           ),
           Expanded(
@@ -1978,7 +2044,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                 hintText: 'Message',
                 hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
-                fillColor: const Color(0xFF241609),
+                fillColor: const Color(0xFF18181F),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
@@ -1990,7 +2056,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
           ),
           const SizedBox(width: 8),
           Material(
-            color: const Color(0xFF8B4513),
+            color: const Color(0xFF7C3AED),
             shape: const CircleBorder(),
             child: InkWell(
               customBorder: const CircleBorder(),
@@ -2067,12 +2133,12 @@ class _CommunitySleepGateState extends State<_CommunitySleepGate> {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: const BoxDecoration(
-            color: Color(0xFF1B120A),
+            color: Color(0xFF18181F),
             border: Border(top: BorderSide(color: Colors.white12)),
           ),
           child: Row(
             children: [
-              const Icon(Icons.bedtime_rounded, color: Color(0xFFD2B48C)),
+              const Icon(Icons.bedtime_rounded, color: Color(0xFFA78BFA)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -2286,7 +2352,7 @@ class _GroupTypingIndicatorState extends State<_GroupTypingIndicator>
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                color: Color(0xFFD2B48C),
+                color: Color(0xFFA78BFA),
                 shape: BoxShape.circle,
               ),
             ),
@@ -2308,7 +2374,7 @@ class _GroupTypingIndicatorState extends State<_GroupTypingIndicator>
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFFD2B48C),
+              color: Color(0xFFA78BFA),
               fontSize: 11,
               fontStyle: FontStyle.italic,
             ),
@@ -2404,7 +2470,7 @@ class _GroupMessageBubble extends StatelessWidget {
             errorBuilder: (_, _, _) => Container(
               width: 200,
               height: 200,
-              color: const Color(0xFF2A1B0E),
+              color: const Color(0xFF20202A),
               child: const Icon(Icons.broken_image_rounded, color: Colors.white38),
             ),
           ),
@@ -2420,7 +2486,7 @@ class _GroupMessageBubble extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_attachmentIconFor(messageType), color: const Color(0xFFD2B48C), size: 22),
+            Icon(_attachmentIconFor(messageType), color: const Color(0xFFA78BFA), size: 22),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
@@ -2540,14 +2606,14 @@ class _GroupMessageBubble extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                   decoration: BoxDecoration(
-                    color: isMe ? const Color(0xFF8B4513) : const Color(0xFF1B120A),
+                    color: isMe ? const Color(0xFF7C3AED) : const Color(0xFF18181F),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
                       bottomLeft: Radius.circular(isMe ? 16 : 4),
                       bottomRight: Radius.circular(isMe ? 4 : 16),
                     ),
-                    border: isMe ? null : Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .18)),
+                    border: isMe ? null : Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .18)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -2598,10 +2664,10 @@ class _GroupMessageBubble extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B120A),
+                    color: const Color(0xFF18181F),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF120B06),
+                      color: const Color(0xFF18181F),
                       width: 2,
                     ),
                   ),
@@ -2791,11 +2857,11 @@ class _SwipeableReplyState extends State<_SwipeableReply>
                   height: 36,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFF2A1B0E),
+                    color: Color(0xFF20202A),
                   ),
                   child: const Icon(
                     Icons.reply_rounded,
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                     size: 21,
                   ),
                 ),
@@ -2846,7 +2912,7 @@ class _SenderAvatar extends StatelessWidget {
           return snapshot.connectionState == ConnectionState.waiting
               ? const CircleAvatar(
                   radius: 13,
-                  backgroundColor: Color(0xFF2A1B0E),
+                  backgroundColor: Color(0xFF20202A),
                   child: Icon(Icons.person, color: Colors.white70, size: 14),
                 )
               : _accountAvatar(context);
@@ -2854,7 +2920,7 @@ class _SenderAvatar extends StatelessWidget {
 
         return CircleAvatar(
           radius: 13,
-          backgroundColor: const Color(0xFF2A1B0E),
+          backgroundColor: const Color(0xFF20202A),
           backgroundImage: _profileImageProvider(identity.image),
           child: identity.image.isEmpty
               ? const Icon(Icons.person, color: Colors.white70, size: 14)
@@ -2873,7 +2939,7 @@ class _SenderAvatar extends StatelessWidget {
         if (data == null || me == null) {
           return const CircleAvatar(
             radius: 13,
-            backgroundColor: Color(0xFF2A1B0E),
+            backgroundColor: Color(0xFF20202A),
             child: Icon(Icons.person, color: Colors.white70, size: 14),
           );
         }
@@ -2893,7 +2959,7 @@ class _SenderAvatar extends StatelessWidget {
 
             return CircleAvatar(
               radius: 13,
-              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundColor: const Color(0xFF20202A),
               backgroundImage: _profileImageProvider(image),
               child: image.isEmpty
                   ? const Icon(Icons.person, color: Colors.white70, size: 14)
@@ -2942,7 +3008,7 @@ class _SenderNameLabel extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            color: Color(0xFFD2B48C),
+            color: Color(0xFFA78BFA),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -2973,10 +3039,381 @@ class _SenderNameLabel extends StatelessWidget {
             final name = (isConnected && privateName.isNotEmpty) ? privateName : publicName;
             return Text(
               name.isEmpty ? 'Unnamed' : name,
-              style: const TextStyle(color: Color(0xFFD2B48C), fontSize: 12, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: Color(0xFFA78BFA), fontSize: 12, fontWeight: FontWeight.w600),
             );
           },
         );
+      },
+    );
+  }
+}
+
+
+// ================================================================
+// MESSAGE INFO SHEET
+// ----------------------------------------------------------------
+// Opened from the long-press menu ("Info") on my own message.
+// Lists "Read by" and "Delivered to" for the group's members.
+// ================================================================
+
+String _infoTime(DateTime d) {
+  final l = d.toLocal();
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final h = l.hour % 12 == 0 ? 12 : l.hour % 12;
+  final m = l.minute.toString().padLeft(2, '0');
+  final ap = l.hour >= 12 ? 'PM' : 'AM';
+  return '${l.day} ${months[l.month - 1]}, $h:$m $ap';
+}
+
+class _MessageInfoSheet extends StatelessWidget {
+  final String groupDocId;
+  final DocumentReference<Map<String, dynamic>> messageRef;
+  final String senderUid;
+  final String preview;
+  final ScrollController scrollController;
+
+  const _MessageInfoSheet({
+    required this.groupDocId,
+    required this.messageRef,
+    required this.senderUid,
+    required this.preview,
+    required this.scrollController,
+  });
+
+  Widget _sectionHeader(IconData icon, Color color, String label, int count) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Text(
+            '$label  ($count)',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyLine(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white38, fontSize: 13),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: messageRef.snapshots(),
+      builder: (context, msgSnap) {
+        final msgData = msgSnap.data?.data();
+        final sentTs = msgData?['sentAt'];
+        final DateTime? sentAt = sentTs is Timestamp ? sentTs.toDate() : null;
+
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('groups')
+              .doc(groupDocId)
+              .snapshots(),
+          builder: (context, groupSnap) {
+            final g = groupSnap.data?.data();
+            if (g == null) {
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
+              );
+            }
+
+            // Community profile scope: the community Chat itself uses
+            // `communityId`, groups created inside a community use
+            // `communityDocId`. Empty for ordinary groups.
+            String scope = '';
+            if (g['isCommunityChat'] == true) {
+              scope = (g['communityId'] ?? '').toString();
+            }
+            if (scope.isEmpty) {
+              scope = (g['communityDocId'] ?? '').toString();
+            }
+
+            final members = g['members'] is List
+                ? List<String>.from(
+                    (g['members'] as List).map((e) => e.toString()))
+                : <String>[];
+            final rawRead = g['lastReadAt'];
+            final readMap = rawRead is Map
+                ? Map<String, dynamic>.from(rawRead)
+                : <String, dynamic>{};
+
+            final readers = <MapEntry<String, DateTime>>[];
+            final delivered = <String>[];
+            for (final uid in members) {
+              if (uid.isEmpty || uid == senderUid) continue;
+              final v = readMap[uid];
+              final DateTime? readAt = v is Timestamp ? v.toDate() : null;
+              if (readAt != null && sentAt != null && !readAt.isBefore(sentAt)) {
+                readers.add(MapEntry(uid, readAt));
+              } else {
+                delivered.add(uid);
+              }
+            }
+            readers.sort((a, b) => b.value.compareTo(a.value));
+
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.only(bottom: 24),
+              children: [
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  child: Text(
+                    'Message info',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF20202A),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          preview.isEmpty ? 'Message' : preview,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                        if (sentAt != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Sent ${_infoTime(sentAt)}',
+                            style: const TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                _sectionHeader(
+                  Icons.done_all_rounded,
+                  const Color(0xFF53BDEB),
+                  'Read by',
+                  readers.length,
+                ),
+                if (readers.isEmpty)
+                  _emptyLine('No one has read this yet')
+                else
+                  for (final r in readers)
+                    _InfoPersonTile(
+                      key: ValueKey('read_${r.key}'),
+                      uid: r.key,
+                      communityDocId: scope,
+                    ),
+
+                _sectionHeader(
+                  Icons.done_all_rounded,
+                  Colors.white54,
+                  'Delivered to',
+                  delivered.length,
+                ),
+                if (delivered.isEmpty)
+                  _emptyLine('Everyone has read this')
+                else
+                  for (final uid in delivered)
+                    _InfoPersonTile(
+                      key: ValueKey('deliv_$uid'),
+                      uid: uid,
+                      communityDocId: scope,
+                    ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _InfoPersonTile extends StatefulWidget {
+  final String uid;
+
+  /// Non-empty when the group belongs to a community: then the person
+  /// is shown as their COMMUNITY PROFILE (name + image + role).
+  final String communityDocId;
+
+  const _InfoPersonTile({
+    super.key,
+    required this.uid,
+    this.communityDocId = '',
+  });
+
+  @override
+  State<_InfoPersonTile> createState() => _InfoPersonTileState();
+}
+
+class _InfoPersonTileState extends State<_InfoPersonTile> {
+  Stream<CommunityChatIdentity?>? _identityStream;
+  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _userStream;
+  Future<DocumentSnapshot<Map<String, dynamic>>>? _connFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.communityDocId.isNotEmpty) {
+      _identityStream = CommunityChatIdentityService.watch(
+        communityDocId: widget.communityDocId,
+        uid: widget.uid,
+      );
+    }
+
+    _userStream = FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .snapshots();
+
+    final me = FirebaseAuth.instance.currentUser;
+    if (me != null && me.uid != widget.uid) {
+      _connFuture = FirebaseFirestore.instance
+          .collection('connections')
+          .doc(([me.uid, widget.uid]..sort()).join('_'))
+          .get();
+    }
+  }
+
+  Widget _row({
+    required String name,
+    required String image,
+    String subtitle = '',
+  }) {
+    return ListTile(
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundColor: const Color(0xFF20202A),
+        backgroundImage: _profileImageProvider(image),
+        child: image.isEmpty
+            ? const Icon(Icons.person, color: Colors.white70, size: 20)
+            : null,
+      ),
+      title: Text(
+        name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: subtitle.isEmpty
+          ? null
+          : Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+    );
+  }
+
+  /// Connected -> my connected (private) name + image for that person;
+  /// not connected -> their public name + image.
+  Widget _accountRow() {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: _userStream,
+      builder: (context, userSnap) {
+        final d = userSnap.data?.data();
+        if (d == null) {
+          return _row(
+            name: userSnap.connectionState == ConnectionState.waiting
+                ? ''
+                : 'Unnamed',
+            image: '',
+          );
+        }
+
+        return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          future: _connFuture,
+          builder: (context, connSnap) {
+            // Wait for the connection check so a connected person is
+            // never flashed with their public name first.
+            if (_connFuture != null &&
+                connSnap.connectionState != ConnectionState.done) {
+              return _row(name: '', image: '');
+            }
+
+            final connected =
+                (connSnap.data?.data()?['status'] ?? '') == 'connected';
+
+            final privateName = (d['privateName'] ?? '').toString().trim();
+            final publicName = (d['publicName'] ?? '').toString().trim();
+            final privateImage = (d['privateImage'] ?? '').toString().trim();
+            final publicImage =
+                (d['publicImage'] ?? d['profileImage'] ?? '').toString().trim();
+
+            final name =
+                (connected && privateName.isNotEmpty) ? privateName : publicName;
+            final image = (connected && privateImage.isNotEmpty)
+                ? privateImage
+                : publicImage;
+
+            return _row(name: name.isEmpty ? 'Unnamed' : name, image: image);
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = _identityStream;
+    if (stream == null) return _accountRow();
+
+    return StreamBuilder<CommunityChatIdentity?>(
+      stream: stream,
+      builder: (context, snap) {
+        final identity = snap.data;
+        if (identity != null) {
+          return _row(
+            name: identity.name,
+            image: identity.image,
+            subtitle: identity.role,
+          );
+        }
+        if (snap.connectionState == ConnectionState.waiting) {
+          return _row(name: '', image: '');
+        }
+        // No Community Profile for this account -> normal account rule.
+        return _accountRow();
       },
     );
   }

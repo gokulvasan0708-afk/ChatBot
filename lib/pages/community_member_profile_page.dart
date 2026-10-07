@@ -599,7 +599,7 @@ class _CommunityMemberProfilePageState
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF8B4513).withValues(alpha: .3),
+              color: const Color(0xFF7C3AED).withValues(alpha: .3),
               borderRadius: BorderRadius.circular(10),
               border:
                   Border.all(color: CommunityColors.tan.withValues(alpha: .5)),
@@ -633,8 +633,8 @@ class _CommunityMemberProfilePageState
                         return n.isEmpty ? r : '$r - $n';
                       }(),
                     ),
-                    backgroundColor: const Color(0xFF120C07),
-                    selectedColor: const Color(0xFF8B4513).withValues(alpha: .55),
+                    backgroundColor: const Color(0xFF18181F),
+                    selectedColor: const Color(0xFF7C3AED).withValues(alpha: .55),
                     labelStyle: const TextStyle(
                         color: CommunityColors.glow, fontSize: 12.5),
                     side: BorderSide(
@@ -693,7 +693,7 @@ class _CommunityMemberProfilePageState
                     for (final s in skills)
                       Chip(
                         label: Text(s),
-                        backgroundColor: const Color(0xFF120C07),
+                        backgroundColor: const Color(0xFF18181F),
                         labelStyle: const TextStyle(
                             color: CommunityColors.glow, fontSize: 12.5),
                         side: BorderSide(

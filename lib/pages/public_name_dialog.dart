@@ -47,8 +47,8 @@ class _PublicNameDialog extends StatefulWidget {
 }
 
 class _PublicNameDialogState extends State<_PublicNameDialog> {
-  static const Color _bg = Color(0xFF1B120A);
-  static const Color _tan = Color(0xFFD2B48C);
+  static const Color _bg = Color(0xFF18181F);
+  static const Color _tan = Color(0xFFA78BFA);
 
   late final TextEditingController _controller =
       TextEditingController(text: widget.initial);
@@ -107,7 +107,7 @@ class _PublicNameDialogState extends State<_PublicNameDialog> {
           Icon(
             ok ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
             size: 16,
-            color: ok ? Colors.greenAccent : Colors.white38,
+            color: ok ? Color(0xFF10B981) : Colors.white38,
           ),
           const SizedBox(width: 8),
           Text(

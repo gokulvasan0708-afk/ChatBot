@@ -182,7 +182,7 @@ class _PostCommentsSheetState extends State<PostCommentsSheet> {
               ),
               if (_replyTo != null)
                 Container(
-                  color: const Color(0xFF120C07),
+                  color: const Color(0xFF18181F),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Row(

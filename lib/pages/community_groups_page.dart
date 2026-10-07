@@ -52,7 +52,7 @@ class CommunityGroupsPage extends StatelessWidget {
                       builder: (_) => CreateCommunityGroupDialog(communityDocId: communityDocId),
                     ),
                     icon: const Icon(Icons.add_circle_rounded,
-                        color: Color(0xFFD2B48C), size: 26),
+                        color: Color(0xFFA78BFA), size: 26),
                   ),
                 ],
               ),
@@ -63,7 +63,7 @@ class CommunityGroupsPage extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                        child: CircularProgressIndicator(color: Color(0xFFD2B48C)));
+                        child: CircularProgressIndicator(color: Color(0xFFA78BFA)));
                   }
                   if (snapshot.hasError) {
                     return const _StateMessage(
@@ -149,7 +149,7 @@ class _GroupCardState extends State<_GroupCard> {
       child: Opacity(
         opacity: expired ? .55 : 1,
         child: Material(
-          color: const Color(0xFF1B120A),
+          color: const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -163,7 +163,7 @@ class _GroupCardState extends State<_GroupCard> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .3)),
+                border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,11 +175,11 @@ class _GroupCardState extends State<_GroupCard> {
                         height: 48,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF2A1B0E),
-                          border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .6)),
+                          color: const Color(0xFF20202A),
+                          border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .6)),
                         ),
                         child: imageUrl.isEmpty
-                            ? const Icon(Icons.groups_rounded, color: Color(0xFFD2B48C), size: 20)
+                            ? const Icon(Icons.groups_rounded, color: Color(0xFFA78BFA), size: 20)
                             : ClipOval(child: Image.network(imageUrl, fit: BoxFit.cover)),
                       ),
                       const SizedBox(width: 12),
@@ -214,7 +214,7 @@ class _GroupCardState extends State<_GroupCard> {
                           icon: Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              const Icon(Icons.settings_rounded, color: Color(0xFFD2B48C), size: 20),
+                              const Icon(Icons.settings_rounded, color: Color(0xFFA78BFA), size: 20),
                               if (pendingCount > 0)
                                 Positioned(
                                   right: -2,
@@ -278,11 +278,11 @@ class _GroupCardState extends State<_GroupCard> {
             child: _busy
                 ? const SizedBox(
                     width: 14, height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1B120A)))
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF18181F)))
                 : Text(
                     type == 'approval' ? 'Request' : 'Join',
                     style: const TextStyle(
-                        color: Color(0xFF1B120A), fontWeight: FontWeight.bold, fontSize: 12.5),
+                        color: Color(0xFF18181F), fontWeight: FontWeight.bold, fontSize: 12.5),
                   ),
           ),
         ),
@@ -323,7 +323,7 @@ class _GroupCardState extends State<_GroupCard> {
   void _showMemberActions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -331,7 +331,7 @@ class _GroupCardState extends State<_GroupCard> {
           children: [
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.flag_rounded, color: Colors.orangeAccent),
+              leading: const Icon(Icons.flag_rounded, color: Color(0xFFF5B942)),
               title: const Text('Report Group', style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -371,7 +371,7 @@ class _GroupCardState extends State<_GroupCard> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheetState) => Padding(
@@ -391,10 +391,10 @@ class _GroupCardState extends State<_GroupCard> {
                 children: reasons.map((r) {
                   final sel = r == selected;
                   return ChoiceChip(
-                    label: Text(r, style: TextStyle(color: sel ? const Color(0xFF1B120A) : Colors.white70)),
+                    label: Text(r, style: TextStyle(color: sel ? const Color(0xFF18181F) : Colors.white70)),
                     selected: sel,
-                    selectedColor: const Color(0xFFD2B48C),
-                    backgroundColor: const Color(0xFF2A1B0E),
+                    selectedColor: const Color(0xFFA78BFA),
+                    backgroundColor: const Color(0xFF20202A),
                     onSelected: (_) => setSheetState(() => selected = r),
                   );
                 }).toList(),
@@ -408,7 +408,7 @@ class _GroupCardState extends State<_GroupCard> {
                   hintText: 'Additional details (optional)',
                   hintStyle: const TextStyle(color: Colors.white38),
                   filled: true,
-                  fillColor: const Color(0xFF2A1B0E),
+                  fillColor: const Color(0xFF20202A),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
@@ -416,7 +416,7 @@ class _GroupCardState extends State<_GroupCard> {
               const SizedBox(height: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD2B48C),
+                  backgroundColor: const Color(0xFFA78BFA),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
@@ -441,7 +441,7 @@ class _GroupCardState extends State<_GroupCard> {
                   }
                 },
                 child: const Text('Submit Report',
-                    style: TextStyle(color: Color(0xFF1B120A), fontWeight: FontWeight.bold)),
+                    style: TextStyle(color: Color(0xFF18181F), fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -454,7 +454,7 @@ class _GroupCardState extends State<_GroupCard> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (sheetContext) => _ManageGroupSheet(group: widget.group, uid: widget.uid),
     );
@@ -510,7 +510,7 @@ class _ManageGroupSheet extends StatelessWidget {
             const Divider(color: Colors.white12, height: 28),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.archive_rounded, color: Color(0xFFD2B48C)),
+              leading: const Icon(Icons.archive_rounded, color: Color(0xFFA78BFA)),
               title: const Text('Archive Now', style: TextStyle(color: Colors.white)),
               onTap: () async {
                 try {
@@ -572,17 +572,17 @@ class _PendingRequestTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: const Color(0xFF2A1B0E),
+                backgroundColor: const Color(0xFF20202A),
                 backgroundImage: image.isEmpty ? null : NetworkImage(image),
                 child: image.isEmpty
-                    ? const Icon(Icons.person_rounded, color: Color(0xFFD2B48C), size: 14)
+                    ? const Icon(Icons.person_rounded, color: Color(0xFFA78BFA), size: 14)
                     : null,
               ),
               const SizedBox(width: 10),
               Expanded(child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 13))),
               IconButton(
                 onPressed: onApprove,
-                icon: const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 22),
+                icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22),
               ),
               IconButton(
                 onPressed: onReject,
@@ -612,12 +612,12 @@ class _TypePill extends StatelessWidget {
         icon = Icons.lock_rounded;
         break;
       case 'approval':
-        color = const Color(0xFFD2B48C);
+        color = const Color(0xFFA78BFA);
         label = 'Approval';
         icon = Icons.how_to_reg_rounded;
         break;
       case 'temporary':
-        color = Colors.orangeAccent;
+        color = Color(0xFFF5B942);
         label = 'Temporary';
         icon = Icons.hourglass_bottom_rounded;
         break;
@@ -627,7 +627,7 @@ class _TypePill extends StatelessWidget {
         icon = Icons.archive_rounded;
         break;
       default:
-        color = Colors.lightBlueAccent;
+        color = Color(0xFF22D3EE);
         label = 'Public';
         icon = Icons.public_rounded;
     }
@@ -674,7 +674,7 @@ class _StateMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 14),
             Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
@@ -687,11 +687,11 @@ class _StateMessage extends StatelessWidget {
               OutlinedButton(
                 onPressed: onAction,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD2B48C)),
+                  side: const BorderSide(color: Color(0xFFA78BFA)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: Text(actionLabel!, style: const TextStyle(color: Color(0xFFFFE9B0))),
+                child: Text(actionLabel!, style: const TextStyle(color: Color(0xFFC4B5FD))),
               ),
             ],
           ],

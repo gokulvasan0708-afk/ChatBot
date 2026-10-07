@@ -145,7 +145,10 @@ class _AiChatPanelState extends State<AiChatPanel> {
         padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
         child: Row(
           children: [
-            Icon(Icons.auto_awesome, color: a, size: 18),
+            ShaderMask(
+              shaderCallback: (r) => AppColors.aiGradient1.createShader(r),
+              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text('Nexus AI',
@@ -279,15 +282,13 @@ class _Bubble extends StatelessWidget {
     final user = message.isUser;
     final err = message.isError;
     final c = AppColors.of(context);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final a = dark ? AppColors.tan : AppColors.saddleBrown;
     final bg = user
-        ? a
+        ? AppColors.primary
         : err
             ? const Color(0xFF3B1D1D)
             : c.card;
     final fg = user
-        ? (dark ? AppColors.lightTextPrimary : AppColors.cream)
+        ? Colors.white
         : (err ? const Color(0xFFFCA5A5) : c.textPrimary);
 
     return LayoutBuilder(

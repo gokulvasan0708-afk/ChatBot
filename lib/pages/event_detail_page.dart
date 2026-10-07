@@ -33,7 +33,7 @@ class EventDetailPage extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFD2B48C)));
+                  child: CircularProgressIndicator(color: Color(0xFFA78BFA)));
             }
             if (snapshot.hasError) {
               return _MessageState(
@@ -173,16 +173,16 @@ class _EventBodyState extends State<_EventBody> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.open_in_new_rounded,
-                              size: 15, color: Color(0xFFFFE9B0)),
+                              size: 15, color: Color(0xFFC4B5FD)),
                           SizedBox(width: 6),
                           Text(
                             'Open location link',
                             style: TextStyle(
-                              color: Color(0xFFFFE9B0),
+                              color: Color(0xFFC4B5FD),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               decoration: TextDecoration.underline,
-                              decorationColor: Color(0xFFFFE9B0),
+                              decorationColor: Color(0xFFC4B5FD),
                             ),
                           ),
                         ],
@@ -245,7 +245,7 @@ class _EventBodyState extends State<_EventBody> {
               child: Row(
                 children: [
                   Icon(wantsReminder ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
-                      color: const Color(0xFFD2B48C), size: 18),
+                      color: const Color(0xFFA78BFA), size: 18),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text('Remind me before this event',
@@ -253,7 +253,7 @@ class _EventBodyState extends State<_EventBody> {
                   ),
                   Switch(
                     value: wantsReminder,
-                    activeThumbColor: const Color(0xFFD2B48C),
+                    activeThumbColor: const Color(0xFFA78BFA),
                     onChanged: (v) => EventService.setReminder(
                       eventDocId: event['id'] as String,
                       uid: widget.uid,
@@ -397,7 +397,7 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFFD2B48C)),
+          Icon(icon, size: 16, color: const Color(0xFFA78BFA)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13)),
@@ -441,10 +441,10 @@ class _ActionButton extends StatelessWidget {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1B120A)),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF18181F)),
                       )
                     : Text(label,
-                        style: const TextStyle(color: Color(0xFF1B120A), fontWeight: FontWeight.bold)),
+                        style: const TextStyle(color: Color(0xFF18181F), fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -455,10 +455,10 @@ class _ActionButton extends StatelessWidget {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 13),
-        side: const BorderSide(color: Color(0xFFD2B48C)),
+        side: const BorderSide(color: Color(0xFFA78BFA)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-      child: Text(label, style: const TextStyle(color: Color(0xFFFFE9B0))),
+      child: Text(label, style: const TextStyle(color: Color(0xFFC4B5FD))),
     );
   }
 }
@@ -507,13 +507,13 @@ class _CheckInCardState extends State<_CheckInCard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .35)),
+        border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .35)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFFD2B48C), size: 20),
+          const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFFA78BFA), size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -530,10 +530,10 @@ class _CheckInCardState extends State<_CheckInCard> {
           _busy
               ? const SizedBox(
                   width: 18, height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD2B48C)))
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFA78BFA)))
               : TextButton(
                   onPressed: _submit,
-                  child: const Text('Check In', style: TextStyle(color: Color(0xFFFFE9B0))),
+                  child: const Text('Check In', style: TextStyle(color: Color(0xFFC4B5FD))),
                 ),
         ],
       ),
@@ -549,15 +549,15 @@ class _CheckedInBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: .12),
+        color: Color(0xFF10B981).withValues(alpha: .12),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.greenAccent.withValues(alpha: .5)),
+        border: Border.all(color: Color(0xFF10B981).withValues(alpha: .5)),
       ),
       child: const Row(
         children: [
-          Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 18),
+          Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
           SizedBox(width: 8),
-          Text('Attendance checked in', style: TextStyle(color: Colors.greenAccent, fontSize: 13)),
+          Text('Attendance checked in', style: TextStyle(color: Color(0xFF10B981), fontSize: 13)),
         ],
       ),
     );
@@ -598,16 +598,16 @@ class _OrganizerPanelState extends State<_OrganizerPanel> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .3)),
+        border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.confirmation_number_rounded, color: Color(0xFFD2B48C), size: 18),
+              const Icon(Icons.confirmation_number_rounded, color: Color(0xFFA78BFA), size: 18),
               const SizedBox(width: 8),
               const Text('Check-in code', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
               const Spacer(),
@@ -621,7 +621,7 @@ class _OrganizerPanelState extends State<_OrganizerPanel> {
                           requesterUid: widget.uid,
                           event: event,
                         )),
-                icon: const Icon(Icons.refresh_rounded, color: Color(0xFFD2B48C), size: 18),
+                icon: const Icon(Icons.refresh_rounded, color: Color(0xFFA78BFA), size: 18),
               ),
             ],
           ),
@@ -644,12 +644,12 @@ class _OrganizerPanelState extends State<_OrganizerPanel> {
                               event: event,
                             )),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: cancelled ? Colors.greenAccent : Colors.redAccent),
+                    side: BorderSide(color: cancelled ? Color(0xFF10B981) : Colors.redAccent),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Text(
                     cancelled ? 'Reopen Event' : 'Cancel Event',
-                    style: TextStyle(color: cancelled ? Colors.greenAccent : Colors.redAccent),
+                    style: TextStyle(color: cancelled ? Color(0xFF10B981) : Colors.redAccent),
                   ),
                 ),
               ),
@@ -679,10 +679,10 @@ class _ParticipantTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: const Color(0xFF2A1B0E),
+                backgroundColor: const Color(0xFF20202A),
                 backgroundImage: image.isEmpty ? null : NetworkImage(image),
                 child: image.isEmpty
-                    ? const Icon(Icons.person_rounded, color: Color(0xFFD2B48C), size: 16)
+                    ? const Icon(Icons.person_rounded, color: Color(0xFFA78BFA), size: 16)
                     : null,
               ),
               const SizedBox(width: 12),
@@ -717,7 +717,7 @@ class _StatusPill extends StatelessWidget {
         label = 'Cancelled';
         break;
       default:
-        color = const Color(0xFFD2B48C);
+        color = const Color(0xFF10B981);
         label = 'Upcoming';
     }
     return Container(
@@ -747,7 +747,7 @@ class _MessageState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 16),
             Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),

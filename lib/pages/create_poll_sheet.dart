@@ -324,7 +324,7 @@ class _CreatePollSheetState extends State<CreatePollSheet> {
                         _scopeId = '';
                       }),
                       selectedColor: CommunityColors.tan,
-                      backgroundColor: const Color(0xFF120C07),
+                      backgroundColor: const Color(0xFF18181F),
                       labelStyle: TextStyle(
                           color: _scope == 'community'
                               ? Colors.black
@@ -339,7 +339,7 @@ class _CreatePollSheetState extends State<CreatePollSheet> {
                           _scopeId = _audience.groups.keys.first;
                         }),
                         selectedColor: CommunityColors.tan,
-                        backgroundColor: const Color(0xFF120C07),
+                        backgroundColor: const Color(0xFF18181F),
                         labelStyle: TextStyle(
                             color: _scope == 'group'
                                 ? Colors.black

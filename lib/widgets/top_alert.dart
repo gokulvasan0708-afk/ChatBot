@@ -140,13 +140,13 @@ class _TopAlertBoxState extends State<_TopAlertBox>
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: widget.isError
-                          ? const Color(0xFF3A1414)
-                          : const Color(0xFF1B120A),
+                          ? const Color(0xFF3A1420)
+                          : const Color(0xFF18181F),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: widget.isError
-                            ? const Color(0xFFB3413B)
-                            : const Color(0xFF8B4513),
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF7C3AED),
                         width: 1,
                       ),
                       boxShadow: const [
@@ -165,8 +165,8 @@ class _TopAlertBoxState extends State<_TopAlertBox>
                                   ? Icons.error_outline_rounded
                                   : Icons.info_outline_rounded),
                           color: widget.isError
-                              ? const Color(0xFFE57373)
-                              : const Color(0xFFE0B27A),
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFFA78BFA),
                           size: 20,
                         ),
                         const SizedBox(width: 10),

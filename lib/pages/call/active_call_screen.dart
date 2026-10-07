@@ -255,7 +255,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> with AiLauncherHide
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         body: SafeArea(
           child: _isVideo ? _buildVideoBody() : _buildVoiceBody(),
         ),
@@ -295,20 +295,20 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> with AiLauncherHide
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               CallActionButton(
-                color: const Color(0xFF8B4513),
+                color: const Color(0xFF7C3AED),
                 icon: _muted ? Icons.mic_off_rounded : Icons.mic_rounded,
                 label: _muted ? 'Unmute' : 'Mute',
                 onTap: _toggleMute,
                 selected: _muted,
               ),
               CallActionButton(
-                color: Colors.red,
+                color: Color(0xFFEF4444),
                 icon: Icons.call_end_rounded,
                 label: 'End',
                 onTap: _endCall,
               ),
               CallActionButton(
-                color: const Color(0xFF8B4513),
+                color: const Color(0xFF7C3AED),
                 icon: _speakerOn
                     ? Icons.volume_up_rounded
                     : Icons.hearing_rounded,
@@ -347,7 +347,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> with AiLauncherHide
                   objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                 )
               : Container(
-                  color: const Color(0xFF1B120A),
+                  color: const Color(0xFF18181F),
                   child: Center(
                     child: CallAvatar(
                       imagePath: widget.otherUserImage,
@@ -396,7 +396,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> with AiLauncherHide
             child: Container(
               width: 100,
               height: 140,
-              color: const Color(0xFF2A1B0E),
+              color: const Color(0xFF20202A),
               child: (_renderersReady && !_cameraOff && _localRenderer != null)
                   ? RTCVideoView(
                       _localRenderer!,
@@ -434,14 +434,14 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> with AiLauncherHide
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 CallActionButton(
-                  color: const Color(0xFF8B4513),
+                  color: const Color(0xFF7C3AED),
                   icon: _muted ? Icons.mic_off_rounded : Icons.mic_rounded,
                   label: _muted ? 'Unmute' : 'Mute',
                   onTap: _toggleMute,
                   selected: _muted,
                 ),
                 CallActionButton(
-                  color: const Color(0xFF8B4513),
+                  color: const Color(0xFF7C3AED),
                   icon: _cameraOff
                       ? Icons.videocam_off_rounded
                       : Icons.videocam_rounded,
@@ -450,13 +450,13 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> with AiLauncherHide
                   selected: _cameraOff,
                 ),
                 CallActionButton(
-                  color: Colors.red,
+                  color: Color(0xFFEF4444),
                   icon: Icons.call_end_rounded,
                   label: 'End',
                   onTap: _endCall,
                 ),
                 CallActionButton(
-                  color: const Color(0xFF8B4513),
+                  color: const Color(0xFF7C3AED),
                   icon: _speakerOn
                       ? Icons.volume_up_rounded
                       : Icons.hearing_rounded,

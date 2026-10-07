@@ -39,17 +39,17 @@ class ShowToAllCollegesToggle extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 14),
           padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF2A1B0E),
+            color: const Color(0xFF20202A),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: const Color(0xFFD2B48C)
+              color: const Color(0xFFA78BFA)
                   .withValues(alpha: value ? .8 : .3),
             ),
           ),
           child: Row(
             children: [
               const Icon(Icons.public_rounded,
-                  color: Color(0xFFD2B48C), size: 22),
+                  color: Color(0xFFA78BFA), size: 22),
               const SizedBox(width: 12),
               const Expanded(
                 child: Column(
@@ -73,7 +73,7 @@ class ShowToAllCollegesToggle extends StatelessWidget {
               ),
               Switch(
                 value: value,
-                activeThumbColor: const Color(0xFFD2B48C),
+                activeThumbColor: const Color(0xFFA78BFA),
                 onChanged: onChanged,
               ),
             ],

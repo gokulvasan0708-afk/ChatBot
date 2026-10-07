@@ -201,7 +201,7 @@ class _EditSkillsSheetState extends State<EditSkillsSheet> {
                                       ? null
                                       : () => setState(() => _skills =
                                           _skills.where((e) => e != s).toList()),
-                                  backgroundColor: const Color(0xFF120C07),
+                                  backgroundColor: const Color(0xFF18181F),
                                   deleteIconColor: CommunityColors.tan,
                                   labelStyle: const TextStyle(
                                       color: CommunityColors.glow, fontSize: 12.5),

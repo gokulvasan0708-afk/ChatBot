@@ -232,7 +232,7 @@ class _CommunityActivitiesPageState extends State<CommunityActivitiesPage> {
             selected: selected,
             onSelected: (_) => setState(() => _filter = e.key),
             selectedColor: CommunityColors.tan,
-            backgroundColor: const Color(0xFF120C07),
+            backgroundColor: const Color(0xFF18181F),
             labelStyle: TextStyle(
               color: selected ? Colors.black : Colors.white70,
               fontSize: 12.5,

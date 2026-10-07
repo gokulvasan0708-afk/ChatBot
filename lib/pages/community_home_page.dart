@@ -365,7 +365,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+                child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
               );
             }
 
@@ -708,7 +708,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
                         child: Material(
-                          color: const Color(0xFF1B120A),
+                          color: const Color(0xFF18181F),
                           borderRadius: BorderRadius.circular(16),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
@@ -726,7 +726,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                                   color: isUrgent
                                       ? Colors.redAccent.withValues(alpha: .55)
                                       : const Color(
-                                          0xFFD2B48C,
+                                          0xFFA78BFA,
                                         ).withValues(alpha: .3),
                                 ),
                               ),
@@ -738,7 +738,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                                         : Icons.campaign_rounded,
                                     color: isUrgent
                                         ? Colors.redAccent
-                                        : const Color(0xFFFFE9B0),
+                                        : const Color(0xFFC4B5FD),
                                     size: 20,
                                   ),
                                   const SizedBox(width: 10),
@@ -826,7 +826,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
@@ -867,7 +867,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                 Text(
                   communityId,
                   style: const TextStyle(
-                    color: Color(0xFFFFE9B0),
+                    color: Color(0xFFC4B5FD),
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -946,9 +946,9 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                               icon: const Icon(Icons.edit_rounded, size: 20),
                               label: const Text('Edit Community'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFFFE9B0),
+                                foregroundColor: const Color(0xFFC4B5FD),
                                 side: const BorderSide(
-                                  color: Color(0xFFD2B48C),
+                                  color: Color(0xFFA78BFA),
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
@@ -1058,7 +1058,7 @@ class _CoverBackdrop extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.black.withValues(alpha: .35),
-                        const Color(0xFF1B120A),
+                        const Color(0xFF18181F),
                       ],
                     ),
                   ),
@@ -1114,7 +1114,7 @@ class _MyProfileButton extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(0xFFD2B48C),
+                    color: const Color(0xFFA78BFA),
                     width: 1.5,
                   ),
                 ),
@@ -1141,13 +1141,13 @@ class _CommunityAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF2A1B0E),
-        border: Border.all(color: const Color(0xFFD2B48C), width: 2),
+        color: const Color(0xFF20202A),
+        border: Border.all(color: const Color(0xFFA78BFA), width: 2),
       ),
       child: logoUrl.isEmpty
           ? Icon(
               Icons.public_rounded,
-              color: const Color(0xFFD2B48C),
+              color: const Color(0xFFA78BFA),
               size: size * 0.42,
             )
           : ClipOval(
@@ -1158,7 +1158,7 @@ class _CommunityAvatar extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => Icon(
                   Icons.public_rounded,
-                  color: const Color(0xFFD2B48C),
+                  color: const Color(0xFFA78BFA),
                   size: size * 0.42,
                 ),
               ),
@@ -1178,7 +1178,7 @@ class _SearchBarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF1B120A),
+      color: const Color(0xFF18181F),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -1190,14 +1190,14 @@ class _SearchBarButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFFD2B48C).withValues(alpha: .35),
+              color: const Color(0xFFA78BFA).withValues(alpha: .35),
             ),
           ),
           child: Row(
             children: [
               const Icon(
                 Icons.search_rounded,
-                color: Color(0xFFFFE9B0),
+                color: Color(0xFFC4B5FD),
                 size: 22,
               ),
               const SizedBox(width: 10),
@@ -1259,7 +1259,7 @@ class _QuickNavCard extends StatelessWidget {
       fit: StackFit.passthrough,
       children: [
         Material(
-          color: const Color(0xFF1B120A),
+          color: const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             onTap: onTap,
@@ -1269,12 +1269,12 @@ class _QuickNavCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFFD2B48C).withValues(alpha: .35),
+                  color: const Color(0xFFA78BFA).withValues(alpha: .35),
                 ),
               ),
               child: Column(
                 children: [
-                  Icon(icon, color: const Color(0xFFFFE9B0), size: 24),
+                  Icon(icon, color: const Color(0xFFC4B5FD), size: 24),
                   const SizedBox(height: 8),
                   Text(
                     label,
@@ -1297,7 +1297,7 @@ class _QuickNavCard extends StatelessWidget {
               child: Text(
                 subtitle!,
                 style: const TextStyle(
-                  color: Color(0xFFD2B48C),
+                  color: Color(0xFFA78BFA),
                   fontSize: 9.5,
                   fontWeight: FontWeight.w600,
                   height: 1.1,
@@ -1342,7 +1342,7 @@ class _QuickNavCard extends StatelessWidget {
                   color: Colors.redAccent,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(0xFF1B120A),
+                    color: const Color(0xFF18181F),
                     width: 1.5,
                   ),
                 ),
@@ -1377,7 +1377,7 @@ class _MessageState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: const Color(0xFFD2B48C)),
+            Icon(icon, size: 44, color: const Color(0xFFA78BFA)),
             const SizedBox(height: 16),
             Text(
               title,
@@ -1397,7 +1397,7 @@ class _MessageState extends StatelessWidget {
             OutlinedButton(
               onPressed: onAction,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFD2B48C)),
+                side: const BorderSide(color: Color(0xFFA78BFA)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -1408,7 +1408,7 @@ class _MessageState extends StatelessWidget {
               ),
               child: Text(
                 actionLabel,
-                style: const TextStyle(color: Color(0xFFFFE9B0)),
+                style: const TextStyle(color: Color(0xFFC4B5FD)),
               ),
             ),
           ],

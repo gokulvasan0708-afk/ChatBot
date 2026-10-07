@@ -17,7 +17,6 @@ import '../services/chat_settings_service.dart';
 import 'package:flutter/foundation.dart';
 
 import '../widgets/top_alert.dart';
-import '../widgets/nexus_sliding_switcher.dart';
 // ================================================================
 // PROFILE IMAGE PROVIDER
 // ----------------------------------------------------------------
@@ -136,22 +135,6 @@ class _ChatPageState extends State<ChatPage>
   String? _connectionsOwnerUid;
   bool _connectionsLoaded = false;
 
-  // ----------------------------------------------------------
-  // UNSEEN-MESSAGE DOTS on the Public | Private switch.
-  // A dot shows on a segment while at least one chat in that section
-  // has an unseen last message -- the same rule the per-chat dot
-  // (_UnreadDot) uses: last message is from the other person and the
-  // current account is not in its readBy list.
-  // ----------------------------------------------------------
-  final ValueNotifier<bool> _publicUnseen = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> _privateUnseen = ValueNotifier<bool>(false);
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _unseenChatsSub;
-  final Map<String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
-      _lastMessageSubs = {};
-  final Map<String, String> _unseenChatOther = {}; // chatId -> other uid
-  final Map<String, bool> _chatHasUnseen = {}; // chatId -> unseen?
-  String? _unseenOwnerUid;
-
   // Cache of resolved user docs (uid -> data) so search suggestions
   // can be computed without extra network round-trips.
   final Map<String, Map<String, dynamic>> _userCache = {};
@@ -178,7 +161,6 @@ class _ChatPageState extends State<ChatPage>
     searchFocusNode.addListener(_onSearchFocusChanged);
 
     _listenConnections();
-    _startUnseenTracking();
 
     // Re-bind the connections listener when the signed-in account
     // changes (account switch / re-login) without ChatPage being rebuilt.
@@ -197,7 +179,6 @@ class _ChatPageState extends State<ChatPage>
     _messageCache.clear();
 
     _listenConnections();
-    _startUnseenTracking();
     setState(() => showPrivate = false);
   }
 
@@ -313,7 +294,6 @@ class _ChatPageState extends State<ChatPage>
           ..addAll(uids);
         _connectionsLoaded = true;
       });
-      _recomputeUnseen();
     }, onError: (Object e) {
       debugPrint('ChatPage connections error: $e');
       if (!mounted || _connectionsOwnerUid != ownerUid) return;
@@ -322,127 +302,11 @@ class _ChatPageState extends State<ChatPage>
     });
   }
 
-  // ==========================================================
-  // UNSEEN-MESSAGE TRACKING (dots on the Public | Private switch)
-  // ==========================================================
-
-  void _stopUnseenTracking() {
-    _unseenChatsSub?.cancel();
-    _unseenChatsSub = null;
-    for (final sub in _lastMessageSubs.values) {
-      sub.cancel();
-    }
-    _lastMessageSubs.clear();
-    _unseenChatOther.clear();
-    _chatHasUnseen.clear();
-    _unseenOwnerUid = null;
-    _publicUnseen.value = false;
-    _privateUnseen.value = false;
-  }
-
-  void _startUnseenTracking() {
-    _stopUnseenTracking();
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    final String uid = user.uid;
-    _unseenOwnerUid = uid;
-
-    final chats = FirebaseFirestore.instance.collection('chats');
-
-    _unseenChatsSub =
-        chats.where('participants', arrayContains: uid).snapshots().listen(
-      (snap) {
-        if (!mounted || _unseenOwnerUid != uid) return;
-
-        final live = <String>{};
-        for (final doc in snap.docs) {
-          final data = doc.data();
-          final hiddenFor = List<String>.from(data['hiddenFor'] ?? []);
-          if (hiddenFor.contains(uid)) continue;
-
-          final participants = List<String>.from(data['participants'] ?? []);
-          final other = participants.firstWhere(
-            (id) => id != uid,
-            orElse: () => '',
-          );
-          if (other.isEmpty) continue;
-
-          live.add(doc.id);
-          _unseenChatOther[doc.id] = other;
-
-          if (!_lastMessageSubs.containsKey(doc.id)) {
-            _lastMessageSubs[doc.id] = chats
-                .doc(doc.id)
-                .collection('messages')
-                .orderBy('sentAt', descending: true)
-                .limit(1)
-                .snapshots()
-                .listen(
-              (m) {
-                if (!mounted || _unseenOwnerUid != uid) return;
-                var unseen = false;
-                if (m.docs.isNotEmpty) {
-                  final d = m.docs.first.data();
-                  final senderId = (d['senderId'] ?? '').toString();
-                  final readBy = List<String>.from(d['readBy'] ?? []);
-                  unseen = senderId.isNotEmpty &&
-                      senderId != uid &&
-                      !readBy.contains(uid);
-                }
-                if (_chatHasUnseen[doc.id] != unseen) {
-                  _chatHasUnseen[doc.id] = unseen;
-                  _recomputeUnseen();
-                }
-              },
-              onError: (Object e) =>
-                  debugPrint('ChatPage unseen last-message error: $e'),
-            );
-          }
-        }
-
-        // Chats that were deleted / hidden stop counting.
-        for (final id
-            in _lastMessageSubs.keys.where((k) => !live.contains(k)).toList()) {
-          _lastMessageSubs.remove(id)?.cancel();
-          _chatHasUnseen.remove(id);
-          _unseenChatOther.remove(id);
-        }
-        _recomputeUnseen();
-      },
-      onError: (Object e) => debugPrint('ChatPage unseen chats error: $e'),
-    );
-  }
-
-  void _recomputeUnseen() {
-    // Public / Private cannot be told apart until connections are known.
-    if (!_connectionsLoaded) return;
-
-    var pub = false;
-    var priv = false;
-    _chatHasUnseen.forEach((chatId, unseen) {
-      if (!unseen) return;
-      final other = _unseenChatOther[chatId];
-      if (other == null) return;
-      if (_connectedUids.contains(other)) {
-        priv = true;
-      } else {
-        pub = true;
-      }
-    });
-
-    if (_publicUnseen.value != pub) _publicUnseen.value = pub;
-    if (_privateUnseen.value != priv) _privateUnseen.value = priv;
-  }
-
   @override
   void dispose() {
     widget.publicResetSignal?.removeListener(_onPublicResetSignal);
     _connectionsSub?.cancel();
     _authSub?.cancel();
-    _stopUnseenTracking();
-    _publicUnseen.dispose();
-    _privateUnseen.dispose();
     _accountIdSearchDebounce?.cancel();
     searchFocusNode.removeListener(_onSearchFocusChanged);
     searchFocusNode.dispose();
@@ -1046,6 +910,24 @@ class _ChatPageState extends State<ChatPage>
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      // Save the request notification so it stays in the receiver's
+      // Notifications page for 7 days (even after they accept/decline).
+      try {
+        await firestore.collection('notifications').add({
+          'receiverUid': otherUserUid,
+          'senderUid': currentUser.uid,
+          'senderName': senderName,
+          'message': '$senderName sent you a connection request',
+          'type': 'connection_request',
+          'requestId': connectionDocId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 7))),
+        });
+      } catch (e) {
+        debugPrint('Save connection notification error: $e');
+      }
+
       final receiverDoc =
           await firestore.collection('users').doc(otherUserUid).get();
 
@@ -1115,7 +997,7 @@ class _ChatPageState extends State<ChatPage>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1B120A),
+          backgroundColor: const Color(0xFF18181F),
           title: const Text(
             'Disconnect',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -1129,7 +1011,7 @@ class _ChatPageState extends State<ChatPage>
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text(
                 'CANCEL',
-                style: TextStyle(color: Color(0xFFD2B48C)),
+                style: TextStyle(color: Color(0xFFA78BFA)),
               ),
             ),
             TextButton(
@@ -1187,7 +1069,7 @@ class _ChatPageState extends State<ChatPage>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
@@ -1204,9 +1086,9 @@ class _ChatPageState extends State<ChatPage>
                   height: 90,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF2A1B0E),
+                    color: const Color(0xFF20202A),
                     border: Border.all(
-                      color: const Color(0xFFD2B48C),
+                      color: const Color(0xFFA78BFA),
                       width: 2,
                     ),
                   ),
@@ -1252,7 +1134,7 @@ class _ChatPageState extends State<ChatPage>
                         height: 50,
                         child: Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFFD2B48C),
+                            color: Color(0xFFA78BFA),
                           ),
                         ),
                       );
@@ -1302,7 +1184,7 @@ class _ChatPageState extends State<ChatPage>
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF8B4513),
+                                  backgroundColor: const Color(0xFF7C3AED),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -1341,7 +1223,7 @@ class _ChatPageState extends State<ChatPage>
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2A1B0E),
+                                  backgroundColor: const Color(0xFF20202A),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -1383,7 +1265,7 @@ class _ChatPageState extends State<ChatPage>
                         child: Container(
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2A1B0E),
+                            color: const Color(0xFF20202A),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.white24),
                           ),
@@ -1418,7 +1300,7 @@ class _ChatPageState extends State<ChatPage>
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8B4513),
+                                backgroundColor: const Color(0xFF7C3AED),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -1457,7 +1339,7 @@ class _ChatPageState extends State<ChatPage>
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2A1B0E),
+                                backgroundColor: const Color(0xFF20202A),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -1604,7 +1486,7 @@ class _ChatPageState extends State<ChatPage>
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1B120A),
+          backgroundColor: const Color(0xFF18181F),
           title: const Text(
             'Delete Chat',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -1618,7 +1500,7 @@ class _ChatPageState extends State<ChatPage>
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text(
                 'CANCEL',
-                style: TextStyle(color: Color(0xFFD2B48C)),
+                style: TextStyle(color: Color(0xFFA78BFA)),
               ),
             ),
             TextButton(
@@ -1802,22 +1684,25 @@ class _ChatPageState extends State<ChatPage>
                   chatSearchMode
                       ? Icons.manage_search_rounded
                       : Icons.search_rounded,
-                  color: const Color(0xFFD2B48C),
+                  color: const Color(0xFFA78BFA),
                 ),
                 suffixIcon: _buildSearchSuffixIcon(),
                 filled: true,
-                fillColor: const Color(0xFF1B120A),
+                fillColor: const Color(0xFF18181F),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: Color(0xFF292934)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(
+                    color: Color(0xFF7C3AED),
+                    width: 1.4,
+                  ),
                 ),
               ),
             ),
@@ -1833,23 +1718,9 @@ class _ChatPageState extends State<ChatPage>
           // ==================================================
           // PUBLIC / PRIVATE TOGGLE
           // ==================================================
-          // Same sliding switcher as Hubs (Community | Clubs | Groups),
-          // with an unseen-messages dot on each segment's top-right.
-          ValueListenableBuilder<bool>(
-            valueListenable: _publicUnseen,
-            builder: (context, publicUnseen, _) {
-              return ValueListenableBuilder<bool>(
-                valueListenable: _privateUnseen,
-                builder: (context, privateUnseen, _) {
-                  return NexusSlidingSwitcher(
-                    labels: const ['Public', 'Private'],
-                    selectedIndex: showPrivate ? 1 : 0,
-                    badges: [publicUnseen, privateUnseen],
-                    onChanged: (i) => setState(() => showPrivate = i == 1),
-                  );
-                },
-              );
-            },
+          _PublicPrivateToggle(
+            showPrivate: showPrivate,
+            onTap: () => setState(() => showPrivate = !showPrivate),
           ),
 
           const SizedBox(height: 10),
@@ -1874,7 +1745,7 @@ class _ChatPageState extends State<ChatPage>
           height: 20,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: Color(0xFFD2B48C),
+            color: Color(0xFFA78BFA),
           ),
         ),
       );
@@ -1897,8 +1768,8 @@ class _ChatPageState extends State<ChatPage>
       icon: Icon(
         Icons.forum_rounded,
         color: chatSearchMode
-            ? const Color(0xFF6B4A2A)
-            : const Color(0xFFD2B48C),
+            ? const Color(0xFF343440)
+            : const Color(0xFFA78BFA),
       ),
     );
   }
@@ -1918,7 +1789,7 @@ class _ChatPageState extends State<ChatPage>
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: 16),
           child: Center(
-            child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+            child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
           ),
         );
       }
@@ -1940,7 +1811,7 @@ class _ChatPageState extends State<ChatPage>
           return ListTile(
             leading: CircleAvatar(
               radius: 20,
-              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundColor: const Color(0xFF20202A),
               backgroundImage: _profileImageProvider(r['image'] as String),
               child: (r['image'] as String).isEmpty
                   ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -2020,7 +1891,7 @@ class _ChatPageState extends State<ChatPage>
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: const Color(0xFF8B4513),
+              color: const Color(0xFF7C3AED),
               borderRadius: BorderRadius.circular(15),
             ),
             child: const Row(
@@ -2042,7 +1913,7 @@ class _ChatPageState extends State<ChatPage>
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: const Color(0xFF8B4513),
+              color: const Color(0xFF7C3AED),
               borderRadius: BorderRadius.circular(15),
             ),
             child: const Row(
@@ -2063,7 +1934,7 @@ class _ChatPageState extends State<ChatPage>
           child: ListTile(
             leading: CircleAvatar(
               radius: 20,
-              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundColor: const Color(0xFF20202A),
               backgroundImage: _profileImageProvider(image),
               child: image.isEmpty
                   ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -2081,7 +1952,7 @@ class _ChatPageState extends State<ChatPage>
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
             trailing: isConnected
-                ? Container(width: 3, height: 28, color: const Color(0xFF8B4513))
+                ? Container(width: 3, height: 28, color: const Color(0xFF7C3AED))
                 : null,
             onTap: () {
               FocusScope.of(context).unfocus();
@@ -2131,7 +2002,7 @@ class _ChatPageState extends State<ChatPage>
             return ListTile(
               leading: CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFF2A1B0E),
+                backgroundColor: const Color(0xFF20202A),
                 backgroundImage: _profileImageProvider(image),
                 child: image.isEmpty
                     ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -2145,7 +2016,7 @@ class _ChatPageState extends State<ChatPage>
                 ),
               ),
               trailing: isConnected
-                  ? Container(width: 3, height: 28, color: const Color(0xFF8B4513))
+                  ? Container(width: 3, height: 28, color: const Color(0xFF7C3AED))
                   : null,
               onTap: () {
                 _openChatFromSearch(
@@ -2165,9 +2036,9 @@ class _ChatPageState extends State<ChatPage>
     return Container(
       margin: const EdgeInsets.only(top: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFFFFDD0).withValues(alpha: 0.25)),
+        border: Border.all(color: const Color(0xFFEDE9FE).withValues(alpha: 0.25)),
       ),
       child: ListView.separated(
         shrinkWrap: true,
@@ -2240,7 +2111,7 @@ class _ChatPageState extends State<ChatPage>
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+              child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
             ),
           );
         }
@@ -2252,7 +2123,7 @@ class _ChatPageState extends State<ChatPage>
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+              child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
             ),
           );
         }
@@ -2364,7 +2235,7 @@ class _ChatPageState extends State<ChatPage>
                         contentPadding: const EdgeInsets.symmetric(horizontal: 5),
                         leading: CircleAvatar(
                           radius: 25,
-                          backgroundColor: const Color(0xFF2A1B0E),
+                          backgroundColor: const Color(0xFF20202A),
                           backgroundImage: _profileImageProvider(image),
                           child: image.isEmpty
                               ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -2483,7 +2354,7 @@ class _ChatPageState extends State<ChatPage>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: isTyping ? Colors.orange : Colors.white54,
+                      color: isTyping ? const Color(0xFF22D3EE) : Colors.white54,
                       fontSize: 11,
                     ),
                   ),
@@ -2541,7 +2412,7 @@ class _UnreadDot extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: const BoxDecoration(
-            color: Color(0xFFFFE9B0),
+            color: Color(0xFFC4B5FD),
             shape: BoxShape.circle,
           ),
         );
@@ -2603,7 +2474,7 @@ class _GlassShimmerTextState extends State<_GlassShimmerText>
               end: end,
               colors: const [
                 Colors.white,
-                Color(0xFFFFFDF0),
+                Color(0xFFFFFFFF),
                 Colors.white,
               ],
               stops: const [0.35, 0.5, 0.65],
@@ -2738,3 +2609,53 @@ class _AnimatedTraceBorder extends StatelessWidget {
     );
   }
 }
+
+// ================================================================
+// PUBLIC / PRIVATE TOGGLE
+// ================================================================
+
+class _PublicPrivateToggle extends StatelessWidget {
+  final bool showPrivate;
+  final VoidCallback onTap;
+
+  const _PublicPrivateToggle({required this.showPrivate, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+        decoration: BoxDecoration(
+          color: showPrivate
+              ? const Color(0xFF7C3AED).withValues(alpha: 0.35)
+              : const Color(0xFF18181F),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFA78BFA).withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              showPrivate ? Icons.lock_rounded : Icons.public_rounded,
+              size: 16,
+              color: const Color(0xFFC4B5FD),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              showPrivate ? 'Private' : 'Public',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

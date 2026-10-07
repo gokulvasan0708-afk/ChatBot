@@ -51,7 +51,7 @@ import '../widgets/top_alert.dart';
 // (its active Profile ID) -- never on its other profiles.
 // ================================================================
 
-const Color _tan = Color(0xFFD2B48C);
+const Color _tan = Color(0xFFA78BFA);
 
 const List<String> _kCategories = [
   'All',
@@ -68,13 +68,13 @@ const List<String> _kCategories = [
 Color _roleColor(String role) {
   switch (role) {
     case 'Principal':
-      return const Color(0xFFFFC107);
+      return const Color(0xFFF59E0B);
     case 'Controller':
-      return const Color(0xFFB57BFF);
+      return const Color(0xFFA78BFA);
     case 'HOD':
-      return const Color(0xFF4FA3FF);
+      return const Color(0xFF22D3EE);
     case 'Faculty':
-      return const Color(0xFF3DDC97);
+      return const Color(0xFF10B981);
     default:
       return _tan;
   }
@@ -178,7 +178,7 @@ class _CommunityMembersPageState extends State<CommunityMembersPage> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFF2A1B0E),
+            color: const Color(0xFF20202A),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _tan.withValues(alpha: .4)),
           ),
@@ -204,7 +204,7 @@ class _CommunityMembersPageState extends State<CommunityMembersPage> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF120C06),
+      backgroundColor: const Color(0xFF18181F),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -326,8 +326,8 @@ class _PillChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF8B4513).withValues(alpha: .55)
-              : const Color(0xFF1A1208),
+              ? const Color(0xFF7C3AED).withValues(alpha: .55)
+              : const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected ? _tan : _tan.withValues(alpha: .3),
@@ -337,7 +337,7 @@ class _PillChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? const Color(0xFFFFE9B0) : Colors.white70,
+            color: selected ? const Color(0xFFC4B5FD) : Colors.white70,
             fontSize: 13,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
           ),
@@ -361,14 +361,14 @@ class _RoleBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: staff
             ? c.withValues(alpha: .18)
-            : const Color(0xFF8B4513).withValues(alpha: .3),
+            : const Color(0xFF7C3AED).withValues(alpha: .3),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: c.withValues(alpha: staff ? .8 : .5)),
       ),
       child: Text(
         role,
         style: TextStyle(
-          color: staff ? c : const Color(0xFFFFE9B0),
+          color: staff ? c : const Color(0xFFC4B5FD),
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
@@ -408,7 +408,7 @@ class _PersonTile extends StatelessWidget {
         role: badge ?? '',
         child: CircleAvatar(
           radius: 22,
-          backgroundColor: const Color(0xFF2A1B0E),
+          backgroundColor: const Color(0xFF20202A),
           backgroundImage: hasImage ? NetworkImage(image) : null,
           // No photo -> first letter of the shown name (or role), same
           // as the "All" list.
@@ -628,7 +628,7 @@ Future<void> _showMemberActions(
 
   final choice = await showModalBottomSheet<String>(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
@@ -664,7 +664,7 @@ Future<void> _showMemberActions(
           if (canAssignRep)
             option(Icons.how_to_reg_rounded, 'Assign Representative',
                 'assignRep',
-                color: const Color(0xFFFFE9B0)),
+                color: const Color(0xFFC4B5FD)),
           if (canRemoveRep)
             option(Icons.person_off_rounded, 'Remove Representative',
                 'removeRep'),
@@ -753,7 +753,7 @@ Future<void> _confirmRep(
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, true),
           child: Text(assign ? 'ASSIGN' : 'REMOVE',
-              style: const TextStyle(color: Color(0xFFFFE9B0))),
+              style: const TextStyle(color: Color(0xFFC4B5FD))),
         ),
       ],
     ),
@@ -928,7 +928,7 @@ class _PersonalProfileLoaderState extends State<_PersonalProfileLoader> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0704),
+      backgroundColor: const Color(0xFF0F0F14),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

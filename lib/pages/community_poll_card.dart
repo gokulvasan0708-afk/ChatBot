@@ -430,7 +430,7 @@ class _CommunityPollCardState extends State<CommunityPollCard> {
           decoration: BoxDecoration(
             color: selected
                 ? CommunityColors.tan.withValues(alpha: .16)
-                : const Color(0xFF120C07),
+                : const Color(0xFF18181F),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected
@@ -476,7 +476,7 @@ class _CommunityPollCardState extends State<CommunityPollCard> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF120C07),
+          color: const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isMine
@@ -517,7 +517,7 @@ class _CommunityPollCardState extends State<CommunityPollCard> {
                 minHeight: 6,
                 backgroundColor: Colors.white10,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isMine ? CommunityColors.tan : const Color(0xFF8B6B45),
+                  isMine ? CommunityColors.tan : const Color(0xFF777784),
                 ),
               ),
             ),
@@ -539,7 +539,7 @@ class _HiddenResults extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: CommunityColors.tan.withValues(alpha: .2)),
       ),

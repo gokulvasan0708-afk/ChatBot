@@ -3,22 +3,12 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
 // ================================================================
-// NEXUS LOGO
+// NEXUS LOGO  (purple redesign)
 // ----------------------------------------------------------------
-// Single shared brand mark used everywhere the "Nexus" wordmark
-// appears (Splash Screen, Get Started Page, Login Page) so the
-// glyph style, gradient and tagline are always pixel-identical —
-// only the sizing changes per screen.
-//
-//   NexusLogo(
-//     nSize: 84,
-//     wordSize: 30,
-//     letterSpacing: 10,
-//   )
-//
-// Every screen using this widget automatically stays in sync if
-// the brand gradient/tagline ever needs to change — edit it here
-// once instead of in every page.
+// Shared brand mark: gradient "N" (purple -> cyan) + NEXUS wordmark
+// + tagline "Connect • Collaborate • Grow".
+// Same constructor as before, so Splash / Get Started / Login (and
+// any other screen using it) stay in sync from this one file.
 // ================================================================
 
 class NexusLogo extends StatelessWidget {
@@ -31,7 +21,7 @@ class NexusLogo extends StatelessWidget {
   /// Letter spacing of the "NEXUS" wordmark.
   final double letterSpacing;
 
-  /// Whether to show the "CONNECT • CREATE • EXPLORE" tagline.
+  /// Whether to show the tagline.
   final bool showTagline;
 
   /// Font size of the tagline (when shown).
@@ -56,24 +46,45 @@ class NexusLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // ==========================================
-        // "N" MARK
+        // "N" MARK  (soft glow + purple -> cyan gradient)
         // ==========================================
-        ShaderMask(
-          shaderCallback: (bounds) =>
-              AppColors.goldGradient.createShader(bounds),
-          child: Text(
-            'N',
-            style: TextStyle(
-              fontSize: nSize,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 1,
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: nSize * 0.9,
+              height: nSize * 0.9,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: nSize * 0.55,
+                    spreadRadius: nSize * 0.05,
+                  ),
+                ],
+              ),
             ),
-          ),
+            ShaderMask(
+              shaderCallback: (bounds) =>
+                  AppColors.brandGradient.createShader(bounds),
+              child: Text(
+                'N',
+                style: TextStyle(
+                  fontSize: nSize,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  height: 1,
+                ),
+              ),
+            ),
+          ],
         ),
 
         SizedBox(height: nToWordGap ?? nSize * 0.11),
@@ -81,29 +92,25 @@ class NexusLogo extends StatelessWidget {
         // ==========================================
         // "NEXUS" WORDMARK
         // ==========================================
-        ShaderMask(
-          shaderCallback: (bounds) =>
-              AppColors.goldGradient.createShader(bounds),
-          child: Text(
-            'NEXUS',
-            style: TextStyle(
-              fontSize: wordSize,
-              fontWeight: FontWeight.w700,
-              letterSpacing: letterSpacing,
-              color: Colors.white,
-            ),
+        Text(
+          'NEXUS',
+          style: TextStyle(
+            fontSize: wordSize,
+            fontWeight: FontWeight.w700,
+            letterSpacing: letterSpacing,
+            color: c.textPrimary,
           ),
         ),
 
         if (showTagline) ...[
           SizedBox(height: wordToTaglineGap ?? wordSize * 0.33),
           Text(
-            'CONNECT • CREATE • EXPLORE',
+            'Connect  •  Collaborate  •  Grow',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.tan.withValues(alpha: 0.75),
+              color: AppColors.primaryLight,
               fontSize: taglineSize,
-              letterSpacing: 3,
+              letterSpacing: 1.6,
               fontWeight: FontWeight.w500,
             ),
           ),

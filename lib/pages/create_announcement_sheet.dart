@@ -166,7 +166,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF1B120A),
+          color: Color(0xFF18181F),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -233,13 +233,13 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                     child: Container(
                       height: 140,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2A1B0E),
+                        color: const Color(0xFF20202A),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .4)),
+                        border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .4)),
                       ),
                       child: _uploadingImage
                           ? const Center(
-                              child: CircularProgressIndicator(color: Color(0xFFD2B48C)))
+                              child: CircularProgressIndicator(color: Color(0xFFA78BFA)))
                           : (_imageUrl != null
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(14),
@@ -247,7 +247,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                                 )
                               : const Center(
                                   child: Icon(Icons.add_photo_alternate_rounded,
-                                      color: Color(0xFFD2B48C), size: 32),
+                                      color: Color(0xFFA78BFA), size: 32),
                                 )),
                     ),
                   ),
@@ -277,7 +277,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A1B0E),
+                      color: const Color(0xFF20202A),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -334,7 +334,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                   children: [
                     Switch(
                       value: _isUrgent,
-                      activeThumbColor: const Color(0xFFD2B48C),
+                      activeThumbColor: const Color(0xFFA78BFA),
                       onChanged: (v) => setState(() => _isUrgent = v),
                     ),
                     const Text('Mark as urgent / important',
@@ -361,11 +361,11 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                                   width: 18,
                                   height: 18,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2.2, color: Color(0xFF1B120A)),
+                                      strokeWidth: 2.2, color: Color(0xFF18181F)),
                                 )
                               : const Text('Post Announcement',
                                   style: TextStyle(
-                                      color: Color(0xFF1B120A), fontWeight: FontWeight.bold)),
+                                      color: Color(0xFF18181F), fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ),
@@ -425,7 +425,7 @@ class _Field extends StatelessWidget {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
-        fillColor: const Color(0xFF2A1B0E),
+        fillColor: const Color(0xFF20202A),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       ),
@@ -448,14 +448,14 @@ class _Chip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           gradient: selected ? AppColors.goldGradient : null,
-          color: selected ? null : const Color(0xFF2A1B0E),
+          color: selected ? null : const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: selected ? 1 : .4)),
+          border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: selected ? 1 : .4)),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? const Color(0xFF1B120A) : Colors.white70,
+            color: selected ? const Color(0xFF18181F) : Colors.white70,
             fontWeight: FontWeight.w600,
             fontSize: 12.5,
           ),

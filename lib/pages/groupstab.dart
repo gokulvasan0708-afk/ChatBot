@@ -251,7 +251,7 @@ class _GroupsTabState extends State<GroupsTab> {
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+            child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
           );
         }
 
@@ -404,10 +404,10 @@ class _GroupSearchField extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFD2B48C).withValues(alpha: .35),
+          color: const Color(0xFFA78BFA).withValues(alpha: .35),
         ),
       ),
       child: Row(
@@ -478,7 +478,7 @@ class _GroupSuggestionTile extends StatelessWidget {
     final String image = (group['groupProfileImage'] ?? '').toString();
 
     return Material(
-      color: const Color(0xFF1B120A),
+      color: const Color(0xFF18181F),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -488,14 +488,14 @@ class _GroupSuggestionTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFD2B48C).withValues(alpha: .5),
+              color: const Color(0xFFA78BFA).withValues(alpha: .5),
             ),
           ),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: const Color(0xFF2A1B0E),
+                backgroundColor: const Color(0xFF20202A),
                 backgroundImage: _profileImageProvider(image),
                 child: image.isEmpty
                     ? const Icon(Icons.diversity_3_rounded,
@@ -534,14 +534,14 @@ class _GroupSuggestionTile extends StatelessWidget {
               const Text(
                 'Join',
                 style: TextStyle(
-                  color: Color(0xFFD2B48C),
+                  color: Color(0xFFA78BFA),
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
               ),
               const SizedBox(width: 4),
               const Icon(Icons.arrow_forward_ios_rounded,
-                  color: Color(0xFFD2B48C), size: 13),
+                  color: Color(0xFFA78BFA), size: 13),
             ],
           ),
         ),
@@ -574,7 +574,7 @@ class _AddGroupButton extends StatelessWidget {
           child: const SizedBox(
             width: 44,
             height: 44,
-            child: Icon(Icons.add_rounded, color: Color(0xFF1B120A), size: 24),
+            child: Icon(Icons.add_rounded, color: Color(0xFF18181F), size: 24),
           ),
         ),
       ),
@@ -780,7 +780,7 @@ class _GroupListTileState extends State<_GroupListTile> {
         (myReadAt == null || lastMessageAtTs.toDate().isAfter(myReadAt));
 
     return Material(
-      color: const Color(0xFF1B120A),
+      color: const Color(0xFF18181F),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -830,14 +830,14 @@ class _GroupListTileState extends State<_GroupListTile> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFD2B48C).withValues(alpha: .25),
+                color: const Color(0xFFA78BFA).withValues(alpha: .25),
               ),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: const Color(0xFF2A1B0E),
+                  backgroundColor: const Color(0xFF20202A),
                   backgroundImage: _profileImageProvider(image),
                   child: image.isEmpty
                       ? const Icon(Icons.diversity_3_rounded,
@@ -883,12 +883,12 @@ class _GroupListTileState extends State<_GroupListTile> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.bedtime_rounded,
-                                size: 12, color: Color(0xFFD2B48C)),
+                                size: 12, color: Color(0xFFA78BFA)),
                             const SizedBox(width: 4),
                             Text(
                               sleepLabel(sleepUntil, sleepType),
                               style: const TextStyle(
-                                color: Color(0xFFD2B48C),
+                                color: Color(0xFFA78BFA),
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -923,11 +923,11 @@ class _GroupListTileState extends State<_GroupListTile> {
                         width: 10,
                         height: 10,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFFFE9B0),
+                          color: Color(0xFFC4B5FD),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0x66FFE9B0),
+                              color: Color(0x66C4B5FD),
                               blurRadius: 6,
                               spreadRadius: 1,
                             ),
@@ -1034,15 +1034,15 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: selected ? AppColors.goldGradient : null,
-          color: selected ? null : const Color(0xFF1B120A),
+          color: selected ? null : const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(alpha: selected ? 0 : .3),
+            color: const Color(0xFFA78BFA).withValues(alpha: selected ? 0 : .3),
           ),
         ),
         child: Icon(
           icon,
-          color: selected ? const Color(0xFF1B120A) : const Color(0xFFD2B48C),
+          color: selected ? const Color(0xFF18181F) : const Color(0xFFA78BFA),
           size: 20,
         ),
       ),
@@ -1054,9 +1054,9 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF120B06),
+      backgroundColor: const Color(0xFF18181F),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF120B06),
+        backgroundColor: const Color(0xFF18181F),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -1103,7 +1103,7 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                     ConnectionState.waiting) {
                   return const Center(
                     child:
-                        CircularProgressIndicator(color: Color(0xFFD2B48C)),
+                        CircularProgressIndicator(color: Color(0xFFA78BFA)),
                   );
                 }
 
@@ -1183,7 +1183,7 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                         Center(
                           child: CircleAvatar(
                             radius: 48,
-                            backgroundColor: const Color(0xFF2A1B0E),
+                            backgroundColor: const Color(0xFF20202A),
                             backgroundImage: _profileImageProvider(image),
                             child: image.isEmpty
                                 ? const Icon(Icons.diversity_3_rounded,
@@ -1355,19 +1355,19 @@ class _CommunityInfoIcon extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B120A),
+              color: const Color(0xFF18181F),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFFD2B48C).withValues(alpha: .3),
+                color: const Color(0xFFA78BFA).withValues(alpha: .3),
               ),
             ),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundColor: const Color(0xFF20202A),
               backgroundImage: _profileImageProvider(logo),
               child: logo.isEmpty
                   ? const Icon(Icons.school_rounded,
-                      color: Color(0xFFD2B48C), size: 18)
+                      color: Color(0xFFA78BFA), size: 18)
                   : null,
             ),
           ),
@@ -1380,7 +1380,7 @@ class _CommunityInfoIcon extends StatelessWidget {
 void _showCommunityInfoSheet(BuildContext context, String communityDocId) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
@@ -1397,7 +1397,7 @@ void _showCommunityInfoSheet(BuildContext context, String communityDocId) {
             return const SizedBox(
               height: 160,
               child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+                child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
               ),
             );
           }
@@ -1421,7 +1421,7 @@ void _showCommunityInfoSheet(BuildContext context, String communityDocId) {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(icon, color: const Color(0xFFD2B48C), size: 20),
+                  Icon(icon, color: const Color(0xFFA78BFA), size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -1451,7 +1451,7 @@ void _showCommunityInfoSheet(BuildContext context, String communityDocId) {
                 Center(
                   child: CircleAvatar(
                     radius: 42,
-                    backgroundColor: const Color(0xFF2A1B0E),
+                    backgroundColor: const Color(0xFF20202A),
                     backgroundImage: _profileImageProvider(logo),
                     child: logo.isEmpty
                         ? const Icon(Icons.school_rounded,
@@ -1476,7 +1476,7 @@ void _showCommunityInfoSheet(BuildContext context, String communityDocId) {
                   Center(
                     child: Text(communityId,
                         style: const TextStyle(
-                            color: Color(0xFFFFE9B0),
+                            color: Color(0xFFC4B5FD),
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600)),
                   ),
@@ -1568,7 +1568,7 @@ class _GroupFilesGrid extends StatelessWidget {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 32),
             child: Center(
-              child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+              child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
             ),
           );
         }
@@ -1605,7 +1605,7 @@ class _GroupFilesGrid extends StatelessWidget {
             final String fileName = (data['fileName'] ?? '').toString();
 
             return Material(
-              color: const Color(0xFF1B120A),
+              color: const Color(0xFF18181F),
               borderRadius: BorderRadius.circular(12),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
@@ -1613,7 +1613,7 @@ class _GroupFilesGrid extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: const Color(0xFFD2B48C).withValues(alpha: .25),
+                      color: const Color(0xFFA78BFA).withValues(alpha: .25),
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1633,7 +1633,7 @@ class _GroupFilesGrid extends StatelessWidget {
                             children: [
                               Icon(
                                 _iconFor(messageType),
-                                color: const Color(0xFFD2B48C),
+                                color: const Color(0xFFA78BFA),
                                 size: 24,
                               ),
                               const SizedBox(height: 6),
@@ -1712,7 +1712,7 @@ void _showGroupIdDialog(BuildContext context, String groupId) {
     context: context,
     builder: (context) {
       return AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         title: const Text(
           'Group ID',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -1721,15 +1721,15 @@ void _showGroupIdDialog(BuildContext context, String groupId) {
           width: double.infinity,
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: const Color(0xFF2A1B0E),
+            color: const Color(0xFF20202A),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFD2B48C)),
+            border: Border.all(color: const Color(0xFFA78BFA)),
           ),
           child: SelectableText(
             groupId,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFFD2B48C),
+              color: Color(0xFFA78BFA),
               fontSize: 18,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
@@ -1739,7 +1739,7 @@ void _showGroupIdDialog(BuildContext context, String groupId) {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('CLOSE', style: TextStyle(color: Color(0xFFD2B48C))),
+            child: const Text('CLOSE', style: TextStyle(color: Color(0xFFA78BFA))),
           ),
         ],
       );
@@ -1884,7 +1884,7 @@ void _openGroupSettingsSheet(
 
   showModalBottomSheet(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
@@ -1914,7 +1914,7 @@ void _openGroupSettingsSheet(
                 if (canEditCommunity && communityDocId.isNotEmpty)
                   ListTile(
                     leading: const Icon(Icons.edit_rounded,
-                        color: Color(0xFFD2B48C)),
+                        color: Color(0xFFA78BFA)),
                     title: const Text(
                       'Edit Community',
                       style: TextStyle(color: Colors.white),
@@ -1927,7 +1927,7 @@ void _openGroupSettingsSheet(
               ] else if (isAdmin || isCoAdmin)
                 ListTile(
                   leading: const Icon(Icons.edit_rounded,
-                      color: Color(0xFFD2B48C)),
+                      color: Color(0xFFA78BFA)),
                   title: const Text(
                     'Edit Group',
                     style: TextStyle(color: Colors.white),
@@ -1945,7 +1945,7 @@ void _openGroupSettingsSheet(
                 if (!isCommunityChat || canSleepCommunity)
                 ListTile(
                   leading: const Icon(Icons.bedtime_rounded,
-                      color: Color(0xFFD2B48C)),
+                      color: Color(0xFFA78BFA)),
                   title: Text(
                     isSleeping ? 'Sleep Mode (active)' : 'Sleep Mode',
                     style: const TextStyle(color: Colors.white),
@@ -2153,7 +2153,7 @@ class SleepModeDialogState extends State<SleepModeDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
@@ -2226,16 +2226,16 @@ class SleepModeDialogState extends State<SleepModeDialog> {
                         height: 48,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2A1B0E),
+                          color: const Color(0xFF20202A),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFFD2B48C).withValues(alpha: .3),
+                            color: const Color(0xFFA78BFA).withValues(alpha: .3),
                           ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _durationUnit,
-                            dropdownColor: const Color(0xFF2A1B0E),
+                            dropdownColor: const Color(0xFF20202A),
                             isExpanded: true,
                             style: const TextStyle(color: Colors.white, fontSize: 14),
                             items: const [
@@ -2261,10 +2261,10 @@ class SleepModeDialogState extends State<SleepModeDialog> {
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A1B0E),
+                      color: const Color(0xFF20202A),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFD2B48C).withValues(alpha: .3),
+                        color: const Color(0xFFA78BFA).withValues(alpha: .3),
                       ),
                     ),
                     child: Row(
@@ -2310,14 +2310,14 @@ class SleepModeDialogState extends State<SleepModeDialog> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                  color: Color(0xFF1B120A),
+                                  color: Color(0xFF18181F),
                                   strokeWidth: 2.4,
                                 ),
                               )
                             : const Text(
                                 'Set Sleep Mode',
                                 style: TextStyle(
-                                  color: Color(0xFF1B120A),
+                                  color: Color(0xFF18181F),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -2519,7 +2519,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
 
     await showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
@@ -2597,6 +2597,24 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      // Save the invite notification so it stays in the receiver's
+      // Notifications page for 7 days (even after they accept/decline).
+      try {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'receiverUid': member.uid,
+          'senderUid': user.uid,
+          'senderName': senderName,
+          'message': '$senderName invited you to join "$currentGroupName"',
+          'type': 'group_request',
+          'requestId': requestRef.id,
+          'createdAt': FieldValue.serverTimestamp(),
+          'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(days: 7))),
+        });
+      } catch (e) {
+        debugPrint('Save group notification error: $e');
+      }
+
       await FirebaseFirestore.instance
           .collection('groups')
           .doc(widget.groupDocId)
@@ -2661,7 +2679,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
@@ -2670,7 +2688,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
             ? const Padding(
                 padding: EdgeInsets.all(32),
                 child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+                  child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
                 ),
               )
             : SingleChildScrollView(
@@ -2702,12 +2720,12 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
                             onTap: _uploadingImage ? null : _pickImage,
                             child: CircleAvatar(
                               radius: 44,
-                              backgroundColor: const Color(0xFF2A1B0E),
+                              backgroundColor: const Color(0xFF20202A),
                               backgroundImage:
                                   _profileImageProvider(_groupImageUrl ?? ''),
                               child: _uploadingImage
                                   ? const CircularProgressIndicator(
-                                      color: Color(0xFFD2B48C))
+                                      color: Color(0xFFA78BFA))
                                   : (_groupImageUrl ?? '').isEmpty
                                       ? const Icon(Icons.diversity_3_rounded,
                                           color: Colors.white70, size: 36)
@@ -2718,7 +2736,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
                             bottom: 0,
                             right: -4,
                             child: Material(
-                              color: const Color(0xFF8B4513),
+                              color: const Color(0xFF7C3AED),
                               shape: const CircleBorder(),
                               child: InkWell(
                                 customBorder: const CircleBorder(),
@@ -2774,7 +2792,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
                           child: Row(
                             children: [
                               const Icon(Icons.tag_rounded,
-                                  size: 13, color: Color(0xFFD2B48C)),
+                                  size: 13, color: Color(0xFFA78BFA)),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -2782,7 +2800,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    color: Color(0xFFD2B48C),
+                                    color: Color(0xFFA78BFA),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -2805,17 +2823,17 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: const BorderSide(
-                            color: Color(0xFFD2B48C), width: 1.1),
+                            color: Color(0xFFA78BFA), width: 1.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       icon: const Icon(Icons.person_add_alt_1_rounded,
-                          color: Color(0xFFFFE9B0), size: 18),
+                          color: Color(0xFFC4B5FD), size: 18),
                       label: const Text(
                         'Add Member',
                         style: TextStyle(
-                          color: Color(0xFFFFE9B0),
+                          color: Color(0xFFC4B5FD),
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -2828,7 +2846,7 @@ class _EditGroupDialogState extends State<EditGroupDialog> {
                       child: ElevatedButton(
                         onPressed: (_saving || _uploadingImage) ? null : _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B4513),
+                          backgroundColor: const Color(0xFF7C3AED),
                           padding:
                               const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
@@ -2894,16 +2912,16 @@ class _ModeChip extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: selected ? AppColors.goldGradient : null,
-          color: selected ? null : const Color(0xFF2A1B0E),
+          color: selected ? null : const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(alpha: selected ? 0 : .3),
+            color: const Color(0xFFA78BFA).withValues(alpha: selected ? 0 : .3),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? const Color(0xFF1B120A) : Colors.white70,
+            color: selected ? const Color(0xFF18181F) : Colors.white70,
             fontWeight: FontWeight.bold,
             fontSize: 13.5,
           ),
@@ -2930,7 +2948,7 @@ void confirmDeleteGroup(
   showDialog(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: const Text('Delete Group?', style: TextStyle(color: Colors.white)),
       content: Text(
@@ -2991,7 +3009,7 @@ void confirmExitGroup(
   showDialog(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: const Text('Exit Group?', style: TextStyle(color: Colors.white)),
       content: Text(
@@ -3194,7 +3212,7 @@ class _GroupMemberTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFF2A1B0E),
+                backgroundColor: const Color(0xFF20202A),
                 backgroundImage: _profileImageProvider(image),
                 child: image.isEmpty
                     ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -3258,7 +3276,7 @@ class _GroupMemberTile extends StatelessWidget {
                   child: Text(
                     badgeText,
                     style: const TextStyle(
-                      color: Color(0xFF1B120A),
+                      color: Color(0xFF18181F),
                       fontSize: 10.5,
                       fontWeight: FontWeight.bold,
                     ),
@@ -3297,15 +3315,15 @@ class _GroupMemberTile extends StatelessWidget {
 Color _communityRoleColor(String role) {
   switch (role) {
     case 'Principal':
-      return const Color(0xFFFFC107);
+      return const Color(0xFFF59E0B);
     case 'Controller':
-      return const Color(0xFFB57BFF);
+      return const Color(0xFFA78BFA);
     case 'HOD':
-      return const Color(0xFF4FA3FF);
+      return const Color(0xFF22D3EE);
     case 'Faculty':
-      return const Color(0xFF3DDC97);
+      return const Color(0xFF10B981);
     default:
-      return const Color(0xFFD2B48C);
+      return const Color(0xFFA78BFA);
   }
 }
 
@@ -3417,7 +3435,7 @@ class _CommunityChatMemberListState extends State<_CommunityChatMemberList> {
   static const Widget _loader = Padding(
     padding: EdgeInsets.symmetric(vertical: 24),
     child: Center(
-      child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+      child: CircularProgressIndicator(color: Color(0xFFA78BFA)),
     ),
   );
 
@@ -3619,7 +3637,7 @@ class _CommunityProfileTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundColor: const Color(0xFF20202A),
               backgroundImage: _profileImageProvider(image),
               child: image.isEmpty
                   ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -3707,7 +3725,7 @@ void _showMemberManageSheet(
 }) {
   showModalBottomSheet(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
@@ -3733,7 +3751,7 @@ void _showMemberManageSheet(
                     isTargetCoAdmin
                         ? Icons.remove_moderator_rounded
                         : Icons.add_moderator_rounded,
-                    color: const Color(0xFFD2B48C),
+                    color: const Color(0xFFA78BFA),
                   ),
                   title: Text(
                     isTargetCoAdmin ? 'Remove Co-Admin' : 'Assign Co-Admin',
@@ -3785,7 +3803,7 @@ void _confirmRemoveMember(
   showDialog(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: const Text('Remove Member?', style: TextStyle(color: Colors.white)),
       content: const Text(
@@ -3855,13 +3873,13 @@ class _GroupsEmptyState extends StatelessWidget {
               height: 88,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF8B4513).withValues(alpha: .22),
+                color: const Color(0xFF7C3AED).withValues(alpha: .22),
                 border: Border.all(
-                  color: const Color(0xFFD2B48C).withValues(alpha: .45),
+                  color: const Color(0xFFA78BFA).withValues(alpha: .45),
                 ),
               ),
               child: const Icon(Icons.diversity_3_rounded,
-                  size: 40, color: Color(0xFFFFE9B0)),
+                  size: 40, color: Color(0xFFC4B5FD)),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -3897,7 +3915,7 @@ class _GroupsEmptyState extends StatelessWidget {
                         child: Text(
                           'Join Group',
                           style: TextStyle(
-                            color: Color(0xFF1B120A),
+                            color: Color(0xFF18181F),
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -3915,7 +3933,7 @@ class _GroupsEmptyState extends StatelessWidget {
                 onPressed: onCreate,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: Color(0xFFD2B48C), width: 1.2),
+                  side: const BorderSide(color: Color(0xFFA78BFA), width: 1.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -3923,7 +3941,7 @@ class _GroupsEmptyState extends StatelessWidget {
                 child: const Text(
                   'Create Group',
                   style: TextStyle(
-                    color: Color(0xFFFFE9B0),
+                    color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -4123,7 +4141,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
 
     await showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
@@ -4303,7 +4321,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
@@ -4338,9 +4356,9 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                         height: 90,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF2A1B0E),
+                          color: const Color(0xFF20202A),
                           border: Border.all(
-                            color: const Color(0xFFD2B48C),
+                            color: const Color(0xFFA78BFA),
                             width: 2,
                           ),
                         ),
@@ -4350,7 +4368,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                                   width: 26,
                                   height: 26,
                                   child: CircularProgressIndicator(
-                                    color: Color(0xFFD2B48C),
+                                    color: Color(0xFFA78BFA),
                                     strokeWidth: 2.4,
                                   ),
                                 ),
@@ -4383,7 +4401,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                           child: const Icon(
                             Icons.camera_alt_rounded,
                             size: 14,
-                            color: Color(0xFF1B120A),
+                            color: Color(0xFF18181F),
                           ),
                         ),
                       ),
@@ -4422,7 +4440,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                 child: Row(
                   children: [
                     const Icon(Icons.tag_rounded,
-                        size: 15, color: Color(0xFFD2B48C)),
+                        size: 15, color: Color(0xFFA78BFA)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -4432,7 +4450,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                         style: TextStyle(
                           color: _groupIdPreview.isEmpty
                               ? Colors.white38
-                              : const Color(0xFFFFE9B0),
+                              : const Color(0xFFC4B5FD),
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -4454,17 +4472,17 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                 onPressed: _openAddMember,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: const BorderSide(color: Color(0xFFD2B48C), width: 1.1),
+                  side: const BorderSide(color: Color(0xFFA78BFA), width: 1.1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 icon: const Icon(Icons.person_add_alt_1_rounded,
-                    color: Color(0xFFFFE9B0), size: 18),
+                    color: Color(0xFFC4B5FD), size: 18),
                 label: const Text(
                   'Add Member',
                   style: TextStyle(
-                    color: Color(0xFFFFE9B0),
+                    color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -4494,7 +4512,7 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                           children: [
                             CircleAvatar(
                               radius: 16,
-                              backgroundColor: const Color(0xFF2A1B0E),
+                              backgroundColor: const Color(0xFF20202A),
                               backgroundImage:
                                   _profileImageProvider(member.image),
                               child: member.image.isEmpty
@@ -4595,14 +4613,14 @@ class _CreateGroupDialogState extends State<_CreateGroupDialog> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                  color: Color(0xFF1B120A),
+                                  color: Color(0xFF18181F),
                                   strokeWidth: 2.4,
                                 ),
                               )
                             : const Text(
                                 'Create',
                                 style: TextStyle(
-                                  color: Color(0xFF1B120A),
+                                  color: Color(0xFF18181F),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -4774,7 +4792,7 @@ class _JoinGroupDialogState extends State<_JoinGroupDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
@@ -4864,14 +4882,14 @@ class _JoinGroupDialogState extends State<_JoinGroupDialog> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                  color: Color(0xFF1B120A),
+                                  color: Color(0xFF18181F),
                                   strokeWidth: 2.4,
                                 ),
                               )
                             : const Text(
                                 'Join',
                                 style: TextStyle(
-                                  color: Color(0xFF1B120A),
+                                  color: Color(0xFF18181F),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -4913,7 +4931,7 @@ class _FieldLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: Color(0xFFD2B48C),
+        color: Color(0xFFA78BFA),
         fontSize: 12.5,
         fontWeight: FontWeight.w700,
       ),
@@ -4962,24 +4980,24 @@ class _DialogTextField extends StatelessWidget {
         hintStyle: const TextStyle(color: Colors.white38, fontSize: 13.5),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFF2A1B0E),
+        fillColor: const Color(0xFF20202A),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: const Color(0xFFD2B48C).withValues(alpha: .3),
+            color: const Color(0xFFA78BFA).withValues(alpha: .3),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: const Color(0xFFD2B48C).withValues(alpha: .3),
+            color: const Color(0xFFA78BFA).withValues(alpha: .3),
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFD2B48C), width: 1.4),
+          borderSide: const BorderSide(color: Color(0xFFA78BFA), width: 1.4),
         ),
       ),
     );
@@ -5152,7 +5170,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
     return ListTile(
       leading: CircleAvatar(
         radius: 20,
-        backgroundColor: const Color(0xFF2A1B0E),
+        backgroundColor: const Color(0xFF20202A),
         backgroundImage: _profileImageProvider(image),
         child: image.isEmpty
             ? const Icon(Icons.person_rounded, color: Colors.white70)
@@ -5165,12 +5183,12 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
       subtitle: isConnected
           ? const Text(
               'Connected',
-              style: TextStyle(color: Color(0xFFD2B48C), fontSize: 11.5),
+              style: TextStyle(color: Color(0xFFA78BFA), fontSize: 11.5),
             )
           : null,
       trailing: Icon(
         selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-        color: selected ? const Color(0xFFFFE9B0) : Colors.white38,
+        color: selected ? const Color(0xFFC4B5FD) : Colors.white38,
       ),
       onTap: () => _toggleSelect(
         uid: uid,
@@ -5282,27 +5300,27 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                                     onPressed: () => _searchController.clear(),
                                   ),
                             filled: true,
-                            fillColor: const Color(0xFF2A1B0E),
+                            fillColor: const Color(0xFF20202A),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 0),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide(
                                 color:
-                                    const Color(0xFFD2B48C).withValues(alpha: .3),
+                                    const Color(0xFFA78BFA).withValues(alpha: .3),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide(
                                 color:
-                                    const Color(0xFFD2B48C).withValues(alpha: .3),
+                                    const Color(0xFFA78BFA).withValues(alpha: .3),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: const BorderSide(
-                                  color: Color(0xFFD2B48C), width: 1.4),
+                                  color: Color(0xFFA78BFA), width: 1.4),
                             ),
                           ),
                         ),
@@ -5316,7 +5334,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                             ? (_idSearching
                                 ? const Center(
                                     child: CircularProgressIndicator(
-                                        color: Color(0xFFD2B48C)),
+                                        color: Color(0xFFA78BFA)),
                                   )
                                 : !idResultUsable
                                     ? const Center(
@@ -5411,4 +5429,4 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
       },
     );
   }
-}
+}

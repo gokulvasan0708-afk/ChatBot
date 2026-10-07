@@ -107,7 +107,7 @@ class PrivateMemberProfilePage extends StatelessWidget {
         final image = (data['privateImage'] ?? data['publicImage'] ?? '').toString();
 
         return Scaffold(
-          backgroundColor: const Color(0xFF0A0704),
+          backgroundColor: const Color(0xFF0F0F14),
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -122,7 +122,7 @@ class PrivateMemberProfilePage extends StatelessWidget {
               child: Column(children: [
                 CircleAvatar(
                   radius: 58,
-                  backgroundColor: const Color(0xFF2A1B0E),
+                  backgroundColor: const Color(0xFF20202A),
                   backgroundImage: _profileImageProvider(image),
                   child: image.isEmpty ? const Icon(Icons.person_rounded, size: 55, color: Colors.white70) : null,
                 ),
@@ -138,11 +138,11 @@ class PrivateMemberProfilePage extends StatelessWidget {
                 InkWell(
                   onTap: () => _showMembers(context),
                   borderRadius: BorderRadius.circular(18),
-                  child: Container(width: double.infinity, padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: const Color(0xFF1B120A), borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFD2B48C).withValues(alpha: .35))), child: const Row(children: [Icon(Icons.people_alt_rounded, color: Color(0xFFD2B48C)), SizedBox(width: 12), Text('Members', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Spacer(), Icon(Icons.chevron_right_rounded, color: Colors.white54)])),
+                  child: Container(width: double.infinity, padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: const Color(0xFF18181F), borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFA78BFA).withValues(alpha: .35))), child: const Row(children: [Icon(Icons.people_alt_rounded, color: Color(0xFFA78BFA)), SizedBox(width: 12), Text('Members', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Spacer(), Icon(Icons.chevron_right_rounded, color: Colors.white54)])),
                 ),
                 const SizedBox(height: 28),
                 const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  Icon(Icons.grid_view_rounded, color: Color(0xFFD2B48C)),
+                  Icon(Icons.grid_view_rounded, color: Color(0xFFA78BFA)),
                   Icon(Icons.photo_library_rounded, color: Colors.white54),
                   Icon(Icons.link_rounded, color: Colors.white54),
                   Icon(Icons.bookmark_rounded, color: Colors.white54),
@@ -155,7 +155,7 @@ class PrivateMemberProfilePage extends StatelessWidget {
     );
   }
 
-  ButtonStyle _buttonStyle() => ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B4513), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)));
+  ButtonStyle _buttonStyle() => ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)));
 
   // Tapping "Connected" no longer disconnects immediately -- it opens a
   // small centered dialog previewing the account's private profile
@@ -169,10 +169,10 @@ class PrivateMemberProfilePage extends StatelessWidget {
       barrierDismissible: true,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: const Color(0xFF1B120A),
+          backgroundColor: const Color(0xFF18181F),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: const Color(0xFFD2B48C).withValues(alpha: 0.30)),
+            side: BorderSide(color: const Color(0xFFA78BFA).withValues(alpha: 0.30)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -183,7 +183,7 @@ class PrivateMemberProfilePage extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: const Color(0xFF2A1B0E),
+                      backgroundColor: const Color(0xFF20202A),
                       backgroundImage: _profileImageProvider(image),
                       child: image.isEmpty
                           ? const Icon(Icons.person_rounded, color: Colors.white70, size: 28)
@@ -255,7 +255,7 @@ class PrivateMemberProfilePage extends StatelessWidget {
       }
     }
     if (!context.mounted) return;
-    showModalBottomSheet(context: context, backgroundColor: const Color(0xFF1B120A), isScrollControlled: true, builder: (sheet) => SafeArea(child: ListView(padding: const EdgeInsets.all(20), shrinkWrap: true, children: members.map((memberUid) => FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(future: FirebaseFirestore.instance.collection('users').doc(memberUid).get(), builder: (context, s) { final d=s.data?.data()??{}; final name=(d['privateName']??d['publicName']??'User').toString(); final image=(d['privateImage']??d['publicImage']??'').toString(); return ListTile(leading: CircleAvatar(backgroundImage:_profileImageProvider(image), child:image.isEmpty?const Icon(Icons.person):null), title:Text(name,style:const TextStyle(color:Colors.white)), onTap:() async {
+    showModalBottomSheet(context: context, backgroundColor: const Color(0xFF18181F), isScrollControlled: true, builder: (sheet) => SafeArea(child: ListView(padding: const EdgeInsets.all(20), shrinkWrap: true, children: members.map((memberUid) => FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(future: FirebaseFirestore.instance.collection('users').doc(memberUid).get(), builder: (context, s) { final d=s.data?.data()??{}; final name=(d['privateName']??d['publicName']??'User').toString(); final image=(d['privateImage']??d['publicImage']??'').toString(); return ListTile(leading: CircleAvatar(backgroundImage:_profileImageProvider(image), child:image.isEmpty?const Icon(Icons.person):null), title:Text(name,style:const TextStyle(color:Colors.white)), onTap:() async {
   Navigator.pop(sheet);
   final me = FirebaseAuth.instance.currentUser;
   if (me == null) return;
@@ -271,6 +271,6 @@ class PrivateMemberProfilePage extends StatelessWidget {
   }
 
   void _showMenu(BuildContext context) {
-    showModalBottomSheet(context: context, backgroundColor: const Color(0xFF1B120A), builder: (_) => SafeArea(child: ListTile(leading: const Icon(Icons.block_rounded, color: Colors.redAccent), title: const Text('Block Account', style: TextStyle(color: Colors.white)), onTap: () async { Navigator.pop(context); await ChatSettingsService.instance.setBlocked(uid, true); })));
+    showModalBottomSheet(context: context, backgroundColor: const Color(0xFF18181F), builder: (_) => SafeArea(child: ListTile(leading: const Icon(Icons.block_rounded, color: Colors.redAccent), title: const Text('Block Account', style: TextStyle(color: Colors.white)), onTap: () async { Navigator.pop(context); await ChatSettingsService.instance.setBlocked(uid, true); })));
   }
 }

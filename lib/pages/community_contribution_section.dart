@@ -280,7 +280,7 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: CommunityColors.tan.withValues(alpha: .25)),
       ),
@@ -438,7 +438,7 @@ class _ErrorBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: CommunityColors.danger.withValues(alpha: .4)),
       ),

@@ -740,7 +740,7 @@ class _EventBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: CommunityColors.tan.withValues(alpha: .25)),
       ),
@@ -810,7 +810,7 @@ class _AchievementBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: highlighted
@@ -887,7 +887,7 @@ class _LostFoundBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: .4)),
       ),
@@ -1058,7 +1058,7 @@ class _VideoTile extends StatelessWidget {
         child: Container(
           height: 200,
           width: double.infinity,
-          color: const Color(0xFF120C07),
+          color: const Color(0xFF18181F),
           child: Stack(
             fit: StackFit.expand,
             children: [

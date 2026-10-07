@@ -87,10 +87,10 @@ class ClubSectionNav extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 13),
               decoration: BoxDecoration(
                 gradient: active ? AppColors.goldGradient : null,
-                color: active ? null : const Color(0xFF1B120A),
+                color: active ? null : const Color(0xFF18181F),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xFFD2B48C).withValues(alpha: active ? .95 : .30),
+                  color: const Color(0xFFA78BFA).withValues(alpha: active ? .95 : .30),
                 ),
               ),
               child: Row(
@@ -99,13 +99,13 @@ class ClubSectionNav extends StatelessWidget {
                   Icon(
                     section.icon,
                     size: 16,
-                    color: active ? const Color(0xFF1B120A) : const Color(0xFFFFE9B0),
+                    color: active ? const Color(0xFF18181F) : const Color(0xFFC4B5FD),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     section.label,
                     style: TextStyle(
-                      color: active ? const Color(0xFF1B120A) : Colors.white70,
+                      color: active ? const Color(0xFF18181F) : Colors.white70,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -155,16 +155,16 @@ class ClubSectionPlaceholder extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFF1B120A),
+            color: const Color(0xFF18181F),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFFD2B48C).withValues(alpha: .30),
+              color: const Color(0xFFA78BFA).withValues(alpha: .30),
             ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(section.icon, size: 42, color: const Color(0xFFD2B48C)),
+              Icon(section.icon, size: 42, color: const Color(0xFFA78BFA)),
               const SizedBox(height: 12),
               Text(
                 section.label,

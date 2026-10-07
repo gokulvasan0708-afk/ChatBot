@@ -247,7 +247,7 @@ class _CommunitySearchPageState extends State<CommunitySearchPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: const Color(0xFF2A1B0E),
+      color: const Color(0xFF20202A),
       child: Row(
         children: [
           const Icon(Icons.info_outline_rounded,
@@ -297,7 +297,7 @@ class _CommunitySearchPageState extends State<CommunitySearchPage> {
               ActionChip(
                 label: Text('#$tag'),
                 onPressed: () => _setQuery(tag),
-                backgroundColor: const Color(0xFF120C07),
+                backgroundColor: const Color(0xFF18181F),
                 labelStyle: const TextStyle(
                     color: CommunityColors.glow, fontSize: 12.5),
                 side: BorderSide(
@@ -372,7 +372,7 @@ class _CommunitySearchPageState extends State<CommunitySearchPage> {
             selected: selected,
             onSelected: (_) => setState(() => _kind = e.key),
             selectedColor: CommunityColors.tan,
-            backgroundColor: const Color(0xFF120C07),
+            backgroundColor: const Color(0xFF18181F),
             labelStyle: TextStyle(
               color: selected ? Colors.black : Colors.white70,
               fontSize: 12.5,

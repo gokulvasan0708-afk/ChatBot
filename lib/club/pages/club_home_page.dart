@@ -8,6 +8,7 @@ import '../models/club_model.dart';
 import '../../pages/app_theme.dart';
 import '../../services/club_service.dart';
 import '../../widgets/top_alert.dart';
+import '../../widgets/community_widgets.dart';
 import '../widgets/club_section_nav.dart';
 import 'club_discussions_page.dart';
 import 'club_announcements_page.dart';
@@ -201,7 +202,7 @@ class _ClubHomePageState extends State<ClubHomePage> {
     final shouldLeave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         title: const Text(
           'Leave Club?',
           style: TextStyle(color: Colors.white),
@@ -276,7 +277,7 @@ class _ClubHomePageState extends State<ClubHomePage> {
       await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -373,7 +374,7 @@ class _ClubHomePageState extends State<ClubHomePage> {
                             child: Text(
                               'Save Changes',
                               style: TextStyle(
-                                color: Color(0xFF1B120A),
+                                color: Color(0xFF18181F),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -464,8 +465,8 @@ class _ClubHomeContent extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       club.category,
-                      style: const TextStyle(
-                        color: Color(0xFFFFE9B0),
+                      style: TextStyle(
+                        color: clubCategoryColor(club.category),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -521,7 +522,7 @@ class _ClubHomeContent extends StatelessWidget {
                         label: const Text('Share'),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.tan),
-                          foregroundColor: const Color(0xFFFFE9B0),
+                          foregroundColor: const Color(0xFFC4B5FD),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -687,7 +688,7 @@ class _ClubIdChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFF1B120A),
+          color: const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.tan.withValues(alpha: .35)),
         ),
@@ -702,7 +703,7 @@ class _ClubIdChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: Color(0xFFFFE9B0),
+                  color: Color(0xFFC4B5FD),
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -735,7 +736,7 @@ class _Banner extends StatelessWidget {
           ? const Center(
               child: Icon(
                 ClubIcons.club,
-                color: Color(0xFFFFE9B0),
+                color: Color(0xFFC4B5FD),
                 size: 48,
               ),
             )
@@ -745,7 +746,7 @@ class _Banner extends StatelessWidget {
               errorBuilder: (_, _, _) => const Center(
                 child: Icon(
                   Icons.image_not_supported_outlined,
-                  color: Color(0xFFFFE9B0),
+                  color: Color(0xFFC4B5FD),
                   size: 40,
                 ),
               ),
@@ -767,7 +768,7 @@ class _Avatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF2A1B0E),
+        color: const Color(0xFF20202A),
         border: Border.all(color: AppColors.tan, width: 3),
         boxShadow: const [
           BoxShadow(
@@ -808,7 +809,7 @@ class _MemberCount extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.tan.withValues(alpha: .30),
@@ -874,7 +875,7 @@ class _JoinButton extends StatelessWidget {
             child: Text(
               joinMode == 'approval' ? 'Request to Join' : 'Join Club',
               style: const TextStyle(
-                color: Color(0xFF1B120A),
+                color: Color(0xFF18181F),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -895,14 +896,14 @@ class _RoleBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFF8B4513).withValues(alpha: .30),
+        color: const Color(0xFF7C3AED).withValues(alpha: .30),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.tan.withValues(alpha: .45)),
       ),
       child: Text(
         label,
         style: const TextStyle(
-          color: Color(0xFFFFE9B0),
+          color: Color(0xFFC4B5FD),
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),
@@ -928,7 +929,7 @@ class _InfoSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: AppColors.tan.withValues(alpha: .25),
@@ -1106,7 +1107,7 @@ class _ClubMetaCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: const Color(0xFF120C07),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppColors.tan.withValues(alpha: .20),
@@ -1145,7 +1146,7 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -1186,7 +1187,7 @@ class _EditField extends StatelessWidget {
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white54),
           filled: true,
-          fillColor: const Color(0xFF2A1B0E),
+          fillColor: const Color(0xFF20202A),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -1240,7 +1241,7 @@ class _StateMessage extends StatelessWidget {
                 onPressed: onBack,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.tan),
-                  foregroundColor: const Color(0xFFFFE9B0),
+                  foregroundColor: const Color(0xFFC4B5FD),
                 ),
                 child: const Text('Go Back'),
               ),

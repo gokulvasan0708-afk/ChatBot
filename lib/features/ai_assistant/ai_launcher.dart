@@ -136,26 +136,29 @@ class _AiLauncherState extends State<AiLauncher> {
   }
 
   Widget _fab(BuildContext context) {
-    final c = AppColors.of(context);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final a = dark ? AppColors.tan : AppColors.saddleBrown;
+    // Nexus AI button: purple -> cyan gradient circle with a soft glow.
     return Tooltip(
-        message: 'Nexus AI',
-        child: Material(
-          color: c.card,
-          elevation: 8,
-          shape: CircleBorder(side: BorderSide(color: a.withAlpha(128))),
+      message: 'Nexus AI',
+      child: Material(
+        color: Colors.transparent,
+        elevation: 8,
+        shadowColor: AppColors.primary,
+        shape: const CircleBorder(),
+        child: Ink(
+          width: 52,
+          height: 52,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: AppColors.aiGradient1,
+          ),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: () => setState(() => _open = true),
-            child: SizedBox(
-              width: 52,
-              height: 52,
-              child: Icon(Icons.auto_awesome, color: a, size: 24),
-            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
           ),
         ),
-      );
+      ),
+    );
   }
 }
 

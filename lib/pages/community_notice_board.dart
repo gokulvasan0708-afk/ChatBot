@@ -96,7 +96,7 @@ const int kNoticeAutoSlideSeconds = 5;
 /// Height of one notice card (full width of the page).
 const double kNoticeBoardHeight = 224;
 
-const Color _tan = Color(0xFFD2B48C);
+const Color _tan = Color(0xFFA78BFA);
 
 class _Notice {
   /// Stable id of this notice (used for hide / unhide).
@@ -602,7 +602,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
           key: 'event_$id',
           label: 'NEW EVENT',
           icon: Icons.event_rounded,
-          color: const Color(0xFF66BB6A),
+          color: const Color(0xFF10B981),
           title: _clip((e['title'] ?? 'Event').toString()),
           subtitle: start == null
               ? 'Tap to view'
@@ -622,7 +622,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
         key: 'live_event_$id',
         label: 'LIVE EVENT',
         icon: Icons.sensors_rounded,
-        color: const Color(0xFFFF5252),
+        color: const Color(0xFFEF4444),
         title: _clip((e['title'] ?? 'Event').toString()),
         subtitle: end == null ? 'Happening now' : 'Ends in ${_left(end.difference(now))}',
         priority: 0,
@@ -650,7 +650,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
         key: 'poll_${pollId.isEmpty ? (p['question'] ?? '').toString().hashCode : pollId}',
         label: 'POLL',
         icon: Icons.poll_rounded,
-        color: const Color(0xFF4FA3FF),
+        color: const Color(0xFF22D3EE),
         title: _clip((p['question'] ?? 'Poll').toString()),
         subtitle: voted ? '$left · You voted' : '$left · Vote now',
         priority: 2,
@@ -672,7 +672,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
         key: 'ann_${id.isEmpty ? (a['title'] ?? '').toString().hashCode : id}',
         label: urgent ? 'IMPORTANT' : 'ANNOUNCEMENT',
         icon: urgent ? Icons.priority_high_rounded : Icons.campaign_rounded,
-        color: const Color(0xFFFFB300),
+        color: const Color(0xFFF59E0B),
         title: _clip((a['title'] ?? 'Announcement').toString()),
         subtitle: _clip((a['body'] ?? '').toString(), 60),
         priority: urgent ? 1 : 3,
@@ -711,7 +711,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
               key: 'post_$id',
               label: 'NEW EVENT',
               icon: Icons.event_rounded,
-              color: const Color(0xFF66BB6A),
+              color: const Color(0xFF10B981),
               title: _clip((p['title'] ?? 'Event').toString()),
               subtitle: 'Starts ${communityFormatDateTime(at)}',
               priority: 3,
@@ -731,7 +731,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
             key: 'live_post_$id',
             label: 'LIVE EVENT',
             icon: Icons.sensors_rounded,
-            color: const Color(0xFFFF5252),
+            color: const Color(0xFFEF4444),
             title: _clip((p['title'] ?? 'Event').toString()),
             subtitle: 'Happening now',
             priority: 0,
@@ -758,7 +758,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
               key: 'post_$id',
               label: 'LOST & FOUND',
               icon: Icons.search_rounded,
-              color: const Color(0xFF26C6DA),
+              color: const Color(0xFF22D3EE),
               title: _clip(status == 'found' ? 'Found: $item' : 'Lost: $item'),
               subtitle: where.isEmpty ? 'Tap to view' : 'At $where',
               priority: 4,
@@ -771,7 +771,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
               key: 'post_$id',
               label: 'HELP / REQUEST',
               icon: Icons.volunteer_activism_rounded,
-              color: const Color(0xFFFF8A50),
+              color: const Color(0xFFF5B942),
               title: _clip((p['title'] ?? '').toString().trim().isNotEmpty
                   ? p['title'].toString()
                   : (p['text'] ?? '').toString()),
@@ -786,7 +786,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
               key: 'post_$id',
               label: 'QUESTION',
               icon: Icons.help_outline_rounded,
-              color: const Color(0xFFB57BFF),
+              color: const Color(0xFFA78BFA),
               title: _clip((p['title'] ?? '').toString().trim().isNotEmpty
                   ? p['title'].toString()
                   : (p['text'] ?? '').toString()),
@@ -846,7 +846,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
         key: 'np_$id',
         label: 'NOTICE',
         icon: Icons.push_pin_rounded,
-        color: const Color(0xFFE0A96D),
+        color: const Color(0xFFA78BFA),
         title: _clip(headline),
         subtitle: sub.join(' · '),
         priority: 1,
@@ -893,7 +893,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
           case 'announcement':
             label = 'COLLEGE ANNOUNCEMENT';
             icon = Icons.campaign_rounded;
-            color = const Color(0xFFFFB300);
+            color = const Color(0xFFF59E0B);
             title = _clip((d['title'] ?? 'Announcement').toString());
             subtitle = _clip((d['body'] ?? '').toString(), 60);
             if ((d['type'] ?? '').toString() == 'image') {
@@ -907,7 +907,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
             final live = evStart != null && !now.isBefore(evStart);
             label = live ? 'COLLEGE LIVE EVENT' : 'COLLEGE EVENT';
             icon = live ? Icons.sensors_rounded : Icons.event_rounded;
-            color = live ? const Color(0xFFFF5252) : const Color(0xFF66BB6A);
+            color = live ? const Color(0xFFEF4444) : const Color(0xFF10B981);
             title = _clip((d['title'] ?? 'Event').toString());
             subtitle = live
                 ? (evEnd == null ? 'Happening now' : 'Ends in ${_left(evEnd.difference(now))}')
@@ -927,7 +927,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
             }
             label = 'COLLEGE NOTICE';
             icon = Icons.push_pin_rounded;
-            color = const Color(0xFFE0A96D);
+            color = const Color(0xFFA78BFA);
             title = _clip(t.isNotEmpty
                 ? t
                 : (x.isNotEmpty ? x : (isVideo ? 'Video notice' : 'Photo notice')));
@@ -1009,10 +1009,10 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
                       width: 9,
                       height: 9,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF5252),
+                        color: const Color(0xFFEF4444),
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: const Color(0xFF1B120A), width: 1.2),
+                            color: const Color(0xFF18181F), width: 1.2),
                       ),
                     ),
                   ),
@@ -1025,14 +1025,14 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
                           const BoxConstraints(minWidth: 15, minHeight: 15),
                       padding: const EdgeInsets.symmetric(horizontal: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B4513),
+                        color: const Color(0xFF7C3AED),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
                         child: Text(
                           '$badge',
                           style: const TextStyle(
-                            color: Color(0xFFFFE9B0),
+                            color: Color(0xFFC4B5FD),
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
                           ),
@@ -1158,13 +1158,13 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B4513).withValues(alpha: .45),
+                    color: const Color(0xFF7C3AED).withValues(alpha: .45),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '${items.length}',
                     style: const TextStyle(
-                      color: Color(0xFFFFE9B0),
+                      color: Color(0xFFC4B5FD),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1238,7 +1238,7 @@ class _CommunityNoticeBoardState extends State<CommunityNoticeBoard> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B120A),
+                  color: const Color(0xFF18181F),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: _tan.withValues(alpha: .25)),
                 ),
@@ -1340,7 +1340,7 @@ class _NoticeCard extends StatelessWidget {
       onTap: onOpen,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1B120A),
+          color: const Color(0xFF18181F),
           borderRadius: BorderRadius.circular(18),
         ),
         // Border is painted ABOVE the cover image, so the image can
@@ -1455,7 +1455,7 @@ class _NoticeCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFFFFE9B0),
+                              color: Color(0xFFC4B5FD),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1565,7 +1565,7 @@ class _CollegeCoverCard extends StatelessWidget {
       height: kNoticeBoardHeight,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(18),
       ),
       foregroundDecoration: BoxDecoration(
@@ -1605,7 +1605,7 @@ class _CollegeCoverCard extends StatelessWidget {
                     height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF2A1B0E),
+                      color: const Color(0xFF20202A),
                       border: Border.all(color: _tan, width: 2),
                       boxShadow: [
                         BoxShadow(
@@ -1675,7 +1675,7 @@ class _CollegeLogo extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         border: Border.all(color: _tan.withValues(alpha: .9), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -1731,7 +1731,7 @@ class _NoticePostSheet extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         title: const Text('Delete notice?',
             style: TextStyle(color: Colors.white)),
         content: const Text('It will be removed for everyone.',
@@ -1778,7 +1778,7 @@ class _NoticePostSheet extends StatelessWidget {
       constraints:
           BoxConstraints(maxHeight: MediaQuery.of(context).size.height * .9),
       decoration: const BoxDecoration(
-        color: Color(0xFF1B120A),
+        color: Color(0xFF18181F),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -1830,7 +1830,7 @@ class _NoticePostSheet extends StatelessWidget {
                     child: Container(
                       height: 200,
                       width: double.infinity,
-                      color: const Color(0xFF120C07),
+                      color: const Color(0xFF18181F),
                       child: Stack(
                         fit: StackFit.expand,
                         children: [

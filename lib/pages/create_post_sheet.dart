@@ -355,7 +355,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                               }
                             },
                       selectedColor: CommunityColors.tan,
-                      backgroundColor: const Color(0xFF120C07),
+                      backgroundColor: const Color(0xFF18181F),
                       labelStyle: TextStyle(
                         color: _type == t ? Colors.black : Colors.white70,
                         fontSize: 12.5,
@@ -395,7 +395,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           selected: _lostKind == k,
                           onSelected: (_) => setState(() => _lostKind = k),
                           selectedColor: CommunityColors.tan,
-                          backgroundColor: const Color(0xFF120C07),
+                          backgroundColor: const Color(0xFF18181F),
                           labelStyle: TextStyle(
                               color: _lostKind == k ? Colors.black : Colors.white70),
                         ),
@@ -507,7 +507,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                         child: ActionChip(
                           label: Text('#$tag'),
                           onPressed: () => _insertHashtag(tag),
-                          backgroundColor: const Color(0xFF120C07),
+                          backgroundColor: const Color(0xFF18181F),
                           labelStyle: const TextStyle(
                               color: CommunityColors.glow, fontSize: 12),
                           side: BorderSide(
@@ -665,7 +665,7 @@ class _MediaPickRow extends StatelessWidget {
                     width: 78,
                     height: 78,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF120C07),
+                      color: const Color(0xFF18181F),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color: CommunityColors.tan.withValues(alpha: .4)),

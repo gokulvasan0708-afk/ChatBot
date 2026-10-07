@@ -1337,7 +1337,7 @@ class _IncomingMessageBarState extends State<_IncomingMessageBar>
                                       ),
                                       child: const Icon(
                                         Icons.mark_chat_unread_rounded,
-                                        color: Color(0xFF4CD964),
+                                        color: Color(0xFF10B981),
                                         size: 11,
                                       ),
                                     ),

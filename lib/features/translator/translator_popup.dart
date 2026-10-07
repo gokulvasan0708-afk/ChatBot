@@ -132,20 +132,20 @@ class _TranslatorButton extends StatelessWidget {
                   height: 38,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: on ? const Color(0xFF8B4513) : const Color(0xFF2A1B0E),
+                    color: on ? const Color(0xFF7C3AED) : const Color(0xFF20202A),
                     border: Border.all(
-                        color: const Color(0xFFD2B48C).withValues(alpha: 0.6)),
+                        color: const Color(0xFFA78BFA).withValues(alpha: 0.6)),
                   ),
                   child: controller.busy
                       ? const Padding(
                           padding: EdgeInsets.all(10),
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Color(0xFFD2B48C)),
+                              strokeWidth: 2, color: Color(0xFFA78BFA)),
                         )
                       : Stack(alignment: Alignment.center, children: [
                           Icon(Icons.translate_rounded,
                               size: 20,
-                              color: on ? Colors.white : const Color(0xFFD2B48C)),
+                              color: on ? Colors.white : const Color(0xFFA78BFA)),
                           if (controller.canRestore)
                             Positioned(
                               right: 6,
@@ -154,7 +154,7 @@ class _TranslatorButton extends StatelessWidget {
                                 width: 8,
                                 height: 8,
                                 decoration: const BoxDecoration(
-                                    color: Colors.greenAccent,
+                                    color: Color(0xFF10B981),
                                     shape: BoxShape.circle),
                               ),
                             ),

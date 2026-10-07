@@ -242,7 +242,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
   Widget build(BuildContext context) {
     final busy = _saving || _uploadingImage || _uploadingCover;
     return Dialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: ConstrainedBox(
@@ -275,9 +275,9 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                         height: 90,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFF2A1B0E),
+                          color: const Color(0xFF20202A),
                           border: Border.all(
-                            color: const Color(0xFFD2B48C),
+                            color: const Color(0xFFA78BFA),
                             width: 2,
                           ),
                         ),
@@ -287,7 +287,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                                   width: 26,
                                   height: 26,
                                   child: CircularProgressIndicator(
-                                    color: Color(0xFFD2B48C),
+                                    color: Color(0xFFA78BFA),
                                     strokeWidth: 2.4,
                                   ),
                                 ),
@@ -301,14 +301,14 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, _, _) => const Icon(
                                         Icons.public_rounded,
-                                        color: Color(0xFFD2B48C),
+                                        color: Color(0xFFA78BFA),
                                         size: 34,
                                       ),
                                     ),
                                   )
                                 : const Icon(
                                     Icons.public_rounded,
-                                    color: Color(0xFFD2B48C),
+                                    color: Color(0xFFA78BFA),
                                     size: 34,
                                   ),
                       ),
@@ -325,7 +325,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                           child: const Icon(
                             Icons.camera_alt_rounded,
                             size: 14,
-                            color: Color(0xFF1B120A),
+                            color: Color(0xFF18181F),
                           ),
                         ),
                       ),
@@ -358,7 +358,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                 Text(
                   '${widget.communityId}  (ID can\'t be changed)',
                   style: const TextStyle(
-                    color: Color(0xFFFFE9B0),
+                    color: Color(0xFFC4B5FD),
                     fontWeight: FontWeight.w600,
                     fontSize: 12.5,
                   ),
@@ -408,10 +408,10 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                   child: Container(
                     height: 130,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A1B0E),
+                      color: const Color(0xFF20202A),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFFD2B48C).withValues(alpha: .6),
+                        color: const Color(0xFFA78BFA).withValues(alpha: .6),
                       ),
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -421,7 +421,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                               width: 26,
                               height: 26,
                               child: CircularProgressIndicator(
-                                color: Color(0xFFD2B48C),
+                                color: Color(0xFFA78BFA),
                                 strokeWidth: 2.4,
                               ),
                             ),
@@ -438,7 +438,7 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.add_photo_alternate_outlined,
-                                      color: Color(0xFFD2B48C), size: 30),
+                                      color: Color(0xFFA78BFA), size: 30),
                                   SizedBox(height: 6),
                                   Text(
                                     'Tap to add a cover image',
@@ -513,14 +513,14 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                           _saving ? null : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 13),
-                        side: const BorderSide(color: Color(0xFFD2B48C)),
+                        side: const BorderSide(color: Color(0xFFA78BFA)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: const Text(
                         'Cancel',
-                        style: TextStyle(color: Color(0xFFFFE9B0)),
+                        style: TextStyle(color: Color(0xFFC4B5FD)),
                       ),
                     ),
                   ),
@@ -545,13 +545,13 @@ class _EditCommunityDialogState extends State<EditCommunityDialog> {
                                       height: 18,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.2,
-                                        color: Color(0xFF1B120A),
+                                        color: Color(0xFF18181F),
                                       ),
                                     )
                                   : const Text(
                                       'Save',
                                       style: TextStyle(
-                                        color: Color(0xFF1B120A),
+                                        color: Color(0xFF18181F),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -609,7 +609,7 @@ class _EditField extends StatelessWidget {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
-        fillColor: const Color(0xFF2A1B0E),
+        fillColor: const Color(0xFF20202A),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
@@ -643,10 +643,10 @@ class _EditTypeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           gradient: selected ? AppColors.goldGradient : null,
-          color: selected ? null : const Color(0xFF2A1B0E),
+          color: selected ? null : const Color(0xFF20202A),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(alpha: selected ? 1 : .4),
+            color: const Color(0xFFA78BFA).withValues(alpha: selected ? 1 : .4),
           ),
         ),
         child: Column(
@@ -655,13 +655,13 @@ class _EditTypeChip extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: selected ? const Color(0xFF1B120A) : const Color(0xFFFFE9B0),
+              color: selected ? const Color(0xFF18181F) : const Color(0xFFC4B5FD),
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: selected ? const Color(0xFF1B120A) : Colors.white70,
+                color: selected ? const Color(0xFF18181F) : Colors.white70,
                 fontWeight: FontWeight.w700,
                 fontSize: 12.5,
               ),

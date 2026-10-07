@@ -93,10 +93,10 @@ class _CosmicBackgroundState extends State<CosmicBackground>
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: const Alignment(0, -0.4),
-                radius: 1.3,
+                center: const Alignment(0, -0.6),
+                radius: 1.25,
                 colors: [colors.bgTop, colors.bgMid, colors.bgBottom],
-                stops: const [0.0, 0.55, 1.0],
+                stops: const [0.0, 0.6, 1.0],
               ),
             ),
           ),
@@ -109,12 +109,12 @@ class _CosmicBackgroundState extends State<CosmicBackground>
           Positioned(
             top: -140,
             left: -90,
-            child: _glowOrb(AppColors.sienna, isDark ? 0.22 : 0.16, 300),
+            child: _glowOrb(AppColors.primary, isDark ? 0.24 : 0.14, 300),
           ),
           Positioned(
             bottom: -120,
             right: -90,
-            child: _glowOrb(AppColors.tan, isDark ? 0.20 : 0.18, 280),
+            child: _glowOrb(AppColors.cyanAccent, isDark ? 0.10 : 0.10, 280),
           ),
         ],
 
@@ -182,7 +182,7 @@ class _StarFieldPainter extends CustomPainter {
 
   _StarFieldPainter({required this.twinkle, required this.starColor});
 
-  static final List<Offset> _positions = List.generate(60, (i) {
+  static final List<Offset> _positions = List.generate(48, (i) {
     final rnd = Random(i * 97);
     return Offset(rnd.nextDouble(), rnd.nextDouble());
   });
@@ -205,10 +205,10 @@ class _StarFieldPainter extends CustomPainter {
       final localTwinkle =
           (sin((twinkle + phase) * 2 * pi) + 1) / 2; // 0..1
 
-      final baseAlpha = isGoldStar ? 0.85 : 0.55;
+      final baseAlpha = isGoldStar ? 0.75 : 0.45;
       final alpha = (baseAlpha * (0.5 + 0.5 * localTwinkle)).clamp(0.0, 1.0);
 
-      paint.color = (isGoldStar ? AppColors.glow : starColor)
+      paint.color = (isGoldStar ? AppColors.primaryLight : starColor)
           .withValues(alpha: alpha);
 
       canvas.drawCircle(point, isBigStar ? 1.5 : 0.8, paint);

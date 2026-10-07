@@ -203,7 +203,7 @@ void _showUnconnectDialog(
     builder: (dialogContext) {
       return AlertDialog(
         backgroundColor:
-            const Color(0xFF1B120A),
+            const Color(0xFF18181F),
 
         title: const Text(
           'Unconnect',
@@ -429,7 +429,7 @@ for (final connectionDoc in membersSnapshot.docs) {
         builder: (_) {
           return const Center(
             child: CircularProgressIndicator(
-              color: Color(0xFFD2B48C),
+              color: Color(0xFFA78BFA),
             ),
           );
         },
@@ -897,9 +897,9 @@ if (isPublic)
           height: 75,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFF1B120A),
+            color: const Color(0xFF18181F),
             border: Border.all(
-              color: const Color(0xFFD2B48C),
+              color: const Color(0xFFA78BFA),
               width: 2,
             ),
           ),
@@ -992,12 +992,12 @@ Widget _buildMembersSection() {
         ),
 
         decoration: BoxDecoration(
-          color: const Color(0xFF1B120A),
+          color: const Color(0xFF18181F),
 
           borderRadius: BorderRadius.circular(18),
 
           border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(
+            color: const Color(0xFFA78BFA).withValues(
               alpha: 0.30,
             ),
             width: 1,
@@ -1010,7 +1010,7 @@ Widget _buildMembersSection() {
             // MEMBERS ICON
             const Icon(
               Icons.people_rounded,
-              color: Color(0xFFD2B48C),
+              color: Color(0xFFA78BFA),
               size: 25,
             ),
 
@@ -1032,7 +1032,7 @@ Widget _buildMembersSection() {
             Text(
               '$membersCount',
               style: const TextStyle(
-                color: Color(0xFFD2B48C),
+                color: Color(0xFFA78BFA),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -1047,7 +1047,7 @@ Widget _buildMembersSection() {
 void _showMembers() {
   showModalBottomSheet(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     isScrollControlled: true,
 
     shape: const RoundedRectangleBorder(
@@ -1137,7 +1137,7 @@ void _showMembers() {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2A1B0E),
+                            color: const Color(0xFF20202A),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Row(
@@ -1150,7 +1150,7 @@ void _showMembers() {
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color:
-                                      const Color(0xFFD2B48C),
+                                      const Color(0xFFA78BFA),
                                 ),
                               ),
 
@@ -1234,9 +1234,9 @@ Widget _buildPrivateProfile() {
 
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF1B120A),
+              color: const Color(0xFF18181F),
               border: Border.all(
-                color: const Color(0xFFD2B48C),
+                color: const Color(0xFFA78BFA),
                 width: 2,
               ),
             ),
@@ -1311,7 +1311,7 @@ Widget _buildPrivateProfile() {
       builder: (context) {
         return AlertDialog(
           backgroundColor:
-              const Color(0xFF1B120A),
+              const Color(0xFF18181F),
 
           title: const Text(
             'Private Name',
@@ -1344,7 +1344,7 @@ Widget _buildPrivateProfile() {
                 borderSide:
                     const BorderSide(
                   color:
-                      Color(0xFFD2B48C),
+                      Color(0xFFA78BFA),
                 ),
                 borderRadius:
                     BorderRadius.circular(
@@ -1357,7 +1357,7 @@ Widget _buildPrivateProfile() {
                 borderSide:
                     const BorderSide(
                   color:
-                      Color(0xFFD2B48C),
+                      Color(0xFFA78BFA),
                   width: 2,
                 ),
                 borderRadius:
@@ -1401,7 +1401,7 @@ Widget _buildPrivateProfile() {
 
                 style: TextStyle(
                   color:
-                      Color(0xFFD2B48C),
+                      Color(0xFFA78BFA),
                   fontWeight:
                       FontWeight.bold,
                 ),
@@ -1453,7 +1453,7 @@ Widget _buildPrivateProfile() {
         builder: (context) {
           return AlertDialog(
             backgroundColor:
-                const Color(0xFF1B120A),
+                const Color(0xFF18181F),
 
             title: const Text(
               'Your Account ID (Public Name)',
@@ -1472,12 +1472,12 @@ Widget _buildPrivateProfile() {
 
               decoration: BoxDecoration(
                 color:
-                    const Color(0xFF2A1B0E),
+                    const Color(0xFF20202A),
                 borderRadius:
                     BorderRadius.circular(12),
                 border: Border.all(
                   color:
-                      const Color(0xFFD2B48C),
+                      const Color(0xFFA78BFA),
                 ),
               ),
 
@@ -1489,7 +1489,7 @@ Widget _buildPrivateProfile() {
 
                 style: const TextStyle(
                   color:
-                      Color(0xFFD2B48C),
+                      Color(0xFFA78BFA),
                   fontSize: 18,
                   fontWeight:
                       FontWeight.bold,
@@ -1510,7 +1510,7 @@ Widget _buildPrivateProfile() {
 
                   style: TextStyle(
                     color:
-                        Color(0xFFD2B48C),
+                        Color(0xFFA78BFA),
                   ),
                 ),
               ),
@@ -1547,7 +1547,7 @@ void _showAccountSwitcher() async {
   // sheet has fully finished closing -- before opening anything else.
   final result = await showModalBottomSheet<Map<String, String>>(
     context: context,
-    backgroundColor: const Color(0xFF1B120A),
+    backgroundColor: const Color(0xFF18181F),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
@@ -1607,7 +1607,7 @@ void _showAccountSwitcher() async {
                   }),
                   const Divider(color: Colors.white12),
                   ListTile(
-                    leading: const CircleAvatar(backgroundColor: Color(0xFF8B4513), child: Icon(Icons.add, color: Colors.white)),
+                    leading: const CircleAvatar(backgroundColor: Color(0xFF7C3AED), child: Icon(Icons.add, color: Colors.white)),
                     title: const Text('Add Nexus Account', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     onTap: () => Navigator.pop(sheetContext, {'action': 'add'}),
                   ),
@@ -1669,7 +1669,7 @@ Widget _switchAccountTile({
   }
 
   final statusIcon = current
-      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFD2B48C))
+      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFA78BFA))
       : const Icon(Icons.chevron_right_rounded, color: Colors.white54);
 
   // The current (already-signed-in) account has no Remove/Delete menu --
@@ -1678,7 +1678,7 @@ Widget _switchAccountTile({
 
   return ListTile(
     onTap: onTap,
-    leading: CircleAvatar(radius: 25, backgroundColor: const Color(0xFF2A1B0E), backgroundImage: provider, child: provider == null ? const Icon(Icons.person, color: Colors.white70) : null),
+    leading: CircleAvatar(radius: 25, backgroundColor: const Color(0xFF20202A), backgroundImage: provider, child: provider == null ? const Icon(Icons.person, color: Colors.white70) : null),
     title: Text(name.isEmpty ? 'Nexus account' : name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
     subtitle: Text(email, style: const TextStyle(color: Colors.white54)),
     trailing: !hasMenu
@@ -1690,7 +1690,7 @@ Widget _switchAccountTile({
               PopupMenuButton<String>(
                 tooltip: 'Account options',
                 icon: const Icon(Icons.menu, color: Colors.white54),
-                color: const Color(0xFF1B120A),
+                color: const Color(0xFF18181F),
                 onSelected: (value) {
                   if (value == 'remove') {
                     onRemove?.call();
@@ -1752,7 +1752,7 @@ Future<void> _deleteSavedAccount(String uid, String email, String name) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: const Color(0xFF1B120A),
+      backgroundColor: const Color(0xFF18181F),
       title: const Text('Delete Account', style: TextStyle(color: Colors.white)),
       content: Text(
         'This will permanently delete $displayName${email.isNotEmpty ? ' ($email)' : ''} and all of its data. '
@@ -1845,7 +1845,7 @@ Future<void> _switchToSavedAccount(String uid, String email, String cachedProvid
     final password = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
+        backgroundColor: const Color(0xFF18181F),
         title: const Text('Switch Account', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: passwordController,
@@ -2024,7 +2024,7 @@ void _showEditProfile() {
     context: context,
 
     backgroundColor:
-        const Color(0xFF1B120A),
+        const Color(0xFF18181F),
 
     shape:
         const RoundedRectangleBorder(
@@ -2081,7 +2081,7 @@ void _showEditProfile() {
                           const Icon(
                         Icons.image_rounded,
                         color:
-                            Color(0xFFD2B48C),
+                            Color(0xFFA78BFA),
                       ),
 
                       title: Text(
@@ -2243,7 +2243,7 @@ void _showEditProfile() {
                           const Icon(
                         Icons.person_rounded,
                         color:
-                            Color(0xFFD2B48C),
+                            Color(0xFFA78BFA),
                       ),
 
                       title: Text(
@@ -2424,7 +2424,7 @@ void _showEditProfile() {
       context: context,
 
       backgroundColor:
-          const Color(0xFF1B120A),
+          const Color(0xFF18181F),
 
       shape:
           const RoundedRectangleBorder(
@@ -2541,7 +2541,7 @@ void _showEditProfile() {
                             border:
                                 Border.all(
                               color:
-                                  const Color(0xFFD2B48C),
+                                  const Color(0xFFA78BFA),
                               width: 2,
                             ),
                           ),
@@ -2659,7 +2659,7 @@ void _showEditProfile() {
       context: context,
 
       backgroundColor:
-          const Color(0xFF1B120A),
+          const Color(0xFF18181F),
 
       shape:
           const RoundedRectangleBorder(
@@ -2708,7 +2708,7 @@ void _showEditProfile() {
                         isDark
                             ? Icons.dark_mode_rounded
                             : Icons.light_mode_rounded,
-                        color: const Color(0xFFD2B48C),
+                        color: const Color(0xFFA78BFA),
                       ),
 
                       title: const Text(
@@ -2722,13 +2722,13 @@ void _showEditProfile() {
                       subtitle: Text(
                         isDark ? 'Dark Mode' : 'Light Mode',
                         style: const TextStyle(
-                          color: Color(0xFFAB8A63),
+                          color: Color(0xFF898997),
                         ),
                       ),
 
                       trailing: Switch(
                         value: isDark,
-                        activeThumbColor: const Color(0xFFD2B48C),
+                        activeThumbColor: const Color(0xFFA78BFA),
                         onChanged: (value) {
                           ThemeController.instance.setMode(
                             value ? ThemeMode.dark : ThemeMode.light,
@@ -2751,7 +2751,7 @@ void _showEditProfile() {
                 ListTile(
                   leading: const Icon(
                     Icons.notifications_active_rounded,
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                   ),
 
                   title: const Text(
@@ -2764,7 +2764,7 @@ void _showEditProfile() {
 
                   trailing: const Icon(
                     Icons.chevron_right_rounded,
-                    color: Color(0xFFAB8A63),
+                    color: Color(0xFF898997),
                   ),
 
                   onTap: () {
@@ -2791,7 +2791,7 @@ void _showEditProfile() {
                     child: Text(
                       'Account',
                       style: TextStyle(
-                        color: Color(0xFFAB8A63),
+                        color: Color(0xFF898997),
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                         letterSpacing: 1.1,
@@ -2803,7 +2803,7 @@ void _showEditProfile() {
                 ListTile(
                   leading: const Icon(
                     Icons.badge_outlined,
-                    color: Color(0xFFD2B48C),
+                    color: Color(0xFFA78BFA),
                   ),
 
                   title: const Text(
@@ -2886,7 +2886,7 @@ void _showEditProfile() {
       builder: (context) {
         return AlertDialog(
           backgroundColor:
-              const Color(0xFF1B120A),
+              const Color(0xFF18181F),
 
           title: const Text(
             'Logout',
@@ -2967,7 +2967,7 @@ void _showEditProfile() {
       builder: (context) {
         return AlertDialog(
           backgroundColor:
-              const Color(0xFF1B120A),
+              const Color(0xFF18181F),
 
           title: const Text(
             'Delete this account',

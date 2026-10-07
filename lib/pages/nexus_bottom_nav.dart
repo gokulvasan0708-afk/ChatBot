@@ -60,6 +60,9 @@ class _NexusBottomNavState extends State<NexusBottomNav>
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.only(left: 25, right: 25, bottom: 15),
@@ -70,11 +73,18 @@ class _NexusBottomNavState extends State<NexusBottomNav>
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B120A).withValues(alpha: .55),
+                    color: c.navBg.withValues(alpha: isDark ? .96 : 1),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: const Color(0xFFD2B48C).withValues(alpha: .65),
-                    ),
+                    border: Border.all(color: c.cardBorder),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: .45)
+                            : AppColors.primary.withValues(alpha: .10),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -120,7 +130,10 @@ class _NexusBottomNavState extends State<NexusBottomNav>
   }
 
   Widget _item({required int index, required IconData icon, required String label}) {
+    final c = AppColors.of(context);
     final selected = widget.selectedIndex == index;
+    final activeColor = AppColors.primaryLight;
+    final idleColor = c.textMuted;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => _tap(index),
@@ -129,21 +142,21 @@ class _NexusBottomNavState extends State<NexusBottomNav>
         height: 55,
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF8B4513).withValues(alpha: .25)
+              ? AppColors.primary.withValues(alpha: .20)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 26, color: selected ? const Color(0xFFFFE9B0) : Colors.white70),
+            Icon(icon, size: 26, color: selected ? activeColor : idleColor),
             const SizedBox(height: 3),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: selected ? const Color(0xFFFFE9B0) : Colors.white70,
+                color: selected ? activeColor : idleColor,
                 fontSize: label.length > 6 ? 9 : 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -178,7 +191,7 @@ class _NexusTracePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.4
       ..strokeCap = StrokeCap.round
-      ..color = AppColors.cream;
+      ..color = AppColors.primaryLight;
 
     if (end <= total) {
       canvas.drawPath(metric.extractPath(start, end), paint);

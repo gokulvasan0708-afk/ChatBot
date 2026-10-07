@@ -34,10 +34,10 @@ class NexusSlidingSwitcher extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B120A),
+        color: const Color(0xFF18181F),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFD2B48C).withValues(alpha: .35),
+          color: const Color(0xFFA78BFA).withValues(alpha: .35),
         ),
       ),
       child: LayoutBuilder(
@@ -86,7 +86,7 @@ class NexusSlidingSwitcher extends StatelessWidget {
                                   curve: Curves.easeOutBack,
                                   style: TextStyle(
                                     color: i == selectedIndex
-                                        ? const Color(0xFF1B120A)
+                                        ? const Color(0xFF18181F)
                                         : Colors.white70,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12.5,
@@ -112,11 +112,11 @@ class NexusSlidingSwitcher extends StatelessWidget {
                                       // the gold (selected) one so it never
                                       // disappears into the pill.
                                       color: i == selectedIndex
-                                          ? const Color(0xFF8B4513)
-                                          : const Color(0xFFFFE9B0),
+                                          ? const Color(0xFF7C3AED)
+                                          : const Color(0xFFC4B5FD),
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: const Color(0xFF1B120A),
+                                        color: const Color(0xFF18181F),
                                         width: 1.2,
                                       ),
                                     ),
