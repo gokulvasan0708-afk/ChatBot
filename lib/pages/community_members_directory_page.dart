@@ -38,6 +38,7 @@ const List<String> kDefaultDepartments = [
   'MECH',
   'CIVIL',
   'AI&DS',
+  'Fashion Technology',
 ];
 
 const List<String> kCommunityYears = [
@@ -133,12 +134,23 @@ class _PersonTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = image.startsWith('http');
+    final shown = name.trim().isEmpty ? fallbackName : name.trim();
     return ListTile(
       leading: CircleAvatar(
         radius: 22,
         backgroundColor: const Color(0xFF2A1B0E),
         backgroundImage: hasImage ? NetworkImage(image) : null,
-        child: hasImage ? null : const Icon(Icons.person, color: _tan),
+        // No photo -> first letter of the shown name (or role).
+        child: hasImage
+            ? null
+            : Text(
+                shown.isEmpty ? '?' : shown[0].toUpperCase(),
+                style: const TextStyle(
+                  color: Color(0xFFFFE0B2),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 19.8,
+                ),
+              ),
       ),
       title: Text(
         name.isEmpty ? fallbackName : name,

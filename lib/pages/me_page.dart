@@ -17,8 +17,10 @@ import 'app_theme.dart';
 import '../services/chat_settings_service.dart';
 import '../services/account_switch_service.dart';
 import '../services/api_service.dart';
+import '../services/user_profile_service.dart';
 import 'nexus_bottom_nav.dart';
 import 'nexus_toggle.dart';
+import 'public_name_dialog.dart';
 import 'nexus_notify_settings_page.dart';
 
 import '../widgets/top_alert.dart';
@@ -1438,6 +1440,13 @@ Widget _buildPrivateProfile() {
 
       if (!mounted) return;
 
+      // Account ID == public name. If it is not set yet, ask for it.
+      if (userId.trim().isEmpty ||
+          UserProfileService.needsPublicName(data)) {
+        await _showNameDialog(TextEditingController());
+        return;
+      }
+
       showDialog(
         context: context,
 
@@ -1447,7 +1456,7 @@ Widget _buildPrivateProfile() {
                 const Color(0xFF1B120A),
 
             title: const Text(
-              'Your Account ID',
+              'Your Account ID (Public Name)',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight:
@@ -2274,12 +2283,11 @@ void _showEditProfile() {
                   // REMOVE NAME
                   // ==================================================
 
+                  // The public name is compulsory (it is the Account ID),
+                  // so only the PRIVATE name can be removed.
                   if (
                     isPublic
-                        ? profileName != null &&
-                          profileName!
-                              .trim()
-                              .isNotEmpty
+                        ? false
                         : privateName != null &&
                           privateName!
                               .trim()
@@ -2622,149 +2630,24 @@ void _showEditProfile() {
   // PUBLIC NAME DIALOG
   // ==========================================================
 
-  void _showNameDialog(
+  // The public name is also the Account ID: compulsory, 4-30 chars,
+  // no spaces, at least 2 of (letters / numbers / special characters),
+  // and unique. All of that lives in public_name_dialog.dart.
+  Future<void> _showNameDialog(
     TextEditingController controller,
-  ) {
-    showDialog(
-      context: context,
-
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor:
-              const Color(0xFF1B120A),
-
-          title: const Text(
-            'Set Name',
-
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight:
-                  FontWeight.bold,
-            ),
-          ),
-
-          content: TextField(
-            controller: controller,
-
-            style: const TextStyle(
-              color: Colors.white,
-            ),
-
-            decoration:
-                InputDecoration(
-              hintText:
-                  'Enter your name',
-
-              hintStyle:
-                  const TextStyle(
-                color: Colors.white54,
-              ),
-
-              enabledBorder:
-                  OutlineInputBorder(
-                borderSide:
-                    const BorderSide(
-                  color:
-                      Color(0xFFD2B48C),
-                ),
-
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
-              ),
-
-              focusedBorder:
-                  OutlineInputBorder(
-                borderSide:
-                    const BorderSide(
-                  color:
-                      Color(0xFFD2B48C),
-                  width: 2,
-                ),
-
-                borderRadius:
-                    BorderRadius.circular(
-                  12,
-                ),
-              ),
-            ),
-          ),
-
-          actions: [
-
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-
-              child:
-                  const Text('CANCEL'),
-            ),
-
-            TextButton(
-              onPressed: () async {
-                final name =
-                    controller.text.trim();
-
-                final user =
-                    FirebaseAuth
-                        .instance
-                        .currentUser;
-
-                if (user == null) {
-                  return;
-                }
-
-                try {
-                  await FirebaseFirestore
-                      .instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .update({
-                    'publicName': name,
-                  });
-
-                  if (!mounted) {
-                    return;
-                  }
-
-                  setState(() {
-                    profileName =
-                        name.isEmpty
-                            ? null
-                            : name;
-                  });
-
-                  Navigator.pop(context);
-                } catch (e) {
-                  debugPrint(
-                    'Name save error: $e',
-                  );
-
-                  if (!mounted) {
-                    return;
-                  }
-
-                  showTopAlert(context, 'Failed to save name', isError: true);
-                }
-              },
-
-              child: const Text(
-                'SAVE',
-
-                style: TextStyle(
-                  color:
-                      Color(0xFFD2B48C),
-                  fontWeight:
-                      FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+  ) async {
+    final saved = await showPublicNameDialog(
+      context,
+      initial: (profileName ?? '').toString(),
     );
+
+    if (saved == null || !mounted) return;
+
+    setState(() {
+      profileName = saved;
+    });
+
+    showTopAlert(context, 'Public name & Account ID updated.');
   }
 
   // ==========================================================

@@ -372,9 +372,16 @@ class _EventBodyState extends State<_EventBody> {
       return '$h:$m ${d.hour >= 12 ? 'PM' : 'AM'}';
     }
 
-    final datePart = '${start.day} ${months[start.month - 1]} ${start.year}';
+    String day(DateTime d) => '${d.day} ${months[d.month - 1]} ${d.year}';
+
+    final datePart = day(start);
     if (end == null) return '$datePart · ${time(start)}';
-    return '$datePart · ${time(start)} – ${time(end)}';
+    final sameDay = start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day;
+    if (sameDay) return '$datePart · ${time(start)} – ${time(end)}';
+    // Multi-day event: show both dates.
+    return '$datePart, ${time(start)} – ${day(end)}, ${time(end)}';
   }
 }
 

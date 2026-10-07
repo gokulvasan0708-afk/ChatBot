@@ -49,7 +49,8 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
   bool _isOnline = false;
   bool _showToAllColleges = false;
 
-  DateTime? _date;
+  DateTime? _date; // start date
+  DateTime? _endDate;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
 
@@ -122,7 +123,30 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
       firstDate: now.subtract(const Duration(days: 1)),
       lastDate: now.add(const Duration(days: 3650)),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked == null) return;
+    setState(() {
+      _date = picked;
+      // End date follows the start date unless it is still valid
+      // (same day or later).
+      if (_endDate == null || _endDate!.isBefore(picked)) {
+        _endDate = picked;
+      }
+    });
+  }
+
+  Future<void> _pickEndDate() async {
+    final now = DateTime.now();
+    final first = _date ?? now.subtract(const Duration(days: 1));
+    final initial = (_endDate != null && !_endDate!.isBefore(first))
+        ? _endDate!
+        : first;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: now.add(const Duration(days: 3650)),
+    );
+    if (picked != null) setState(() => _endDate = picked);
   }
 
   Future<void> _pickStartTime() async {
@@ -159,8 +183,12 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
       showTopAlert(context, 'Event title is required', isError: true);
       return;
     }
-    if (_date == null || _startTime == null || _endTime == null) {
-      showTopAlert(context, 'Pick a date, start time and end time', isError: true);
+    if (_date == null ||
+        _endDate == null ||
+        _startTime == null ||
+        _endTime == null) {
+      showTopAlert(
+          context, 'Pick start & end date and start & end time', isError: true);
       return;
     }
     if (_isOnline && _linkController.text.trim().isEmpty) {
@@ -178,9 +206,10 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
     }
 
     final startAt = _combine(_date, _startTime)!;
-    final endAt = _combine(_date, _endTime)!;
+    final endAt = _combine(_endDate, _endTime)!;
     if (!endAt.isAfter(startAt)) {
-      showTopAlert(context, 'End time must be after start time', isError: true);
+      showTopAlert(context, 'End date & time must be after start date & time',
+          isError: true);
       return;
     }
 
@@ -339,7 +368,7 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
               _TextField(controller: _categoryController, hint: 'e.g. Workshop, Sports'),
 
               const SizedBox(height: 16),
-              _Label('Date & Time'),
+              _Label('Start Date & Time'),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -350,23 +379,33 @@ class _CreateEventDialogState extends State<CreateEventDialog> {
                       onTap: _pickDate,
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _PickerChip(
+                      icon: Icons.schedule_rounded,
+                      label: _formatTime(_startTime),
+                      onTap: _pickStartTime,
+                    ),
+                  ),
                 ],
               ),
+              const SizedBox(height: 14),
+              _Label('End Date & Time'),
               const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: _PickerChip(
-                      icon: Icons.schedule_rounded,
-                      label: 'Start ${_formatTime(_startTime)}',
-                      onTap: _pickStartTime,
+                      icon: Icons.event_available_rounded,
+                      label: _formatDate(_endDate),
+                      onTap: _pickEndDate,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _PickerChip(
                       icon: Icons.schedule_rounded,
-                      label: 'End ${_formatTime(_endTime)}',
+                      label: _formatTime(_endTime),
                       onTap: _pickEndTime,
                     ),
                   ),

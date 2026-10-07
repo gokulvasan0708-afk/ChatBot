@@ -35,18 +35,28 @@ import '../widgets/top_alert.dart';
 // Opened from a search suggestion, the sheet skips step 1 and goes
 // straight to the join requirements.
 // ================================================================
-Future<void> showJoinCommunitySheet(
+///
+/// [pickOnly]: when the sheet is opened without a community, picking
+/// one (exact ID, a single name match, or a tap in the match list)
+/// does NOT start joining -- the sheet closes and returns the picked
+/// community so the caller can show its profile details first (with
+/// a Join button) before the join requirements.
+Future<Map<String, dynamic>?> showJoinCommunitySheet(
   BuildContext context, {
   Map<String, dynamic>? initialCommunity,
+  bool pickOnly = false,
 }) async {
-  await showModalBottomSheet(
+  return showModalBottomSheet<Map<String, dynamic>>(
     context: context,
     backgroundColor: const Color(0xFF1B120A),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
     ),
-    builder: (_) => _JoinCommunitySheet(initialCommunity: initialCommunity),
+    builder: (_) => _JoinCommunitySheet(
+      initialCommunity: initialCommunity,
+      pickOnly: pickOnly,
+    ),
   );
 }
 
@@ -54,7 +64,11 @@ class _JoinCommunitySheet extends StatefulWidget {
   // A community picked from the search suggestions (needs 'docId').
   final Map<String, dynamic>? initialCommunity;
 
-  const _JoinCommunitySheet({this.initialCommunity});
+  // Step 1 only picks the community and returns it (see
+  // showJoinCommunitySheet).
+  final bool pickOnly;
+
+  const _JoinCommunitySheet({this.initialCommunity, this.pickOnly = false});
 
   @override
   State<_JoinCommunitySheet> createState() => _JoinCommunitySheetState();
@@ -142,7 +156,14 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
       // 1) exact Community ID
       final byId = await CommunityService.findByCommunityId(text);
       if (byId != null) {
-        await _proceed(byId);
+        if (widget.pickOnly) {
+          setState(() {
+            _choices = [byId];
+            _joining = false;
+          });
+          return;
+        }
+        await _select(byId);
         return;
       }
 
@@ -157,8 +178,8 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
         return;
       }
 
-      if (matches.length == 1) {
-        await _proceed(matches.first);
+      if (matches.length == 1 && !widget.pickOnly) {
+        await _select(matches.first);
         return;
       }
 
@@ -172,6 +193,16 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
       setState(() => _joining = false);
       showTopAlert(context, 'Failed to join community.', isError: true);
     }
+  }
+
+  /// A community was found / tapped in step 1. In pick-only mode the
+  /// sheet closes and hands it back; otherwise joining starts here.
+  Future<void> _select(Map<String, dynamic> community) async {
+    if (widget.pickOnly && widget.initialCommunity == null) {
+      if (mounted) Navigator.of(context).pop(community);
+      return;
+    }
+    await _proceed(community);
   }
 
   Future<List<Map<String, dynamic>>> _searchByName(String text) async {
@@ -654,7 +685,7 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: _joining ? null : () => _proceed(c),
+          onTap: _joining ? null : () => _select(c),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -695,7 +726,22 @@ class _JoinCommunitySheetState extends State<_JoinCommunitySheet> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+                if (widget.pickOnly) ...[
+                  const SizedBox(width: 8),
+                  const Text(
+                    'View',
+                    style: TextStyle(
+                      color: Color(0xFFD2B48C),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: Color(0xFFD2B48C), size: 13),
+                ] else
+                  const Icon(Icons.chevron_right_rounded,
+                      color: Colors.white38),
               ],
             ),
           ),

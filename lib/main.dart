@@ -120,104 +120,24 @@ Future<void> main() async {
 // from Me Page -> Settings rebuilds the WHOLE app instantly,
 // on every screen, with no extra plumbing required.
 //
-// Also a WidgetsBindingObserver: whenever the app is fully
-// backgrounded (paused) or closed (detached) for 3 minutes or
-// more and then reopened, it pushes the Splash Screen back on
-// top of whatever screen was showing. The Splash Screen's own
-// timer + pushAndRemoveUntil logic (see splash_screen.dart) then
-// lands the user back on the correct page (Chats or Get Started)
-// with a single clean route, so normal navigation/back-stack
-// behavior on a fresh launch is completely unaffected — this only
-// adds behavior for the "left the app for a while" case.
+// SPLASH SCREEN RULE
+// The Splash Screen is the app's `home`, so it plays ONLY on a
+// fresh launch -- i.e. when the app was completely closed (swiped
+// away / killed by the system) and then opened again.
+//
+// It is NOT shown again when the app is merely sent to the
+// background and brought back, when the user navigates between
+// screens, or when the theme changes. (The old "away for 3+
+// minutes -> push the splash back on top" lifecycle observer was
+// removed for exactly that reason.)
 // ==========================================================
 
-class ChatbotApp extends StatefulWidget {
+class ChatbotApp extends StatelessWidget {
   const ChatbotApp({super.key});
 
-  @override
-  State<ChatbotApp> createState() => _ChatbotAppState();
-}
-
-class _ChatbotAppState extends State<ChatbotApp> with WidgetsBindingObserver {
-  static const Duration _splashReentryThreshold = Duration(minutes: 3);
-
-  DateTime? _pausedAt;
-  bool _splashReentryPending = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
-      // Remember the FIRST moment we left the foreground — don't let a
-      // later paused/detached callback (e.g. transient state changes
-      // during a permission dialog) reset the clock.
-      _pausedAt ??= DateTime.now();
-    } else if (state == AppLifecycleState.resumed) {
-      final pausedAt = _pausedAt;
-      _pausedAt = null;
-
-      if (pausedAt == null) return;
-
-      final awayFor = DateTime.now().difference(pausedAt);
-
-      if (awayFor >= _splashReentryThreshold) {
-        _showSplashAgain();
-      }
-    }
-  }
-
-  void _showSplashAgain() {
-    if (_splashReentryPending) return;
-
-    // Don't cover an incoming/outgoing/active call screen with the
-    // splash re-entry screen -- if a call is ringing or connected right
-    // now, leave the navigator alone so the call screen (and its
-    // Accept/Decline/Cancel buttons) stays reachable. Once the call
-    // resolves, normal navigation continues as usual.
-    if (CallService.instance.isCallInProgress) return;
-
-    _splashReentryPending = true;
-
-    // Defer to the next frame so the navigator is guaranteed ready.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final navigator = rootNavigatorKey.currentState;
-
-      if (navigator == null) {
-        _splashReentryPending = false;
-        return;
-      }
-
-      navigator
-          .push(
-            PageRouteBuilder<void>(
-              transitionDuration: const Duration(milliseconds: 400),
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const SplashScreen(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-            ),
-          )
-          .then((_) {
-            _splashReentryPending = false;
-          });
-    });
-  }
+  // One shared instance, so rebuilding MaterialApp (theme switch)
+  // never hands it a "new" home widget.
+  static const Widget _home = SplashScreen();
 
   @override
   Widget build(BuildContext context) {
@@ -231,12 +151,13 @@ class _ChatbotAppState extends State<ChatbotApp> with WidgetsBindingObserver {
 
           title: 'Nexus',
           builder: (context, child) => AiOverlayHost(child: child),
+          navigatorObservers: [AiLauncher.routeObserver],
 
           themeMode: mode,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
 
-          home: const SplashScreen(),
+          home: _home,
         );
       },
     );

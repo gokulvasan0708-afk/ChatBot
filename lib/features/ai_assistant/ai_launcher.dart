@@ -19,6 +19,33 @@ class AiLauncher extends StatefulWidget {
   /// Any page can set true to hide the assistant (e.g. fullscreen player).
   static final ValueNotifier<bool> suppressed = ValueNotifier(false);
 
+  /// True only while the Home screen (Chats / Hubs / Me tabs) is the page
+  /// the user is looking at. The AI button is shown ONLY then, so it never
+  /// appears on pages pushed above those tabs (Community Home, Members,
+  /// settings, ...). Driven by HomeShell via [AiHomeVisibility].
+  static final ValueNotifier<bool> onHome = ValueNotifier(false);
+
+  /// Observer that tells HomeShell when another page is pushed over it or
+  /// popped back to it. Pass to MaterialApp.navigatorObservers.
+  static final RouteObserver<PageRoute<dynamic>> routeObserver =
+      RouteObserver<PageRoute<dynamic>>();
+
+  static Object? _homeOwner;
+
+  static void showOnHome(Object owner) {
+    _homeOwner = owner;
+    onHome.value = true;
+  }
+
+  static void hideOnHome(Object owner) {
+    // Only the shell that switched it on may switch it off (a new shell
+    // can already have taken over, e.g. after login).
+    if (_homeOwner == owner) {
+      _homeOwner = null;
+      onHome.value = false;
+    }
+  }
+
   static int _holds = 0;
 
   /// Ref-counted hide: call [hold] when a screen needs the button hidden and
@@ -67,13 +94,15 @@ class _AiLauncherState extends State<AiLauncher> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([AiLauncher.ready, AiLauncher.suppressed]),
+      listenable: Listenable.merge(
+          [AiLauncher.ready, AiLauncher.suppressed, AiLauncher.onHome]),
       builder: (context, _) {
         final mq = MediaQuery.of(context);
         // Hide only on short screens (phone landscape). Desktop/web stays visible.
         final tooShort = mq.size.height < 420;
         final visible = _signedIn &&
             AiLauncher.ready.value &&
+            AiLauncher.onHome.value &&
             !AiLauncher.suppressed.value &&
             !tooShort;
         if (!visible) return const SizedBox.shrink();
@@ -143,6 +172,50 @@ mixin AiLauncherHide<T extends StatefulWidget> on State<T> {
   @override
   void dispose() {
     WidgetsBinding.instance.addPostFrameCallback((_) => AiLauncher.release());
+    super.dispose();
+  }
+}
+
+/// Add to HomeShell's State (`with AiHomeVisibility`): the AI button is
+/// visible while this screen is the top page, hidden when any other page
+/// is pushed over it, visible again when it comes back.
+/// Needs `navigatorObservers: [AiLauncher.routeObserver]` on MaterialApp.
+mixin AiHomeVisibility<T extends StatefulWidget> on State<T>
+    implements RouteAware {
+  bool _aiSubscribed = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (!_aiSubscribed && route is PageRoute) {
+      AiLauncher.routeObserver.subscribe(this, route);
+      _aiSubscribed = true;
+    }
+  }
+
+  void _aiShow() => WidgetsBinding.instance
+      .addPostFrameCallback((_) => AiLauncher.showOnHome(this));
+
+  void _aiHide() => WidgetsBinding.instance
+      .addPostFrameCallback((_) => AiLauncher.hideOnHome(this));
+
+  @override
+  void didPush() => _aiShow();
+
+  @override
+  void didPopNext() => _aiShow();
+
+  @override
+  void didPushNext() => _aiHide();
+
+  @override
+  void didPop() => _aiHide();
+
+  @override
+  void dispose() {
+    AiLauncher.routeObserver.unsubscribe(this);
+    _aiHide();
     super.dispose();
   }
 }

@@ -17,6 +17,7 @@ import '../services/chat_settings_service.dart';
 import 'package:flutter/foundation.dart';
 
 import '../widgets/top_alert.dart';
+import '../widgets/nexus_sliding_switcher.dart';
 // ================================================================
 // PROFILE IMAGE PROVIDER
 // ----------------------------------------------------------------
@@ -99,6 +100,11 @@ class _ChatPageState extends State<ChatPage>
   // TextField is focused was the source of the Flutter framework
   // `_dependents.isEmpty` assertion seen when entering 10+ digits.
   Map<String, dynamic>? _accountIdSearchResult;
+  // The exact text the current/last Account ID lookup was run for, so a
+  // stale result is never shown for different text, plus lookup status.
+  String _accountIdSearchQuery = '';
+  bool _accountIdSearchDone = false;
+  bool _accountIdSearchFailed = false;
   Timer? _accountIdSearchDebounce;
   int _accountIdSearchRequest = 0;
 
@@ -113,6 +119,38 @@ class _ChatPageState extends State<ChatPage>
   // profile display + the brown "connected" indicator in search).
   final Set<String> _connectedUids = {};
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _connectionsSub;
+
+  // FIX (Public / Private split):
+  // * `_connectionsOwnerUid` remembers which account `_connectedUids`
+  //   belongs to. ChatPage lives inside HomeShell's IndexedStack, so an
+  //   account switch (Me page) does NOT re-run initState -- the old
+  //   listener kept feeding the PREVIOUS account's connections and
+  //   messages from a connected person landed in Public (and the other
+  //   way round). `_authSub` re-binds the listener on every account
+  //   change.
+  // * `_connectionsLoaded` stays false until the first connections
+  //   snapshot arrives, so no chat is placed in Public/Private while
+  //   we do not yet know who is connected (it used to show EVERY
+  //   chat under Public for a moment, then jump to Private).
+  StreamSubscription<User?>? _authSub;
+  String? _connectionsOwnerUid;
+  bool _connectionsLoaded = false;
+
+  // ----------------------------------------------------------
+  // UNSEEN-MESSAGE DOTS on the Public | Private switch.
+  // A dot shows on a segment while at least one chat in that section
+  // has an unseen last message -- the same rule the per-chat dot
+  // (_UnreadDot) uses: last message is from the other person and the
+  // current account is not in its readBy list.
+  // ----------------------------------------------------------
+  final ValueNotifier<bool> _publicUnseen = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _privateUnseen = ValueNotifier<bool>(false);
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _unseenChatsSub;
+  final Map<String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
+      _lastMessageSubs = {};
+  final Map<String, String> _unseenChatOther = {}; // chatId -> other uid
+  final Map<String, bool> _chatHasUnseen = {}; // chatId -> unseen?
+  String? _unseenOwnerUid;
 
   // Cache of resolved user docs (uid -> data) so search suggestions
   // can be computed without extra network round-trips.
@@ -140,8 +178,27 @@ class _ChatPageState extends State<ChatPage>
     searchFocusNode.addListener(_onSearchFocusChanged);
 
     _listenConnections();
+    _startUnseenTracking();
+
+    // Re-bind the connections listener when the signed-in account
+    // changes (account switch / re-login) without ChatPage being rebuilt.
+    _authSub = FirebaseAuth.instance.authStateChanges().listen(_onAuthUserChanged);
 
     widget.publicResetSignal?.addListener(_onPublicResetSignal);
+  }
+
+  void _onAuthUserChanged(User? user) {
+    if (!mounted) return;
+    if (user?.uid == _connectionsOwnerUid) return; // same account, nothing to do
+
+    // Everything cached below belongs to the previous account.
+    _userCache.clear();
+    _chatOtherUid.clear();
+    _messageCache.clear();
+
+    _listenConnections();
+    _startUnseenTracking();
+    setState(() => showPrivate = false);
   }
 
   // ==========================================================
@@ -215,23 +272,36 @@ class _ChatPageState extends State<ChatPage>
   }
 
   void _listenConnections() {
+    _connectionsSub?.cancel();
+    _connectionsSub = null;
+
     final user = FirebaseAuth.instance.currentUser;
+    _connectionsOwnerUid = user?.uid;
+
+    // New (or no) account: forget the old account's connections and
+    // wait for the first snapshot before splitting Public / Private.
+    _connectedUids.clear();
+    _connectionsLoaded = false;
+
     if (user == null) return;
+
+    final String ownerUid = user.uid;
 
     _connectionsSub = FirebaseFirestore.instance
         .collection('connections')
-        .where('users', arrayContains: user.uid)
+        .where('users', arrayContains: ownerUid)
         .where('status', isEqualTo: 'connected')
         .snapshots()
         .listen((snapshot) {
-      if (!mounted) return;
+      // Ignore late events from a listener of a previous account.
+      if (!mounted || _connectionsOwnerUid != ownerUid) return;
 
       final uids = <String>{};
 
       for (final doc in snapshot.docs) {
         final users = List<String>.from(doc.data()['users'] ?? []);
         final otherUid = users.firstWhere(
-          (id) => id != user.uid,
+          (id) => id != ownerUid,
           orElse: () => '',
         );
         if (otherUid.isNotEmpty) uids.add(otherUid);
@@ -241,14 +311,138 @@ class _ChatPageState extends State<ChatPage>
         _connectedUids
           ..clear()
           ..addAll(uids);
+        _connectionsLoaded = true;
       });
+      _recomputeUnseen();
+    }, onError: (Object e) {
+      debugPrint('ChatPage connections error: $e');
+      if (!mounted || _connectionsOwnerUid != ownerUid) return;
+      // Do not leave the list on a spinner forever.
+      setState(() => _connectionsLoaded = true);
     });
+  }
+
+  // ==========================================================
+  // UNSEEN-MESSAGE TRACKING (dots on the Public | Private switch)
+  // ==========================================================
+
+  void _stopUnseenTracking() {
+    _unseenChatsSub?.cancel();
+    _unseenChatsSub = null;
+    for (final sub in _lastMessageSubs.values) {
+      sub.cancel();
+    }
+    _lastMessageSubs.clear();
+    _unseenChatOther.clear();
+    _chatHasUnseen.clear();
+    _unseenOwnerUid = null;
+    _publicUnseen.value = false;
+    _privateUnseen.value = false;
+  }
+
+  void _startUnseenTracking() {
+    _stopUnseenTracking();
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final String uid = user.uid;
+    _unseenOwnerUid = uid;
+
+    final chats = FirebaseFirestore.instance.collection('chats');
+
+    _unseenChatsSub =
+        chats.where('participants', arrayContains: uid).snapshots().listen(
+      (snap) {
+        if (!mounted || _unseenOwnerUid != uid) return;
+
+        final live = <String>{};
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          final hiddenFor = List<String>.from(data['hiddenFor'] ?? []);
+          if (hiddenFor.contains(uid)) continue;
+
+          final participants = List<String>.from(data['participants'] ?? []);
+          final other = participants.firstWhere(
+            (id) => id != uid,
+            orElse: () => '',
+          );
+          if (other.isEmpty) continue;
+
+          live.add(doc.id);
+          _unseenChatOther[doc.id] = other;
+
+          if (!_lastMessageSubs.containsKey(doc.id)) {
+            _lastMessageSubs[doc.id] = chats
+                .doc(doc.id)
+                .collection('messages')
+                .orderBy('sentAt', descending: true)
+                .limit(1)
+                .snapshots()
+                .listen(
+              (m) {
+                if (!mounted || _unseenOwnerUid != uid) return;
+                var unseen = false;
+                if (m.docs.isNotEmpty) {
+                  final d = m.docs.first.data();
+                  final senderId = (d['senderId'] ?? '').toString();
+                  final readBy = List<String>.from(d['readBy'] ?? []);
+                  unseen = senderId.isNotEmpty &&
+                      senderId != uid &&
+                      !readBy.contains(uid);
+                }
+                if (_chatHasUnseen[doc.id] != unseen) {
+                  _chatHasUnseen[doc.id] = unseen;
+                  _recomputeUnseen();
+                }
+              },
+              onError: (Object e) =>
+                  debugPrint('ChatPage unseen last-message error: $e'),
+            );
+          }
+        }
+
+        // Chats that were deleted / hidden stop counting.
+        for (final id
+            in _lastMessageSubs.keys.where((k) => !live.contains(k)).toList()) {
+          _lastMessageSubs.remove(id)?.cancel();
+          _chatHasUnseen.remove(id);
+          _unseenChatOther.remove(id);
+        }
+        _recomputeUnseen();
+      },
+      onError: (Object e) => debugPrint('ChatPage unseen chats error: $e'),
+    );
+  }
+
+  void _recomputeUnseen() {
+    // Public / Private cannot be told apart until connections are known.
+    if (!_connectionsLoaded) return;
+
+    var pub = false;
+    var priv = false;
+    _chatHasUnseen.forEach((chatId, unseen) {
+      if (!unseen) return;
+      final other = _unseenChatOther[chatId];
+      if (other == null) return;
+      if (_connectedUids.contains(other)) {
+        priv = true;
+      } else {
+        pub = true;
+      }
+    });
+
+    if (_publicUnseen.value != pub) _publicUnseen.value = pub;
+    if (_privateUnseen.value != priv) _privateUnseen.value = priv;
   }
 
   @override
   void dispose() {
     widget.publicResetSignal?.removeListener(_onPublicResetSignal);
     _connectionsSub?.cancel();
+    _authSub?.cancel();
+    _stopUnseenTracking();
+    _publicUnseen.dispose();
+    _privateUnseen.dispose();
     _accountIdSearchDebounce?.cancel();
     searchFocusNode.removeListener(_onSearchFocusChanged);
     searchFocusNode.dispose();
@@ -327,11 +521,83 @@ class _ChatPageState extends State<ChatPage>
   // SEARCH BY EXACT ACCOUNT ID (10-character Account ID)
   // ==========================================================
 
+  // Account IDs can be shorter/longer than 10 characters on older
+  // accounts, so the lookup is a case-sensitive EXACT match on any
+  // text of at least this length (never a prefix / public-name search).
+  static const int _minAccountIdLength = 4;
+
+  /// Runs an exact Account ID lookup against the whole `users`
+  /// collection (not just people already chatted with). If Firestore
+  /// refuses the query, falls back to the locally cached users so
+  /// existing chat members still resolve.
+  Future<Map<String, dynamic>?> _findUserByAccountId(String accountId) async {
+    // Strip any whitespace / zero-width characters that pasting or the
+    // keyboard may have added.
+    final wanted =
+        accountId.replaceAll(RegExp(r'[\s\u200B-\u200D\uFEFF]'), '');
+
+    Map<String, dynamic>? fromDoc(DocumentSnapshot<Map<String, dynamic>> d) {
+      final raw = d.data();
+      if (raw == null) return null;
+      final data = Map<String, dynamic>.from(raw);
+      data['uid'] = (data['uid'] ?? d.id).toString();
+      return data;
+    }
+
+    try {
+      // 1) Exact, case-sensitive match.
+      final exact = await FirebaseFirestore.instance
+          .collection('users')
+          .where('userId', isEqualTo: wanted)
+          .limit(1)
+          .get();
+      if (exact.docs.isNotEmpty) return fromDoc(exact.docs.first);
+
+      // 2) Same ID but the stored value / typed value differs only by
+      //    case or stray whitespace (Firestore cannot query that, so
+      //    compare locally). Still a full-ID match, never a partial one.
+      final lowered = wanted.toLowerCase();
+      final all =
+          await FirebaseFirestore.instance.collection('users').limit(1000).get();
+      for (final d in all.docs) {
+        final stored = (d.data()['userId'] ?? '')
+            .toString()
+            .replaceAll(RegExp(r'[\s\u200B-\u200D\uFEFF]'), '');
+        if (stored.isNotEmpty && stored.toLowerCase() == lowered) {
+          return fromDoc(d);
+        }
+      }
+
+      // 3) The person pasted the Firebase UID instead of the Account ID.
+      if (wanted.length >= 20) {
+        final byUid = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(wanted)
+            .get();
+        if (byUid.exists) return fromDoc(byUid);
+      }
+
+      debugPrint('Account ID search: no users doc matches "$wanted"');
+      return null;
+    } catch (e) {
+      debugPrint('Account ID search error: $e');
+
+      for (final entry in _userCache.entries) {
+        if ((entry.value['userId'] ?? '').toString().trim() == wanted) {
+          final data = Map<String, dynamic>.from(entry.value);
+          data['uid'] = (data['uid'] ?? entry.key).toString();
+          return data;
+        }
+      }
+      rethrow;
+    }
+  }
+
   Future<void> _searchUser() async {
     final searchText = searchController.text.trim();
 
-    if (searchText.length != 10) {
-      showTopAlert(context, 'Enter a valid 10-digit Account ID');
+    if (searchText.length < _minAccountIdLength) {
+      showTopAlert(context, 'Enter a valid Account ID');
       return;
     }
 
@@ -340,11 +606,7 @@ class _ChatPageState extends State<ChatPage>
     });
 
     try {
-      final result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('userId', isEqualTo: searchText)
-          .limit(1)
-          .get();
+      final data = await _findUserByAccountId(searchText);
 
       if (!mounted) return;
 
@@ -352,13 +614,10 @@ class _ChatPageState extends State<ChatPage>
         searchingUser = false;
       });
 
-      if (result.docs.isEmpty) {
+      if (data == null) {
         showTopAlert(context, 'User not found', isError: true);
         return;
       }
-
-      final data = Map<String, dynamic>.from(result.docs.first.data());
-      data['uid'] = (data['uid'] ?? result.docs.first.id).toString();
 
       _showSearchResult(data);
     } catch (e) {
@@ -374,11 +633,11 @@ class _ChatPageState extends State<ChatPage>
     }
   }
 
-  /// Firestore account-ID lookup used only after the user has entered
-  /// the complete 10-character Account ID (letters, digits and symbols
-  /// are all valid — Account IDs are not purely numeric). The result is
-  /// stored in state so the build method never creates/cancels a
-  /// Firestore stream while the keyboard is active.
+  /// Account-ID lookup runs as the user types (debounced) for ANY text
+  /// of a sensible length, in parallel with the name suggestions from
+  /// existing chats. The result is stored in state so the build method
+  /// never creates/cancels a Firestore stream while the keyboard is
+  /// active. Account IDs may contain letters, digits and symbols.
   void _handleSearchChanged(String raw) {
     final text = raw.trim();
     _accountIdSearchDebounce?.cancel();
@@ -387,23 +646,30 @@ class _ChatPageState extends State<ChatPage>
 
     _syncSearchBorderAnimation();
 
-    if (text.length != 10) {
-      if (_accountIdSearchResult != null || searchingUser) {
-        setState(() {
-          _accountIdSearchResult = null;
-          searchingUser = false;
-        });
-      } else {
-        setState(() {});
-      }
+    // Any edit invalidates the previous lookup result.
+    _accountIdSearchRequest++;
+
+    if (text.length < _minAccountIdLength) {
+      setState(() {
+        _accountIdSearchResult = null;
+        _accountIdSearchQuery = '';
+        _accountIdSearchDone = false;
+        _accountIdSearchFailed = false;
+        searchingUser = false;
+      });
       return;
     }
 
-    final requestId = ++_accountIdSearchRequest;
-    _accountIdSearchDebounce = Timer(const Duration(milliseconds: 250), () {
+    final requestId = _accountIdSearchRequest;
+    setState(() {
+      _accountIdSearchResult = null;
+      _accountIdSearchDone = false;
+      _accountIdSearchFailed = false;
+    });
+
+    _accountIdSearchDebounce = Timer(const Duration(milliseconds: 400), () {
       _lookupAccountId(text, requestId);
     });
-    setState(() {});
   }
 
   Future<void> _lookupAccountId(String accountId, int requestId) async {
@@ -412,33 +678,28 @@ class _ChatPageState extends State<ChatPage>
     setState(() {
       searchingUser = true;
       _accountIdSearchResult = null;
+      _accountIdSearchQuery = accountId;
+      _accountIdSearchDone = false;
+      _accountIdSearchFailed = false;
     });
 
     try {
-      final result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('userId', isEqualTo: accountId)
-          .limit(1)
-          .get();
+      final data = await _findUserByAccountId(accountId);
 
       if (!mounted || requestId != _accountIdSearchRequest) return;
-
-      Map<String, dynamic>? data;
-      if (result.docs.isNotEmpty) {
-        data = Map<String, dynamic>.from(result.docs.first.data());
-        data['uid'] = (data['uid'] ?? result.docs.first.id).toString();
-      }
 
       setState(() {
         searchingUser = false;
         _accountIdSearchResult = data;
+        _accountIdSearchDone = true;
       });
     } catch (e) {
-      debugPrint('Account ID search error: $e');
       if (!mounted || requestId != _accountIdSearchRequest) return;
       setState(() {
         searchingUser = false;
         _accountIdSearchResult = null;
+        _accountIdSearchDone = true;
+        _accountIdSearchFailed = true;
       });
     }
   }
@@ -1522,6 +1783,11 @@ class _ChatPageState extends State<ChatPage>
               focusNode: searchFocusNode,
               style: const TextStyle(color: Colors.white),
               textInputAction: TextInputAction.search,
+              // Account IDs are case-sensitive random strings: the
+              // keyboard must never autocorrect / auto-capitalise them.
+              autocorrect: false,
+              enableSuggestions: false,
+              textCapitalization: TextCapitalization.none,
               onChanged: _handleSearchChanged,
               onSubmitted: (_) {
                 FocusScope.of(context).unfocus();
@@ -1567,9 +1833,23 @@ class _ChatPageState extends State<ChatPage>
           // ==================================================
           // PUBLIC / PRIVATE TOGGLE
           // ==================================================
-          _PublicPrivateToggle(
-            showPrivate: showPrivate,
-            onTap: () => setState(() => showPrivate = !showPrivate),
+          // Same sliding switcher as Hubs (Community | Clubs | Groups),
+          // with an unseen-messages dot on each segment's top-right.
+          ValueListenableBuilder<bool>(
+            valueListenable: _publicUnseen,
+            builder: (context, publicUnseen, _) {
+              return ValueListenableBuilder<bool>(
+                valueListenable: _privateUnseen,
+                builder: (context, privateUnseen, _) {
+                  return NexusSlidingSwitcher(
+                    labels: const ['Public', 'Private'],
+                    selectedIndex: showPrivate ? 1 : 0,
+                    badges: [publicUnseen, privateUnseen],
+                    onChanged: (i) => setState(() => showPrivate = i == 1),
+                  );
+                },
+              );
+            },
           ),
 
           const SizedBox(height: 10),
@@ -1696,27 +1976,10 @@ class _ChatPageState extends State<ChatPage>
     }
 
     // ------------------------------------------------------
-    // EXACT 10-DIGIT ACCOUNT ID
+    // EXACT ACCOUNT ID MATCH (any user, not only existing chats)
     // ------------------------------------------------------
-    if (text.length == 10) {
-      if (searchingUser) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 14),
-          child: Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFFD2B48C),
-              ),
-            ),
-          ),
-        );
-      }
-
-      final data = _accountIdSearchResult;
-      if (data == null) return const SizedBox.shrink();
+    if (_accountIdSearchResult != null && _accountIdSearchQuery == text) {
+      final data = _accountIdSearchResult!;
 
       final docUid = (data['uid'] ?? '').toString();
       final name = (data['publicName'] ?? '').toString();
@@ -1843,7 +2106,22 @@ class _ChatPageState extends State<ChatPage>
         final matches =
             _nameSuggestionsFromChats(text, snapshot.data!.docs, user.uid);
 
-        if (matches.isEmpty) return const SizedBox.shrink();
+        if (matches.isEmpty) {
+          // Nothing in existing chats either -> tell the user what
+          // happened with the Account ID lookup instead of staying blank.
+          if (_accountIdSearchDone && _accountIdSearchQuery == text) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                _accountIdSearchFailed
+                    ? 'Could not search Account ID. Check your connection and try again.'
+                    : 'No user found with this Account ID',
+                style: const TextStyle(color: Colors.white54),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
 
         return _suggestionBox(
           children: matches.map((m) {
@@ -1968,6 +2246,16 @@ class _ChatPageState extends State<ChatPage>
         }
 
         if (!snapshot.hasData) return const SizedBox.shrink();
+
+        // Do not split Public / Private until we know who is connected.
+        if (!_connectionsLoaded) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+            ),
+          );
+        }
 
         var chats = snapshot.data!.docs.where((chat) {
           final data = chat.data();
@@ -2447,56 +2735,6 @@ class _AnimatedTraceBorder extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ================================================================
-// PUBLIC / PRIVATE TOGGLE
-// ================================================================
-
-class _PublicPrivateToggle extends StatelessWidget {
-  final bool showPrivate;
-  final VoidCallback onTap;
-
-  const _PublicPrivateToggle({required this.showPrivate, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-        decoration: BoxDecoration(
-          color: showPrivate
-              ? const Color(0xFF8B4513).withValues(alpha: 0.35)
-              : const Color(0xFF1B120A),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFD2B48C).withValues(alpha: 0.5),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              showPrivate ? Icons.lock_rounded : Icons.public_rounded,
-              size: 16,
-              color: const Color(0xFFFFE9B0),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              showPrivate ? 'Private' : 'Public',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

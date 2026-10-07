@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -10,23 +8,121 @@ class UserProfileService {
   static final FirebaseAuth _auth =
       FirebaseAuth.instance;
 
-  static const String _characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-      'abcdefghijklmnopqrstuvwxyz'
-      '0123456789'
-      '@#\$%';
-
   // ==========================================================
-  // GENERATE RANDOM 10 CHARACTER USER ID
+  // ACCOUNT ID  ==  PUBLIC NAME
+  // ----------------------------------------------------------
+  // The Account ID is no longer randomly generated. It is the
+  // user's PUBLIC NAME (stored in `users/{uid}.publicName` and
+  // mirrored into `users/{uid}.userId` so every existing feature
+  // that reads `userId` keeps working).
+  //
+  // Public name rules (so it is a usable, unique ID):
+  //   * compulsory -- an account has no Account ID until it is set
+  //   * 4 to 30 characters, no spaces
+  //   * must contain AT LEAST 2 of these 3 kinds of characters:
+  //       - letters           (a-z, A-Z)
+  //       - numbers           (0-9)
+  //       - special characters (@ # $ % _ . - etc.)
+  //   * unique (case-insensitive) across all accounts
   // ==========================================================
 
-  static String _generateUserId() {
-    final random = Random();
+  static const int minPublicNameLength = 4;
+  static const int maxPublicNameLength = 30;
 
-    return List.generate(
-      10,
-      (_) => _characters[random.nextInt(_characters.length)],
-    ).join();
+  static final RegExp _letterRe = RegExp(r'[A-Za-z]');
+  static final RegExp _digitRe = RegExp(r'[0-9]');
+  static final RegExp _specialRe = RegExp(r'[^A-Za-z0-9\s]');
+
+  /// Returns null when [name] is valid, otherwise a short message
+  /// that can be shown to the user.
+  static String? validatePublicName(String name) {
+    final value = name.trim();
+
+    if (value.isEmpty) {
+      return 'Public name is required.';
+    }
+
+    if (RegExp(r'\s').hasMatch(value)) {
+      return 'Spaces are not allowed.';
+    }
+
+    if (value.length < minPublicNameLength) {
+      return 'Use at least $minPublicNameLength characters.';
+    }
+
+    if (value.length > maxPublicNameLength) {
+      return 'Use at most $maxPublicNameLength characters.';
+    }
+
+    final kinds = (_letterRe.hasMatch(value) ? 1 : 0) +
+        (_digitRe.hasMatch(value) ? 1 : 0) +
+        (_specialRe.hasMatch(value) ? 1 : 0);
+
+    if (kinds < 2) {
+      return 'Mix at least 2 of: letters, numbers, special characters.';
+    }
+
+    return null;
+  }
+
+  /// True when another account already uses [name] as its Account ID.
+  static Future<bool> isAccountIdTaken(
+    String name, {
+    String? exceptUid,
+  }) async {
+    final value = name.trim();
+    final lower = value.toLowerCase();
+
+    Future<bool> check(String field, String wanted) async {
+      final q = await _firestore
+          .collection('users')
+          .where(field, isEqualTo: wanted)
+          .limit(5)
+          .get();
+      return q.docs.any((d) => d.id != exceptUid);
+    }
+
+    if (await check('userId', value)) return true;
+    if (await check('userIdLower', lower)) return true;
+    return false;
+  }
+
+  /// Saves [name] as the public name AND the Account ID in one write.
+  /// Throws a [String] message (validation / "already taken") that the
+  /// UI can show directly.
+  static Future<void> setPublicNameAsAccountId(String name) async {
+    final user = _auth.currentUser;
+
+    if (user == null) {
+      throw 'Please sign in again.';
+    }
+
+    final value = name.trim();
+
+    final error = validatePublicName(value);
+    if (error != null) throw error;
+
+    if (await isAccountIdTaken(value, exceptUid: user.uid)) {
+      throw 'This name is already taken. Try another one.';
+    }
+
+    await _firestore.collection('users').doc(user.uid).update({
+      'publicName': value,
+      'userId': value,
+      'userIdLower': value.toLowerCase(),
+    });
+  }
+
+  /// True when this profile still needs the (compulsory) public name:
+  /// no public name yet, or an old profile whose Account ID is still
+  /// the previous random one and not its public name.
+  static bool needsPublicName(Map<String, dynamic>? data) {
+    if (data == null) return true;
+    final publicName = (data['publicName'] ?? '').toString().trim();
+    final userId = (data['userId'] ?? '').toString().trim();
+    if (publicName.isEmpty) return true;
+    if (validatePublicName(publicName) != null) return true;
+    return userId != publicName;
   }
 
   // ==========================================================
@@ -96,10 +192,19 @@ class UserProfileService {
   return data['userId'].toString();
 }
 
-      // Existing profile but userId missing
-      final newUserId = await _generateUniqueUserId();
+      // Existing profile but userId missing. The Account ID is the
+      // public name now, so there is nothing to generate: copy the
+      // public name if it is already set and valid, else leave empty
+      // (the app asks for the public name right after login).
+      final existingName = (data?['publicName'] ?? '').toString().trim();
+      final canUse = existingName.isNotEmpty &&
+          validatePublicName(existingName) == null &&
+          !await isAccountIdTaken(existingName, exceptUid: user.uid);
 
-      final updates = <String, dynamic>{'userId': newUserId};
+      final updates = <String, dynamic>{
+        'userId': canUse ? existingName : '',
+        if (canUse) 'userIdLower': existingName.toLowerCase(),
+      };
       if (data == null ||
           data['provider'] == null ||
           data['provider'].toString().isEmpty) {
@@ -108,18 +213,20 @@ class UserProfileService {
 
       await userRef.update(updates);
 
-      return newUserId;
+      return updates['userId'].toString();
     }
 
     // ========================================================
     // NEW USER
     // ========================================================
 
-    final userId = await _generateUniqueUserId();
-
     await userRef.set({
       'uid': user.uid,
-      'userId': userId,
+
+      // Account ID == public name. Empty until the user picks their
+      // (compulsory) public name.
+      'userId': '',
+      'userIdLower': '',
       'email': user.email ?? '',
 
       // Auth provider this account was created/authenticated with --
@@ -156,30 +263,7 @@ class UserProfileService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    return userId;
-  }
-
-  // ==========================================================
-  // GENERATE UNIQUE USER ID
-  // ==========================================================
-
-  static Future<String> _generateUniqueUserId() async {
-    while (true) {
-      final userId = _generateUserId();
-
-      final query = await _firestore
-          .collection('users')
-          .where(
-            'userId',
-            isEqualTo: userId,
-          )
-          .limit(1)
-          .get();
-
-      if (query.docs.isEmpty) {
-        return userId;
-      }
-    }
+    return '';
   }
 
   // ==========================================================
@@ -210,16 +294,9 @@ class UserProfileService {
   // ==========================================================
 
   static Future<void> updatePublicName(String name) async {
-    final user = _auth.currentUser;
-
-    if (user == null) return;
-
-    await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .update({
-      'publicName': name.trim(),
-    });
+    // Public name is also the Account ID, so it goes through the
+    // validated + unique-checked path.
+    await setPublicNameAsAccountId(name);
   }
 
   // ==========================================================
@@ -305,7 +382,9 @@ class UserProfileService {
     final data = <String, dynamic>{};
 
     if (name != null) {
-      data['publicName'] = name.trim();
+      // Public name == Account ID: validate, check uniqueness, and
+      // keep `userId` in sync.
+      await setPublicNameAsAccountId(name);
     }
 
     if (imageUrl != null) {

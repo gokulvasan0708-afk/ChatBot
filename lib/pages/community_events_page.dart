@@ -135,6 +135,7 @@ class _EventCard extends StatelessWidget {
     final isOnline = event['isOnline'] == true;
     final location = isOnline ? 'Online' : (event['location'] ?? '').toString();
     final start = (event['startAt'] as Timestamp?)?.toDate();
+    final end = (event['endAt'] as Timestamp?)?.toDate();
     final going = (event['goingUids'] is List) ? (event['goingUids'] as List).length : 0;
     final status = EventService.statusFor(event);
 
@@ -191,7 +192,7 @@ class _EventCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         [
-                          if (start != null) _formatDateTime(start),
+                          if (start != null) _formatSpan(start, end),
                           if (category.isNotEmpty) category,
                           if (location.isNotEmpty) location,
                           '$going going',
@@ -211,6 +212,17 @@ class _EventCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// "7 Oct, 9:00 AM" for a one-day event,
+  /// "7 Oct, 9:00 AM – 9 Oct, 5:00 PM" when it runs over several days.
+  String _formatSpan(DateTime start, DateTime? end) {
+    if (end == null) return _formatDateTime(start);
+    final sameDay = start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day;
+    if (sameDay) return _formatDateTime(start);
+    return '${_formatDateTime(start)} – ${_formatDateTime(end)}';
   }
 
   String _formatDateTime(DateTime d) {

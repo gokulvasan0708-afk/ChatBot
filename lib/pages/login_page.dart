@@ -190,6 +190,17 @@ class _LoginPageState extends State<LoginPage>
     });
 
     try {
+      // Adding an account from the switcher: write the new account into
+      // the CURRENT account's list now, while it is still signed in
+      // (rules only allow a user to write their own switchAccounts).
+      if (widget.accountToLinkUid != null &&
+          widget.accountToLinkUid!.isNotEmpty) {
+        await AccountSwitchService.instance.preLinkByEmail(
+          widget.accountToLinkUid!,
+          email,
+        );
+      }
+
       // =====================================================
       // STEP 1: TRY NORMAL FIREBASE LOGIN
       // =====================================================

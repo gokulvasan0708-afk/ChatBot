@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+
   "scripts": {
-    "start": "node start.js",
-    "start:node": "node server.js"
-  },
+  "start": "concurrently -k -n node,ai \"npm run start:node\" \"npm run start:ai\"",
+  "start:node": "node server.js",
+  "start:ai": "cd ai && python -m uvicorn main:app --host 127.0.0.1 --port 8000"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -17,6 +19,7 @@
     "firebase-admin": "^13.0.0"
   },
   "devDependencies": {
+    "concurrently": "^10.0.5",
     "wrangler": "^4.129.0"
   }
 }

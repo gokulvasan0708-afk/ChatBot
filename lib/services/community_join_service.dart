@@ -49,6 +49,10 @@ enum JoinCheckStatus {
   notNumeric,
   disabled,
   outOfRange,
+
+  /// The owner has not set any allowed numbers (range / extra allowed)
+  /// for this class, so nobody can join it yet.
+  notConfigured,
 }
 
 class JoinCheckResult {
@@ -71,6 +75,9 @@ class JoinCheckResult {
         return 'This register number is not allowed to join.';
       case JoinCheckStatus.outOfRange:
         return 'This register number is not permitted for this class.';
+      case JoinCheckStatus.notConfigured:
+        return 'Join requirements are not set for this class yet. '
+            'Please contact the community owner.';
     }
   }
 }
@@ -123,8 +130,10 @@ class JoinRequirements {
 
   /// Checks a register number against these rules.
   /// Priority: empty/non-numeric -> disabled (always wins) -> extra
-  /// allowed -> range (if one is set). With no range set, any valid
-  /// numeric register number is accepted.
+  /// allowed -> range. A register number is accepted ONLY when it is in
+  /// the range or in the extra-allowed list. If the owner has set
+  /// neither for this class, nobody can join it (join requirements
+  /// must be satisfied -- they are never skipped).
   JoinCheckResult check(String input) {
     final number = input.trim();
     if (number.isEmpty) return const JoinCheckResult(JoinCheckStatus.empty);
@@ -146,8 +155,13 @@ class JoinRequirements {
       }
       final inRange = n >= lo && n <= hi && number.length == rangeStart.length;
       if (!inRange) return const JoinCheckResult(JoinCheckStatus.outOfRange);
+      return const JoinCheckResult(JoinCheckStatus.allowed);
     }
-    return const JoinCheckResult(JoinCheckStatus.allowed);
+    // No range and not in the extra-allowed list.
+    if (extraAllowedNumbers.isEmpty) {
+      return const JoinCheckResult(JoinCheckStatus.notConfigured);
+    }
+    return const JoinCheckResult(JoinCheckStatus.outOfRange);
   }
 }
 
@@ -669,6 +683,21 @@ class CommunityJoinService {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return {'success': false, 'message': 'Please sign in first.'};
+    }
+
+    // Plain join is ONLY for communities with no class join
+    // requirements. If the owner set any, the student must enter a
+    // register number that satisfies them (joinAsStudent).
+    final rules = await _community(communityDocId)
+        .collection('joinRequirements')
+        .limit(1)
+        .get();
+    if (rules.docs.isNotEmpty) {
+      return {
+        'success': false,
+        'message': 'This community has join requirements. '
+            'Select your department and year and enter your register number.',
+      };
     }
 
     // A Student profile of its own -- never merged with this account's

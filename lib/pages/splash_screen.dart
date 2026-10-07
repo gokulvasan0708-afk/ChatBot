@@ -24,6 +24,11 @@ import '../services/call_service.dart';
 //
 // Wire it up in main.dart as the app's `home`:
 //   home: const SplashScreen(),
+//
+// It plays ONCE per app process: when the app is completely closed
+// and opened again. Backgrounding/resuming the app, navigating
+// between screens or switching the theme never shows it again
+// (see _splashAlreadyPlayed below).
 // ================================================================
 
 class SplashScreen extends StatefulWidget {
@@ -32,6 +37,12 @@ class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
+
+// True once the intro has played in this app process. A fully closed
+// app starts a new process, so this resets to false and the splash
+// plays again; anything that happens inside a running app can never
+// replay it.
+bool _splashAlreadyPlayed = false;
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin, AiLauncherHide {
@@ -66,6 +77,17 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
+    // Already played in this process (e.g. this widget was rebuilt
+    // or re-created inside a running app) -> don't replay the intro,
+    // go straight to the right page.
+    if (_splashAlreadyPlayed) {
+      _logoController.value = 1.0;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _goToNextScreen());
+      return;
+    }
+
+    _splashAlreadyPlayed = true;
+
     _logoController.forward();
 
     _navigationTimer = Timer(
@@ -85,12 +107,11 @@ class _SplashScreenState extends State<SplashScreen>
   void _goToNextScreen() {
     if (!mounted) return;
 
-    // If this Splash Screen got pushed back on top (see main.dart's
-    // "away for 3+ minutes" re-entry) while a call is ringing/dialing/
-    // connected, pushAndRemoveUntil below would wipe the ENTIRE
+    // If a call is ringing/dialing/connected while the splash is
+    // finishing, pushAndRemoveUntil below would wipe the ENTIRE
     // navigator stack -- including the Incoming/Outgoing/Active call
-    // screen underneath -- out from under the user before they can even
-    // tap Accept. Instead of navigating away, just wait and re-check
+    // screen -- out from under the user before they can even tap
+    // Accept. Instead of navigating away, just wait and re-check
     // shortly until the call is resolved.
     if (CallService.instance.isCallInProgress) {
       _navigationTimer = Timer(
@@ -105,12 +126,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     final nextPage = user != null ? const HomeShell() : const GetStartedPage();
 
-    // pushAndRemoveUntil (rather than pushReplacement) so this works
-    // identically on first launch AND when the Splash Screen is shown
-    // again after the app has been backgrounded for 3+ minutes — in
-    // that second case there may be several screens underneath the
-    // splash route, and we want a single clean landing page rather
-    // than leaving stale routes buried in the stack.
+    // pushAndRemoveUntil (rather than pushReplacement) so the splash
+    // is replaced by a single clean landing page with no stale route
+    // left underneath it.
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 700),

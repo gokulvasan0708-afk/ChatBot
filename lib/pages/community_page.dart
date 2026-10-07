@@ -70,7 +70,18 @@ class _CommunityPageState extends State<CommunityPage> {
   // COMMUNITY ACTIONS
   // ==========================================================
 
-  Future<void> _joinCommunity() => showJoinCommunitySheet(context);
+  // "Join Community": find the community first, then show its
+  // profile details (Join at the top right) -- the join requirements
+  // only open after Join is tapped there.
+  Future<void> _joinCommunity() async {
+    final picked = await showJoinCommunitySheet(context, pickOnly: true);
+    if (picked == null || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _CommunityPreviewPage(community: picked),
+      ),
+    );
+  }
 
   Future<void> _createCommunity() => showDialog(
         context: context,
@@ -1043,7 +1054,7 @@ class _CommunitySuggestionTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  'Join',
+                  'View',
                   style: TextStyle(
                     color: Color(0xFFD2B48C),
                     fontWeight: FontWeight.bold,

@@ -1,3 +1,4 @@
+import '../features/translator/translator_popup.dart';
 import '../features/ai_assistant/ai_launcher.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -17,6 +18,8 @@ import '../services/chat_settings_service.dart';
 
 import '../widgets/top_alert.dart';
 import '../services/active_conversation.dart';
+import '../services/community_chat_identity_service.dart';
+import '../services/community_member_profile_service.dart';
 // ================================================================
 // GROUP CHAT SCREEN
 // ----------------------------------------------------------------
@@ -171,6 +174,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _sending = false;
+  late final TranslatorController _translator =
+      TranslatorController(_textController);
 
   // ==========================================================
   // TYPING INDICATOR
@@ -220,11 +225,50 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
   late final String _activeConversationKey =
       ActiveConversation.groupKey(widget.groupDocId);
 
+  // ==========================================================
+  // COMMUNITY CHAT IDENTITY
+  // ----------------------------------------------------------
+  // Set only when this group is a Community's auto-created
+  // Community Chat. Then every sender is shown as their
+  // COMMUNITY PROFILE (profile name + profile image) instead of
+  // the account's normal chat name / photo, and every message
+  // sent from here is tagged with the Profile ID that sent it.
+  // Empty for ordinary groups, which behave exactly as before.
+  // ==========================================================
+  String _communityDocId = '';
+
+  Future<void> _loadCommunityIdentity() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupDocId)
+          .get();
+      final d = snap.data();
+      if (d == null || d['isCommunityChat'] != true) return;
+      final cid = (d['communityId'] ?? '').toString();
+      if (cid.isEmpty || !mounted) return;
+      setState(() => _communityDocId = cid);
+    } catch (e) {
+      debugPrint('Community chat identity load error: $e');
+    }
+  }
+
+  /// Extra message fields for the Community Chat: the Profile ID the
+  /// signed-in account is sending as. Empty map for ordinary groups.
+  Future<Map<String, dynamic>> _communitySenderFields() async {
+    if (_communityDocId.isEmpty) return const {};
+    final pid =
+        await CommunityChatIdentityService.currentProfileId(_communityDocId);
+    if (pid.isEmpty) return const {};
+    return {'senderProfileId': pid};
+  }
+
   @override
   void initState() {
     super.initState();
     _textController.addListener(_handleTypingChanged);
     ActiveConversation.push(_activeConversationKey);
+    unawaited(_loadCommunityIdentity());
     // Opening the group counts as reading it -- clears the dot on
     // the Groups tab straight away.
     unawaited(markGroupRead(widget.groupDocId));
@@ -358,6 +402,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     // Leaving the group screen -- its messages can pop a bar again.
     ActiveConversation.pop(_activeConversationKey);
     _textController.removeListener(_handleTypingChanged);
+    _translator.dispose();
     _textController.dispose();
     _scrollController.dispose();
     _revealHideTimer?.cancel();
@@ -371,10 +416,48 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     super.dispose();
   }
 
+  /// True while this Community Chat is in Sleep Mode. Checked against
+  /// the server doc right before sending, so a stale screen can't
+  /// bypass the disabled input bar.
+  Future<bool> _communityAsleepNow() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupDocId)
+          .get();
+      final d = snap.data();
+      if (d == null || d['isCommunityChat'] != true) return false;
+      final v = d['sleepUntil'];
+      return v is Timestamp && v.toDate().isAfter(DateTime.now());
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _send() async {
     final uid = _uid;
-    final text = _textController.text.trim();
-    if (uid == null || text.isEmpty || _sending) return;
+    var text = _textController.text.trim();
+    if (uid == null || text.isEmpty || _sending || _translator.busy) return;
+
+    if (await _communityAsleepNow()) {
+      if (mounted) {
+        showTopAlert(context, 'Community Chat is in Sleep Mode', isError: true);
+      }
+      return;
+    }
+
+    String? originalText;
+    try {
+      final out = await _translator.beforeSend(text);
+      text = out.text;
+      originalText = out.original;
+    } on TranslatorException catch (e) {
+      if (mounted) showTopAlert(context, e.message, isError: true);
+      return;
+    } catch (_) {
+      if (mounted) showTopAlert(context, 'Translation failed. Message not sent.', isError: true);
+      return;
+    }
 
     setState(() => _sending = true);
     _textController.clear();
@@ -384,15 +467,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     final selectedReply = replyMessage;
 
     try {
+      final senderExtra = await _communitySenderFields();
       await groupRef.collection('messages').add({
         'senderUid': uid,
+        ...senderExtra,
         'text': text,
+        if (originalText != null) 'originalText': originalText,
         'sentAt': FieldValue.serverTimestamp(),
         'replyTo': selectedReply == null
             ? null
             : {
                 'messageId': selectedReply.id,
                 'senderUid': (selectedReply.data()?['senderUid'] ?? '').toString(),
+                'senderProfileId':
+                    (selectedReply.data()?['senderProfileId'] ?? '').toString(),
                 'messageType': (selectedReply.data()?['messageType'] ?? 'text').toString(),
                 'text': (selectedReply.data()?['text'] ?? '').toString(),
               },
@@ -706,6 +794,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     final uid = _uid;
     if (uid == null || paths.isEmpty || _isSendingAttachment) return;
 
+    if (await _communityAsleepNow()) {
+      if (mounted) {
+        showTopAlert(context, 'Community Chat is in Sleep Mode', isError: true);
+      }
+      return;
+    }
+
     setState(() => _isSendingAttachment = true);
 
     final groupRef =
@@ -729,9 +824,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
         );
 
         final now = FieldValue.serverTimestamp();
+        final senderExtra = await _communitySenderFields();
 
         await groupRef.collection('messages').add({
           'senderUid': uid,
+          ...senderExtra,
           'text': '',
           'messageType': messageType,
           'fileUrl': upload['secureUrl'],
@@ -1173,6 +1270,100 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
   }
 
   // ------------------------------------------------------------
+  // COMMUNITY CHAT: STAFF ROLE + CLEAR ALL CHAT
+  // ------------------------------------------------------------
+  // Sleep Mode and Clear All Chat are only for the Principal,
+  // Controller and HOD of the community.
+  // ------------------------------------------------------------
+  Future<bool> _isCommunityChatManager(String communityId) async {
+    if (communityId.isEmpty) return false;
+    final uid = _uid;
+    if (uid == null) return false;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('communities')
+          .doc(communityId)
+          .get();
+      final community = snap.data() ?? <String, dynamic>{};
+
+      // Role of the profile this account is using right now; if that
+      // cannot be worked out, the best role among its profiles.
+      final pid = await CommunityChatIdentityService.currentProfileId(communityId);
+      final role = pid.isNotEmpty
+          ? CommunityMemberProfileService.roleOfProfile(pid, community)
+          : CommunityMemberProfileService.quickRole(uid, community);
+
+      return role == CommunityMemberProfileService.rolePrincipal ||
+          role == CommunityMemberProfileService.roleController ||
+          role == CommunityMemberProfileService.roleHod;
+    } catch (e) {
+      debugPrint('Community chat role check error: $e');
+      return false;
+    }
+  }
+
+  Future<void> _confirmClearAllChat() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1B120A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Clear all chat?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Every message in this Community Chat will be deleted for everyone. '
+          'This cannot be undone.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Clear all', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _clearAllChat();
+  }
+
+  /// Deletes every message of this chat for everyone (in batches, so
+  /// any number of messages is handled) and resets the Groups-tab
+  /// preview line.
+  Future<void> _clearAllChat() async {
+    final groupRef =
+        FirebaseFirestore.instance.collection('groups').doc(widget.groupDocId);
+    try {
+      while (true) {
+        final page = await groupRef.collection('messages').limit(400).get();
+        if (page.docs.isEmpty) break;
+        final batch = FirebaseFirestore.instance.batch();
+        for (final d in page.docs) {
+          batch.delete(d.reference);
+        }
+        await batch.commit();
+        if (page.docs.length < 400) break;
+      }
+
+      await groupRef.set({
+        'lastMessage': '',
+        'lastMessageAt': null,
+        'lastMessageSender': '',
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      showTopAlert(context, 'Chat cleared');
+    } catch (e) {
+      debugPrint('Clear all chat error: $e');
+      if (!mounted) return;
+      showTopAlert(context, 'Failed to clear the chat.', isError: true);
+    }
+  }
+
+  // ------------------------------------------------------------
   // 3-DOT MENU
   // ------------------------------------------------------------
   // Reads the group doc fresh right before opening so the sheet
@@ -1214,6 +1405,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     final groupRef =
         FirebaseFirestore.instance.collection('groups').doc(widget.groupDocId);
 
+    // Community Chat: Sleep Mode + Clear All Chat are for the Principal,
+    // Controller and HOD only. Ordinary groups keep the group-admin rule.
+    final bool isCommunityManager = isCommunityChat &&
+        await _isCommunityChatManager(
+            (groupData['communityId'] ?? '').toString());
+    final bool canSleep = isCommunityChat ? isCommunityManager : isAdmin;
+    if (!mounted) return;
+
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xFF1B120A),
@@ -1224,6 +1423,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isCommunityManager)
+              ListTile(
+                leading: const Icon(Icons.cleaning_services_rounded, color: Colors.redAccent),
+                title: const Text('Clear All Chat', style: TextStyle(color: Colors.white)),
+                onTap: () => Navigator.pop(sheetContext, 'clear'),
+              ),
             ListTile(
               leading: Icon(
                 muted ? Icons.notifications_off_rounded : Icons.notifications_active_rounded,
@@ -1235,7 +1440,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
               ),
               onTap: () => Navigator.pop(sheetContext, 'muted'),
             ),
-            if (isAdmin)
+            if (canSleep)
               ListTile(
                 leading: const Icon(Icons.bedtime_rounded, color: Color(0xFFD2B48C)),
                 title: Text(
@@ -1267,7 +1472,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
               ),
             ],
             // Deliberately last in the sheet, per spec.
-            if (isAdmin)
+            // Community Chat has no delete option.
+            if (isAdmin && isCommunityChat)
+              const SizedBox.shrink()
+            else if (isAdmin)
               ListTile(
                 leading: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
                 title: const Text('Delete Group', style: TextStyle(color: Colors.redAccent)),
@@ -1287,6 +1495,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     if (!mounted || action == null) return;
 
     switch (action) {
+      case 'clear':
+        await _confirmClearAllChat();
+        break;
       case 'muted':
         await groupRef.update({'mutedBy.$uid': !muted});
         break;
@@ -1499,6 +1710,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                       final doc = docs[index];
                       final data = doc.data();
                       final senderUid = (data['senderUid'] ?? '').toString();
+                      final senderProfileId =
+                          (data['senderProfileId'] ?? '').toString();
                       final isMe = senderUid == uid;
 
                       // Only show the sender's name above a message
@@ -1515,11 +1728,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                         final olderData =
                             index + 1 < docs.length ? docs[index + 1].data() : null;
                         final olderSender = (olderData?['senderUid'] ?? '').toString();
-                        showSenderName = olderSender != senderUid;
+                        final olderProfile =
+                            (olderData?['senderProfileId'] ?? '').toString();
+                        showSenderName = olderSender != senderUid ||
+                            olderProfile != senderProfileId;
 
                         final newerData = index > 0 ? docs[index - 1].data() : null;
                         final newerSender = (newerData?['senderUid'] ?? '').toString();
-                        showAvatar = index == 0 || newerSender != senderUid;
+                        final newerProfile =
+                            (newerData?['senderProfileId'] ?? '').toString();
+                        showAvatar = index == 0 ||
+                            newerSender != senderUid ||
+                            newerProfile != senderProfileId;
                       }
 
                       final Map<String, dynamic>? replyData =
@@ -1542,6 +1762,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                             text: (data['text'] ?? '').toString(),
                             isMe: isMe,
                             senderUid: senderUid,
+                            senderProfileId: senderProfileId,
+                            communityDocId: _communityDocId,
                             showSenderName: showSenderName,
                             showAvatar: showAvatar,
                             sentAt: data['sentAt'] is Timestamp ? (data['sentAt'] as Timestamp).toDate() : null,
@@ -1578,11 +1800,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                 return _GroupTypingIndicatorBar(
                   groupDocId: widget.groupDocId,
                   members: members,
+                  communityDocId: _communityDocId,
                 );
               },
             ),
-            _buildReplyPreview(),
-            _buildInputBar(),
+            // Community Chat in Sleep Mode: the reply preview + input
+            // bar are swapped for a disabled notice until it wakes.
+            _CommunitySleepGate(
+              stream: groupStream,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildReplyPreview(),
+                  _buildInputBar(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -1648,7 +1881,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
                           ),
                         )
                       else
-                        Flexible(child: _SenderNameLabel(uid: senderUid)),
+                        Flexible(
+                          child: _SenderNameLabel(
+                            uid: senderUid,
+                            communityDocId: _communityDocId,
+                            profileId:
+                                (data['senderProfileId'] ?? '').toString(),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 3),
@@ -1681,8 +1921,37 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
     );
   }
 
+  /// Last 5 text messages received from other members (oldest first),
+  /// used by the global translator popup.
+  Future<List<String>> _lastReceivedTexts() async {
+    final me = _uid;
+    final snap = await FirebaseFirestore.instance
+        .collection('groups')
+        .doc(widget.groupDocId)
+        .collection('messages')
+        .orderBy('sentAt', descending: true)
+        .limit(40)
+        .get();
+    final out = <String>[];
+    for (final d in snap.docs) {
+      final m = d.data();
+      final sender = (m['senderUid'] ?? '').toString();
+      if (sender.isEmpty || sender == me) continue;
+      if ((m['messageType'] ?? 'text').toString() != 'text') continue;
+      if (me != null && List<String>.from(m['hiddenFor'] ?? const []).contains(me)) continue;
+      final t = (m['text'] ?? '').toString().trim();
+      if (t.isEmpty) continue;
+      out.add(t);
+      if (out.length == 5) break;
+    }
+    return out.reversed.toList();
+  }
+
   Widget _buildInputBar() {
-    return Container(
+    return TranslatorInputHost(
+      controller: _translator,
+      getReceivedTexts: _lastReceivedTexts,
+      child: Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: const BoxDecoration(
         color: Color(0xFF1B120A),
@@ -1734,6 +2003,102 @@ class _GroupChatScreenState extends State<GroupChatScreen> with AiLauncherHide {
           ),
         ],
       ),
+    ));
+  }
+}
+
+// ================================================================
+// COMMUNITY SLEEP GATE
+// ----------------------------------------------------------------
+// While a Community Chat's `sleepUntil` is in the future, nobody can
+// type or send -- the input area shows a disabled Sleep Mode notice
+// instead. Re-checks itself the moment sleep ends, so the input bar
+// comes back without reopening the screen. Ordinary groups are
+// never gated.
+// ================================================================
+class _CommunitySleepGate extends StatefulWidget {
+  final Stream<DocumentSnapshot<Map<String, dynamic>>> stream;
+  final Widget child;
+
+  const _CommunitySleepGate({required this.stream, required this.child});
+
+  @override
+  State<_CommunitySleepGate> createState() => _CommunitySleepGateState();
+}
+
+class _CommunitySleepGateState extends State<_CommunitySleepGate> {
+  Timer? _wakeTimer;
+  DateTime? _scheduledFor;
+
+  @override
+  void dispose() {
+    _wakeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleWake(DateTime until) {
+    if (_scheduledFor == until) return;
+    _scheduledFor = until;
+    _wakeTimer?.cancel();
+    final wait = until.difference(DateTime.now()) + const Duration(seconds: 1);
+    _wakeTimer = Timer(wait.isNegative ? Duration.zero : wait, () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: widget.stream,
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data();
+        if (data == null || data['isCommunityChat'] != true) {
+          return widget.child;
+        }
+        final until = data['sleepUntil'] is Timestamp
+            ? (data['sleepUntil'] as Timestamp).toDate()
+            : null;
+        if (until == null || !until.isAfter(DateTime.now())) {
+          return widget.child;
+        }
+        _scheduleWake(until);
+        final type = (data['sleepType'] ?? 'timer').toString();
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1B120A),
+            border: Border(top: BorderSide(color: Colors.white12)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.bedtime_rounded, color: Color(0xFFD2B48C)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Community Chat is in Sleep Mode',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Messaging is disabled - ${sleepLabel(until, type)}',
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -1753,9 +2118,14 @@ class _GroupTypingIndicatorBar extends StatelessWidget {
   final String groupDocId;
   final List<String> members;
 
+  /// Set for the Community Chat: typing names then come from the
+  /// members' Community Profiles instead of their account names.
+  final String communityDocId;
+
   const _GroupTypingIndicatorBar({
     required this.groupDocId,
     required this.members,
+    this.communityDocId = '',
   });
 
   @override
@@ -1803,33 +2173,61 @@ class _GroupTypingIndicatorBar extends StatelessWidget {
               if (otherUid.isNotEmpty) connectedUids.add(otherUid);
             }
 
-            final names = typingDocs.map((d) {
-              final data = d.data();
-              final publicName = (data['publicName'] ?? '').toString().trim();
-              final privateName =
-                  (data['privateName'] ?? '').toString().trim();
-              final isConnected = connectedUids.contains(d.id);
-              final name = (isConnected && privateName.isNotEmpty)
-                  ? privateName
-                  : publicName;
-              return name.isEmpty ? 'Someone' : name;
-            }).toList();
+            Widget buildBar(List<Map<String, dynamic>> profiles) {
+              final names = typingDocs.map((d) {
+                final data = d.data();
 
-            final String label;
-            if (names.length == 1) {
-              label = names.first;
-            } else if (names.length == 2) {
-              label = '${names[0]} and ${names[1]}';
-            } else {
-              label = '${names[0]} and ${names.length - 1} others';
+                // Community Chat: the typing member's Community
+                // Profile name wins.
+                if (communityDocId.isNotEmpty) {
+                  final active = data['activeCommunityProfiles'];
+                  final pointer = active is Map
+                      ? (active[communityDocId] ?? '').toString()
+                      : '';
+                  final profileName =
+                      CommunityChatIdentityService.typingNameFor(
+                    uid: d.id,
+                    pointer: pointer,
+                    profiles: profiles,
+                  );
+                  if (profileName.isNotEmpty) return profileName;
+                }
+
+                final publicName = (data['publicName'] ?? '').toString().trim();
+                final privateName =
+                    (data['privateName'] ?? '').toString().trim();
+                final isConnected = connectedUids.contains(d.id);
+                final name = (isConnected && privateName.isNotEmpty)
+                    ? privateName
+                    : publicName;
+                return name.isEmpty ? 'Someone' : name;
+              }).toList();
+
+              final String label;
+              if (names.length == 1) {
+                label = names.first;
+              } else if (names.length == 2) {
+                label = '${names[0]} and ${names[1]}';
+              } else {
+                label = '${names[0]} and ${names.length - 1} others';
+              }
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: _GroupTypingIndicator(label: label),
+                ),
+              );
             }
 
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: _GroupTypingIndicator(label: label),
-              ),
+            if (communityDocId.isEmpty) return buildBar(const []);
+
+            return StreamBuilder<List<Map<String, dynamic>>>(
+              stream:
+                  CommunityMemberProfileService.watchProfiles(communityDocId),
+              builder: (context, profSnap) =>
+                  buildBar(profSnap.data ?? const []),
             );
           },
         );
@@ -1939,6 +2337,11 @@ class _GroupMessageBubble extends StatelessWidget {
   final String text;
   final bool isMe;
   final String senderUid;
+
+  /// Community Chat only: the Community Profile that sent the message
+  /// and the community it belongs to ('' for ordinary groups).
+  final String senderProfileId;
+  final String communityDocId;
   final bool showSenderName;
   final bool showAvatar;
   final DateTime? sentAt;
@@ -1956,6 +2359,8 @@ class _GroupMessageBubble extends StatelessWidget {
     required this.text,
     required this.isMe,
     required this.senderUid,
+    this.senderProfileId = '',
+    this.communityDocId = '',
     required this.showSenderName,
     this.showAvatar = false,
     required this.sentAt,
@@ -2086,7 +2491,12 @@ class _GroupMessageBubble extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                       )
-                    : _SenderNameLabel(uid: senderId),
+                    : _SenderNameLabel(
+                        uid: senderId,
+                        communityDocId: communityDocId,
+                        profileId:
+                            (replyData['senderProfileId'] ?? '').toString(),
+                      ),
               ),
             ],
           ),
@@ -2121,7 +2531,11 @@ class _GroupMessageBubble extends StatelessWidget {
                 if (showSenderName)
                   Padding(
                     padding: const EdgeInsets.only(left: 10, bottom: 2),
-                    child: _SenderNameLabel(uid: senderUid),
+                    child: _SenderNameLabel(
+                      uid: senderUid,
+                      communityDocId: communityDocId,
+                      profileId: senderProfileId,
+                    ),
                   ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
@@ -2218,7 +2632,13 @@ class _GroupMessageBubble extends StatelessWidget {
           SizedBox(
             width: 26,
             height: 26,
-            child: showAvatar ? _SenderAvatar(uid: senderUid) : null,
+            child: showAvatar
+                ? _SenderAvatar(
+                    uid: senderUid,
+                    communityDocId: communityDocId,
+                    profileId: senderProfileId,
+                  )
+                : null,
           ),
           const SizedBox(width: 6),
           Flexible(child: bubbleStack),
@@ -2398,10 +2818,53 @@ class _SwipeableReplyState extends State<_SwipeableReply>
 class _SenderAvatar extends StatelessWidget {
   final String uid;
 
-  const _SenderAvatar({required this.uid});
+  /// Community Chat only: show the sender's Community Profile image.
+  final String communityDocId;
+  final String profileId;
+
+  const _SenderAvatar({
+    required this.uid,
+    this.communityDocId = '',
+    this.profileId = '',
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (communityDocId.isEmpty) return _accountAvatar(context);
+
+    return StreamBuilder<CommunityChatIdentity?>(
+      stream: CommunityChatIdentityService.watch(
+        communityDocId: communityDocId,
+        uid: uid,
+        profileId: profileId,
+      ),
+      builder: (context, snapshot) {
+        final identity = snapshot.data;
+        // No Community Profile found (e.g. very old data) -> the
+        // account's normal avatar, same as before.
+        if (identity == null) {
+          return snapshot.connectionState == ConnectionState.waiting
+              ? const CircleAvatar(
+                  radius: 13,
+                  backgroundColor: Color(0xFF2A1B0E),
+                  child: Icon(Icons.person, color: Colors.white70, size: 14),
+                )
+              : _accountAvatar(context);
+        }
+
+        return CircleAvatar(
+          radius: 13,
+          backgroundColor: const Color(0xFF2A1B0E),
+          backgroundImage: _profileImageProvider(identity.image),
+          child: identity.image.isEmpty
+              ? const Icon(Icons.person, color: Colors.white70, size: 14)
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _accountAvatar(BuildContext context) {
     final me = FirebaseAuth.instance.currentUser;
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
@@ -2446,10 +2909,49 @@ class _SenderAvatar extends StatelessWidget {
 class _SenderNameLabel extends StatelessWidget {
   final String uid;
 
-  const _SenderNameLabel({required this.uid});
+  /// Community Chat only: show the sender's Community Profile name.
+  final String communityDocId;
+  final String profileId;
+
+  const _SenderNameLabel({
+    required this.uid,
+    this.communityDocId = '',
+    this.profileId = '',
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (communityDocId.isEmpty) return _accountName(context);
+
+    return StreamBuilder<CommunityChatIdentity?>(
+      stream: CommunityChatIdentityService.watch(
+        communityDocId: communityDocId,
+        uid: uid,
+        profileId: profileId,
+      ),
+      builder: (context, snapshot) {
+        final identity = snapshot.data;
+        if (identity == null) {
+          return snapshot.connectionState == ConnectionState.waiting
+              ? const SizedBox.shrink()
+              : _accountName(context);
+        }
+
+        return Text(
+          identity.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Color(0xFFD2B48C),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _accountName(BuildContext context) {
     final me = FirebaseAuth.instance.currentUser;
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),

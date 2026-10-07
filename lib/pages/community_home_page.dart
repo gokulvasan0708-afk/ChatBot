@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'groupchat.dart';
+import 'groupstab.dart' show sleepLabel;
 import 'community_members_page.dart';
 import 'community_announcements_page.dart';
 import 'community_events_page.dart';
@@ -31,7 +32,6 @@ import '../services/event_service.dart';
 import '../services/announcement_service.dart';
 import '../widgets/community_about_section.dart';
 import '../widgets/community_widgets.dart';
-import '../widgets/top_alert.dart';
 
 // ================================================================
 // COMMUNITY HOME
@@ -291,6 +291,30 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
     return false;
   }
 
+  /// Community Chat Sleep Mode: `sleepUntil` on the chat's group doc
+  /// is in the future. Re-evaluated every minute by [_minuteTick].
+  DateTime? get _chatSleepUntil {
+    final g = _chatGroup;
+    if (g == null) return null;
+    final v = g['sleepUntil'];
+    if (v is! Timestamp) return null;
+    final d = v.toDate();
+    return d.isAfter(DateTime.now()) ? d : null;
+  }
+
+  bool get _chatSleeping => _chatSleepUntil != null;
+
+  /// Short enough for the card's top corner ("Sleeps 2h 10m" /
+  /// "Wakes 12 Oct").
+  String _compactSleepLabel(DateTime until, String type) {
+    if (type != 'date') return sleepLabel(until, type);
+    const m = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return 'Wakes ${until.day} ${m[until.month - 1]}';
+  }
+
   bool get _chatDot {
     final g = _chatGroup;
     if (g == null) return false;
@@ -488,9 +512,19 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                           children: [
                             Expanded(
                               child: _QuickNavCard(
-                                icon: Icons.forum_rounded,
+                                icon: _chatSleeping
+                                    ? Icons.bedtime_rounded
+                                    : Icons.forum_rounded,
                                 label: 'Community Chat',
-                                showDot: _chatDot,
+                                dimmed: _chatSleeping,
+                                subtitle: _chatSleeping
+                                    ? _compactSleepLabel(
+                                        _chatSleepUntil!,
+                                        (_chatGroup?['sleepType'] ?? 'timer')
+                                            .toString(),
+                                      )
+                                    : null,
+                                showDot: _chatSleeping ? false : _chatDot,
                                 onTap: groupDocId.isEmpty
                                     ? null
                                     : () => _openChat(groupDocId),
@@ -876,8 +910,8 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                   ),
                 ),
 
-                // Community management actions are limited to the active
-                // Controller or Principal profile.
+                // Edit Community is limited to the active Controller or
+                // Principal profile (Delete Community was removed).
                 StreamBuilder<Map<String, dynamic>?>(
                   stream: CommunityMemberProfileService.watchActiveProfile(
                     widget.communityDocId,
@@ -885,10 +919,10 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                   ),
                   builder: (_, profileSnap) {
                     final role = (profileSnap.data?['role'] ?? '').toString();
-                    final canDelete =
+                    final canEdit =
                         role == CommunityMemberProfileService.roleController ||
                         role == CommunityMemberProfileService.rolePrincipal;
-                    if (!canDelete) return const SizedBox.shrink();
+                    if (!canEdit) return const SizedBox.shrink();
                     return Padding(
                       padding: const EdgeInsets.only(top: 22),
                       child: Column(
@@ -916,29 +950,6 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
                                 side: const BorderSide(
                                   color: Color(0xFFD2B48C),
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () =>
-                                  _confirmDeleteCommunity(sheetContext, name),
-                              icon: const Icon(
-                                Icons.delete_forever_rounded,
-                                size: 20,
-                              ),
-                              label: const Text('Delete Community'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.redAccent,
-                                side: const BorderSide(color: Colors.redAccent),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
@@ -993,64 +1004,6 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
     );
     if (updated == true && sheetContext.mounted) {
       Navigator.of(sheetContext).pop();
-    }
-  }
-
-  Future<void> _confirmDeleteCommunity(
-    BuildContext sheetContext,
-    String name,
-  ) async {
-    // Still valid after this page closes (used for the final message).
-    final rootContext = Navigator.of(context, rootNavigator: true).context;
-
-    final ok = await showDialog<bool>(
-      context: sheetContext,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1B120A),
-        title: const Text(
-          'Delete Community?',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          '"${name.isEmpty ? 'This community' : name}" will be deleted for '
-          'everyone. This can\'t be undone.',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'DELETE',
-              style: TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-
-    try {
-      await CommunityService.deleteCommunity(
-        communityDocId: widget.communityDocId,
-        requesterUid: _uid,
-      );
-      if (sheetContext.mounted) Navigator.of(sheetContext).pop(); // sheet
-      if (mounted) Navigator.of(context).pop(); // Community Home
-      if (rootContext.mounted) {
-        showTopAlert(rootContext, 'Community deleted');
-      }
-    } catch (e) {
-      if (sheetContext.mounted) {
-        showTopAlert(
-          sheetContext,
-          e.toString().replaceFirst('Exception: ', ''),
-          isError: true,
-        );
-      }
     }
   }
 
@@ -1276,16 +1229,32 @@ class _QuickNavCard extends StatelessWidget {
   /// [badgeCount] > 0).
   final bool showDot;
 
+  /// Greyed look (Community Chat while Sleep Mode is on).
+  final bool dimmed;
+
+  /// Tiny text in the top-right corner (Sleep Mode time on Community
+  /// Chat) -- overlaid, so the card keeps its size.
+  final String? subtitle;
+
   const _QuickNavCard({
     required this.icon,
     required this.label,
     this.onTap,
     this.badgeCount = 0,
     this.showDot = false,
+    this.dimmed = false,
+    this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
+    return Opacity(
+      opacity: dimmed ? 0.6 : 1,
+      child: _buildCard(context),
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
     return Stack(
       fit: StackFit.passthrough,
       children: [
@@ -1320,6 +1289,22 @@ class _QuickNavCard extends StatelessWidget {
             ),
           ),
         ),
+        if (subtitle != null)
+          Positioned(
+            top: 6,
+            right: 8,
+            child: IgnorePointer(
+              child: Text(
+                subtitle!,
+                style: const TextStyle(
+                  color: Color(0xFFD2B48C),
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ),
         if (badgeCount > 0)
           Positioned(
             top: 8,

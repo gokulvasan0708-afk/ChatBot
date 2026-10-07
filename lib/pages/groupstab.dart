@@ -15,6 +15,11 @@ import '../services/notification_service.dart';
 import 'chat_screen.dart';
 import 'private_chat_screen.dart';
 import 'groupchat.dart';
+import 'community_member_profile_page.dart';
+import 'community_search_sheets.dart' show CommunitySearchOpener;
+import 'edit_community_dialog.dart';
+import '../services/community_member_profile_service.dart';
+import '../services/community_service.dart';
 
 import '../widgets/community_about_section.dart';
 import '../widgets/top_alert.dart';
@@ -1200,13 +1205,21 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                         ),
                         const SizedBox(height: 6),
                         Center(
-                          child: Text(
-                            '$membersCount member${membersCount == 1 ? '' : 's'}',
-                            style: const TextStyle(
-                              color: Colors.white38,
-                              fontSize: 12.5,
-                            ),
-                          ),
+                          child: (isCommunityChat &&
+                                  communityDocId.isNotEmpty)
+                              // Community Chat: the community's own
+                              // count of member PROFILES.
+                              ? _CommunityChatMemberCount(
+                                  communityDocId: communityDocId,
+                                  fallbackCount: membersCount,
+                                )
+                              : Text(
+                                  '$membersCount member${membersCount == 1 ? '' : 's'}',
+                                  style: const TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
                         ),
 
                         const SizedBox(height: 24),
@@ -1270,6 +1283,15 @@ class _GroupProfilePageState extends State<GroupProfilePage> {
                         // member who is both the admin and the
                         // signed-in account gets both badges).
                         // ---------------------------------------
+                        // Community Chat: every member PROFILE with its
+                        // Community Profile name, image and real role.
+                        else if (isCommunityChat && communityDocId.isNotEmpty)
+                          _CommunityChatMemberList(
+                            communityDocId: communityDocId,
+                            groupMemberUids: members,
+                            currentUid: user.uid,
+                            connectedUids: connectedUids,
+                          )
                         else if (orderedMembers.isEmpty)
                           const Text(
                             'No members yet.',
@@ -1751,24 +1773,95 @@ class _GroupSettingsButton extends StatelessWidget {
             : <String>[];
         final bool isCoAdmin = coAdminUids.contains(user.uid);
         final String groupName = (data['groupName'] ?? 'this group').toString();
+        final bool isCommunityChat = data['isCommunityChat'] == true;
+        final String communityDocId = (data['communityId'] ?? '').toString();
 
         return IconButton(
           icon: const Icon(Icons.settings_rounded, color: Colors.white),
-          onPressed: () => _openGroupSettingsSheet(
+          onPressed: () async {
+            // Community Chat: "Edit Community" is only offered to the
+            // active Controller / Principal profile, same rule the
+            // Community Home sheet already used for its Edit button.
+            bool canEditCommunity = false;
+            // Sleep Mode in a Community Chat: Principal / Controller / HOD only.
+            bool canSleepCommunity = false;
+            if (isCommunityChat && communityDocId.isNotEmpty) {
+              try {
+                final profile =
+                    await CommunityMemberProfileService.loadActiveProfile(
+                        communityDocId, user.uid);
+                final role = (profile?['role'] ?? '').toString();
+                canEditCommunity =
+                    role == CommunityMemberProfileService.roleController ||
+                        role == CommunityMemberProfileService.rolePrincipal;
+                canSleepCommunity = canEditCommunity ||
+                    role == CommunityMemberProfileService.roleHod;
+              } catch (e) {
+                debugPrint('Community role load error: $e');
+              }
+            }
+            if (!context.mounted) return;
+            _openGroupSettingsSheet(
             context,
             groupDocId: groupDocId,
             groupName: groupName,
             isAdmin: isAdmin,
             isCoAdmin: isCoAdmin,
+            isCommunityChat: isCommunityChat,
+            communityDocId: communityDocId,
+            canEditCommunity: canEditCommunity,
+            canSleepCommunity: canSleepCommunity,
             currentSleepUntil: data['sleepUntil'] is Timestamp
                 ? (data['sleepUntil'] as Timestamp).toDate()
                 : null,
             currentSleepType: (data['sleepType'] ?? 'timer').toString(),
             uid: user.uid,
-          ),
+            );
+          },
         );
       },
     );
+  }
+}
+
+/// Opens the existing Community Edit dialog (same one the Community
+/// Home sheet used) for the community that owns this Community Chat.
+Future<void> _openEditCommunity(
+    BuildContext context, String communityDocId) async {
+  try {
+    final snap = await FirebaseFirestore.instance
+        .collection('communities')
+        .doc(communityDocId)
+        .get();
+    final d = snap.data();
+    if (d == null) {
+      if (context.mounted) {
+        showTopAlert(context, 'Community not found', isError: true);
+      }
+      return;
+    }
+    final String type = (d['type'] ?? 'normal').toString();
+    if (!context.mounted) return;
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => EditCommunityDialog(
+        communityDocId: communityDocId,
+        communityId: (d['communityId'] ?? '').toString(),
+        name: (d['name'] ?? '').toString(),
+        type: type,
+        collegeName: (d['collegeName'] ?? '').toString(),
+        vision: (d['vision'] ?? '').toString(),
+        mission: (d['mission'] ?? '').toString(),
+        location: (d['location'] ?? '').toString(),
+        locationLink: (d['locationLink'] ?? '').toString(),
+        logoUrl: (d['logoUrl'] ?? '').toString(),
+        coverUrl: type == 'college' ? (d['coverUrl'] ?? '').toString() : '',
+      ),
+    );
+  } catch (e) {
+    if (context.mounted) {
+      showTopAlert(context, 'Unable to open Edit Community', isError: true);
+    }
   }
 }
 
@@ -1778,6 +1871,10 @@ void _openGroupSettingsSheet(
   required String groupName,
   required bool isAdmin,
   bool isCoAdmin = false,
+  bool isCommunityChat = false,
+  String communityDocId = '',
+  bool canEditCommunity = false,
+  bool canSleepCommunity = false,
   required DateTime? currentSleepUntil,
   required String currentSleepType,
   required String uid,
@@ -1811,7 +1908,23 @@ void _openGroupSettingsSheet(
               // Edit Group is available to the admin AND any
               // co-admin -- everything else below it (Sleep Mode,
               // Delete Group) stays admin-only.
-              if (isAdmin || isCoAdmin)
+              // Community Chat: "Edit Community" (existing community
+              // edit dialog) for the Controller / Principal instead.
+              if (isCommunityChat) ...[
+                if (canEditCommunity && communityDocId.isNotEmpty)
+                  ListTile(
+                    leading: const Icon(Icons.edit_rounded,
+                        color: Color(0xFFD2B48C)),
+                    title: const Text(
+                      'Edit Community',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _openEditCommunity(context, communityDocId);
+                    },
+                  ),
+              ] else if (isAdmin || isCoAdmin)
                 ListTile(
                   leading: const Icon(Icons.edit_rounded,
                       color: Color(0xFFD2B48C)),
@@ -1828,7 +1941,8 @@ void _openGroupSettingsSheet(
                   },
                 ),
 
-              if (isAdmin) ...[
+              if (isAdmin || (isCommunityChat && canSleepCommunity)) ...[
+                if (!isCommunityChat || canSleepCommunity)
                 ListTile(
                   leading: const Icon(Icons.bedtime_rounded,
                       color: Color(0xFFD2B48C)),
@@ -1856,18 +1970,21 @@ void _openGroupSettingsSheet(
                     );
                   },
                 ),
-                ListTile(
-                  leading:
-                      const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                  title: const Text(
-                    'Delete Group',
-                    style: TextStyle(color: Colors.redAccent),
+                // No delete option for a Community Chat (the community
+                // itself can no longer be deleted either).
+                if (!isCommunityChat)
+                  ListTile(
+                    leading: const Icon(Icons.delete_forever_rounded,
+                        color: Colors.redAccent),
+                    title: const Text(
+                      'Delete Group',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      confirmDeleteGroup(context, groupDocId, groupName);
+                    },
                   ),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    confirmDeleteGroup(context, groupDocId, groupName);
-                  },
-                ),
               ] else
                 ListTile(
                   leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
@@ -2944,7 +3061,18 @@ class _GroupMemberTile extends StatelessWidget {
   final bool currentUserIsAdmin;
   final bool currentUserIsCoAdmin;
 
+  /// Set only for Community Chat members who have no Community
+  /// Profile yet (old uid-based communities). The tile then shows
+  /// this real community role instead of Admin / Co-Admin, and the
+  /// group-style long-press management is switched off.
+  final String? communityRole;
+
+  /// Community the legacy (uid-based) member belongs to; used to open
+  /// their Contributions / Skills when the tile is tapped.
+  final String communityDocId;
+
   const _GroupMemberTile({
+    super.key,
     required this.groupDocId,
     required this.uid,
     required this.isAdmin,
@@ -2953,9 +3081,15 @@ class _GroupMemberTile extends StatelessWidget {
     required this.isConnected,
     this.currentUserIsAdmin = false,
     this.currentUserIsCoAdmin = false,
+    this.communityRole,
+    this.communityDocId = '',
   });
 
   void _handleLongPress(BuildContext context) {
+    // Community members are managed from the Community Members
+    // page, never from the chat's group-admin menu.
+    if (communityRole != null) return;
+
     // Nobody gets a management menu on their own tile, and nobody
     // (not even the admin) can manage the admin's own tile.
     if (isSelf || isAdmin) return;
@@ -3016,6 +3150,27 @@ class _GroupMemberTile extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {
+              // Old uid-based Community Chat member: open the community
+              // member sheet (role, Contributions, Skills).
+              if (communityRole != null && communityDocId.isNotEmpty) {
+                final skillsRaw = userData['publicSkills'];
+                CommunitySearchOpener.openMember(
+                  context,
+                  communityDocId: communityDocId,
+                  member: {
+                    'uid': uid,
+                    'id': '',
+                    'profileId': '',
+                    'publicName': publicName,
+                    'publicImage': publicImage,
+                    'publicSkills': skillsRaw is List
+                        ? skillsRaw.map((e) => e.toString()).toList()
+                        : <String>[],
+                    'role': communityRole,
+                  },
+                );
+                return;
+              }
               // Connected -> private profile (private name/image,
               // same fields already used above), not connected ->
               // public profile. Same connected-check the rest of
@@ -3061,6 +3216,13 @@ class _GroupMemberTile extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
+                    if (communityRole != null && isSelf) ...[
+                      const SizedBox(height: 2),
+                      const Text(
+                        'You',
+                        style: TextStyle(color: Colors.white54, fontSize: 11.5),
+                      ),
+                    ],
                     if (showActiveNow) ...[
                       const SizedBox(height: 3),
                       Row(
@@ -3081,7 +3243,10 @@ class _GroupMemberTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isSelf || isAdmin || isCoAdmin) ...[
+              if (communityRole != null) ...[
+                const SizedBox(width: 8),
+                _CommunityRoleBadge(role: communityRole!),
+              ] else if (isSelf || isAdmin || isCoAdmin) ...[
                 const SizedBox(width: 8),
                 Container(
                   padding:
@@ -3105,6 +3270,422 @@ class _GroupMemberTile extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ================================================================
+// COMMUNITY CHAT MEMBERS  (Community Profile page -> Members tab)
+// ----------------------------------------------------------------
+// The Community Chat's member list is a list of community MEMBER
+// PROFILES, not of login accounts:
+//   - the profile's own Community Profile name + image
+//   - the profile's real community role -- Controller, Principal,
+//     HOD, Faculty, Rep, Student or Member -- instead of the group
+//     style "You - Admin" badge
+//   - sorted by role (Principal, Controller, HOD, Faculty, Rep,
+//     Student, Member), then by name
+//   - "You" only on the profile this account is using right now
+//   - one account that holds two profiles shows up twice
+// Members of old uid-based communities (no profile yet) are still
+// listed, with their real role from the community data.
+// Tap a member -> that profile's Community Member Profile page.
+// ================================================================
+
+/// Badge / ring colour that matches the role (same colours as the
+/// Community Members page).
+Color _communityRoleColor(String role) {
+  switch (role) {
+    case 'Principal':
+      return const Color(0xFFFFC107);
+    case 'Controller':
+      return const Color(0xFFB57BFF);
+    case 'HOD':
+      return const Color(0xFF4FA3FF);
+    case 'Faculty':
+      return const Color(0xFF3DDC97);
+    default:
+      return const Color(0xFFD2B48C);
+  }
+}
+
+class _CommunityRoleBadge extends StatelessWidget {
+  final String role;
+
+  const _CommunityRoleBadge({required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _communityRoleColor(role);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: c.withValues(alpha: .16),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: c.withValues(alpha: .55)),
+      ),
+      child: Text(
+        role,
+        style: TextStyle(
+          color: c,
+          fontSize: 10.5,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+/// "N members" line of the Community Profile page header.
+class _CommunityChatMemberCount extends StatefulWidget {
+  final String communityDocId;
+  final int fallbackCount;
+
+  const _CommunityChatMemberCount({
+    required this.communityDocId,
+    required this.fallbackCount,
+  });
+
+  @override
+  State<_CommunityChatMemberCount> createState() =>
+      _CommunityChatMemberCountState();
+}
+
+class _CommunityChatMemberCountState extends State<_CommunityChatMemberCount> {
+  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _stream =
+      CommunityService.watchCommunity(widget.communityDocId);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: _stream,
+      builder: (context, snap) {
+        final stored = snap.data?.data()?['membersCount'];
+        final count = stored is int ? stored : widget.fallbackCount;
+        return Text(
+          '$count member${count == 1 ? '' : 's'}',
+          style: const TextStyle(color: Colors.white38, fontSize: 12.5),
+        );
+      },
+    );
+  }
+}
+
+/// One row of the Community Chat member list: a member profile, or
+/// (old data) an account that has no profile yet.
+class _CommunityChatRow {
+  final Map<String, dynamic>? profile;
+  final String uid;
+  final String role;
+  final String sortName;
+
+  const _CommunityChatRow({
+    required this.profile,
+    required this.uid,
+    required this.role,
+    required this.sortName,
+  });
+}
+
+class _CommunityChatMemberList extends StatefulWidget {
+  final String communityDocId;
+  final List<String> groupMemberUids;
+  final String currentUid;
+  final Set<String> connectedUids;
+
+  const _CommunityChatMemberList({
+    required this.communityDocId,
+    required this.groupMemberUids,
+    required this.currentUid,
+    required this.connectedUids,
+  });
+
+  @override
+  State<_CommunityChatMemberList> createState() =>
+      _CommunityChatMemberListState();
+}
+
+class _CommunityChatMemberListState extends State<_CommunityChatMemberList> {
+  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _communityStream =
+      CommunityService.watchCommunity(widget.communityDocId);
+  late final Stream<List<Map<String, dynamic>>> _profileStream =
+      CommunityMemberProfileService.watchAllProfiles(widget.communityDocId);
+  late final Stream<String> _pointerStream =
+      CommunityMemberProfileService.watchActivePointer(
+          widget.communityDocId, widget.currentUid);
+
+  static const Widget _loader = Padding(
+    padding: EdgeInsets.symmetric(vertical: 24),
+    child: Center(
+      child: CircularProgressIndicator(color: Color(0xFFD2B48C)),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: _communityStream,
+      builder: (context, communitySnap) {
+        final community = communitySnap.data?.data() ?? <String, dynamic>{};
+
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _profileStream,
+          builder: (context, profileSnap) {
+            if (profileSnap.hasError) {
+              return const Text(
+                'Unable to load members',
+                style: TextStyle(color: Colors.white38),
+              );
+            }
+            if (!profileSnap.hasData) return _loader;
+
+            return StreamBuilder<String>(
+              stream: _pointerStream,
+              builder: (context, pointerSnap) {
+                final all = profileSnap.data!;
+                final active = [
+                  for (final p in all)
+                    if (CommunityMemberProfileService.isActive(p)) p,
+                ];
+
+                // The profile this account is using right now.
+                final mine = [
+                  for (final p in active)
+                    if ((p['uid'] ?? '').toString() == widget.currentUid) p,
+                ];
+                final activeId = CommunityMemberProfileService.pickActiveId(
+                    mine, pointerSnap.data ?? '');
+
+                // Accounts in the chat that have no profile doc at
+                // all = old uid-based data (people who left keep an
+                // inactive profile, so they are not mistaken for it).
+                final known = {
+                  for (final p in all) (p['uid'] ?? '').toString(),
+                };
+
+                final rows = <_CommunityChatRow>[
+                  for (final p in active)
+                    _CommunityChatRow(
+                      profile: p,
+                      uid: (p['uid'] ?? '').toString(),
+                      role: CommunityMemberProfileService.effectiveRole(
+                          p, community),
+                      sortName: (p['name'] ?? '').toString().toLowerCase(),
+                    ),
+                  for (final uid in widget.groupMemberUids)
+                    if (uid.isNotEmpty && !known.contains(uid))
+                      _CommunityChatRow(
+                        profile: null,
+                        uid: uid,
+                        role: CommunityMemberProfileService.quickRole(
+                            uid, community),
+                        sortName: '',
+                      ),
+                ]..sort((a, b) {
+                    final r = CommunityMemberProfileService.roleRank(a.role)
+                        .compareTo(
+                            CommunityMemberProfileService.roleRank(b.role));
+                    return r != 0 ? r : a.sortName.compareTo(b.sortName);
+                  });
+
+                if (rows.isEmpty) {
+                  return const Text(
+                    'No members yet.',
+                    style: TextStyle(color: Colors.white38),
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final row in rows)
+                      if (row.profile != null)
+                        _CommunityProfileTile(
+                          key: ValueKey('cp_${row.profile!['id']}'),
+                          communityDocId: widget.communityDocId,
+                          profile: row.profile!,
+                          role: row.role,
+                          isSelf: (row.profile!['id'] ?? '').toString() ==
+                              activeId,
+                        )
+                      else
+                        _GroupMemberTile(
+                          key: ValueKey('cl_${row.uid}'),
+                          groupDocId: '',
+                          uid: row.uid,
+                          isAdmin: false,
+                          isSelf: row.uid == widget.currentUid,
+                          isConnected: widget.connectedUids.contains(row.uid),
+                          communityRole: row.role,
+                          communityDocId: widget.communityDocId,
+                        ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Opens a member PROFILE tapped in the Community Chat member list.
+///  * one of my own profiles -> the editable Community Profile page
+///  * anybody else's         -> their profile sheet (role, Contributions
+///                              and Skills), same as the Members page
+Future<void> _openCommunityMember(
+  BuildContext context, {
+  required String communityDocId,
+  required Map<String, dynamic> profile,
+  required String role,
+}) async {
+  final profileId = (profile['id'] ?? '').toString();
+  final uid = (profile['uid'] ?? '').toString();
+  final name = (profile['name'] ?? '').toString().trim();
+  final image = (profile['image'] ?? '').toString().trim();
+  final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  if (profileId.isNotEmpty &&
+      !profileId.startsWith('legacy_') &&
+      uid.isNotEmpty &&
+      uid == myUid) {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => CommunityMemberProfilePage(
+        communityDocId: communityDocId,
+        profileId: profileId,
+      ),
+    ));
+    return;
+  }
+
+  // Skills of THIS profile (Profile ID).
+  var skills = <String>[];
+  try {
+    skills = await CommunityMemberProfileService.resolveSkills(
+        communityDocId, profile);
+  } catch (_) {}
+  if (!context.mounted) return;
+
+  await CommunitySearchOpener.openMember(
+    context,
+    communityDocId: communityDocId,
+    member: {
+      'uid': uid,
+      'id': profileId,
+      'profileId': profileId,
+      'publicName': name,
+      'publicImage': image,
+      'publicSkills': skills,
+      'role': role,
+    },
+  );
+}
+
+/// One member PROFILE: Community Profile image + name, real role badge.
+class _CommunityProfileTile extends StatelessWidget {
+  final String communityDocId;
+  final Map<String, dynamic> profile;
+  final String role;
+  final bool isSelf;
+
+  const _CommunityProfileTile({
+    super.key,
+    required this.communityDocId,
+    required this.profile,
+    required this.role,
+    required this.isSelf,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final profileId = (profile['id'] ?? '').toString();
+    final ownerUid = (profile['uid'] ?? '').toString();
+    final name = CommunityMemberProfileService.displayName(
+        (profile['name'] ?? '').toString(), role);
+    final image = (profile['image'] ?? '').toString().trim();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openCommunityMember(
+          context,
+          communityDocId: communityDocId,
+          profile: profile,
+          role: role,
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: const Color(0xFF2A1B0E),
+              backgroundImage: _profileImageProvider(image),
+              child: image.isEmpty
+                  ? const Icon(Icons.person_rounded, color: Colors.white70)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (isSelf) ...[
+                    const SizedBox(height: 2),
+                    const Text(
+                      'You',
+                      style: TextStyle(color: Colors.white54, fontSize: 11.5),
+                    ),
+                  ] else if (ownerUid.isNotEmpty)
+                    // "active now" follows the owning account's
+                    // presence, same as the old member rows.
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(ownerUid)
+                          .snapshots(),
+                      builder: (context, snap) {
+                        if (snap.data?.data()?['isActive'] != true) {
+                          return const SizedBox.shrink();
+                        }
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 3),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PresenceStatusDot(isActive: true),
+                              SizedBox(width: 5),
+                              Text(
+                                'active now',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _CommunityRoleBadge(role: role),
+          ],
+        ),
+      ),
     );
   }
 }

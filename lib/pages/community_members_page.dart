@@ -410,10 +410,18 @@ class _PersonTile extends StatelessWidget {
           radius: 22,
           backgroundColor: const Color(0xFF2A1B0E),
           backgroundImage: hasImage ? NetworkImage(image) : null,
+          // No photo -> first letter of the shown name (or role), same
+          // as the "All" list.
           child: hasImage
               ? null
-              : Icon(Icons.person,
-                  color: _roleColor(badge ?? '')),
+              : Text(
+                  name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: CommunityColors.glow,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 19.8,
+                  ),
+                ),
         ),
       ),
       title: Text(

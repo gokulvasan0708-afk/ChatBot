@@ -1,3 +1,4 @@
+import '../features/translator/translator_popup.dart';
 import '../features/ai_assistant/ai_launcher.dart';
 import 'dart:async';
 import 'dart:io';
@@ -439,6 +440,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver, AiLauncherHide {
   final TextEditingController messageController =
       TextEditingController();
+  late final TranslatorController _translator =
+      TranslatorController(messageController);
 
   // ==========================================================
   // ATTACHMENT MENU
@@ -1641,6 +1644,27 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver, Ai
   // CURRENT USER
   // ==========================================================
 
+  /// Last 5 text messages received from the other user (oldest first),
+  /// used by the global translator popup.
+  Future<List<String>> _lastReceivedTexts() async {
+    final snap = await messagesReference
+        .orderBy('sentAt', descending: true)
+        .limit(40)
+        .get();
+    final out = <String>[];
+    for (final d in snap.docs) {
+      final m = d.data();
+      if ((m['senderId'] ?? '').toString() != widget.otherUserUid) continue;
+      if ((m['messageType'] ?? 'text').toString() != 'text') continue;
+      if (List<String>.from(m['hiddenFor'] ?? const []).contains(currentUid)) continue;
+      final t = (m['text'] ?? '').toString().trim();
+      if (t.isEmpty) continue;
+      out.add(t);
+      if (out.length == 5) break;
+    }
+    return out.reversed.toList();
+  }
+
   String get currentUid {
     return FirebaseAuth.instance.currentUser!.uid;
   }
@@ -2413,7 +2437,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver, Ai
   // ==========================================================
 
   Future<void> _sendMessage() async {
-    final text =
+    if (_translator.busy) return;
+    var text =
         messageController.text.trim();
 
     if (text.isEmpty) return;
@@ -2424,6 +2449,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver, Ai
     if (currentUser == null) return;
     if (_otherSettings['blocked'] == true) {
       if (mounted) showTopAlert(context, 'This account has blocked you.');
+      return;
+    }
+
+    String? originalText;
+    try {
+      final out = await _translator.beforeSend(text);
+      text = out.text;
+      originalText = out.original;
+    } on TranslatorException catch (e) {
+      if (mounted) showTopAlert(context, e.message, isError: true);
+      return;
+    } catch (_) {
+      if (mounted) showTopAlert(context, 'Translation failed. Message not sent.', isError: true);
       return;
     }
 
@@ -2446,6 +2484,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver, Ai
 
         'text':
             text,
+        if (originalText != null) 'originalText': originalText,
 
         'sentAt': now,
 
@@ -4249,7 +4288,10 @@ Future<void> _unsaveMessage(
                 // NEW: extra bottom spacing + expanding field
                 // ==================================================
 
-                Padding(
+                TranslatorInputHost(
+  controller: _translator,
+  getReceivedTexts: _lastReceivedTexts,
+  child: Padding(
                   padding:
                       const EdgeInsets.fromLTRB(
                     10,
@@ -4461,6 +4503,7 @@ Future<void> _unsaveMessage(
                     ],
                   ),
                 ),
+),
               ],
             ),
           ),
@@ -4503,6 +4546,7 @@ Future<void> _unsaveMessage(
     _mySettingsSub?.cancel();
     _otherSettingsSub?.cancel();
     messageController.removeListener(_handleTypingChanged);
+    _translator.dispose();
     messageController.dispose();
 
     scrollController.removeListener(_handleScrollPosition);
@@ -4821,7 +4865,6 @@ class _PublicMemberProfilePageState extends State<PublicMemberProfilePage> {
 
   String get _publicName => (_data['publicName'] ?? _data['name'] ?? 'User').toString().trim();
   String get _publicImage => (_data['publicImage'] ?? _data['profileImage'] ?? '').toString().trim();
-  String get _accountId => (_data['userId'] ?? '').toString().trim();
 
   ImageProvider? get _imageProvider {
     if (_publicImage.isEmpty) return null;
@@ -4848,6 +4891,24 @@ class _PublicMemberProfilePageState extends State<PublicMemberProfilePage> {
     });
     if (!mounted) return;
     setState(() => _connectionStatus = 'pending');
+  }
+
+  /// "Message" button shown to the right of Connect / Request Pending
+  /// for accounts that are not connected yet.
+  Widget _messageButton() {
+    return ElevatedButton(
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            otherUserUid: widget.uid,
+            otherUserName: _publicName,
+            otherUserImage: _publicImage,
+          ),
+        ),
+      ),
+      child: const Text('Message'),
+    );
   }
 
   Future<void> _setNickname() async {
@@ -5011,10 +5072,6 @@ class _PublicMemberProfilePageState extends State<PublicMemberProfilePage> {
                   ),
                   const SizedBox(height: 14),
                   Text(displayName, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  if (_accountId.isNotEmpty) ...[
-                    const SizedBox(height: 7),
-                    Text(_accountId, style: const TextStyle(color: Colors.white54)),
-                  ],
                   const SizedBox(height: 24),
                   if (_loadingConnection)
                     const CircularProgressIndicator(color: Color(0xFFD2B48C))
@@ -5029,9 +5086,21 @@ class _PublicMemberProfilePageState extends State<PublicMemberProfilePage> {
                       ],
                     )
                   else if (_connectionStatus == 'pending')
-                    Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14), decoration: BoxDecoration(color: const Color(0xFF2A1B0E), borderRadius: BorderRadius.circular(13)), child: const Center(child: Text('Request Pending', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold))))
+                    Row(
+                      children: [
+                        Expanded(child: Container(padding: const EdgeInsets.symmetric(vertical: 14), decoration: BoxDecoration(color: const Color(0xFF2A1B0E), borderRadius: BorderRadius.circular(13)), child: const Center(child: Text('Request Pending', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold))))),
+                        const SizedBox(width: 10),
+                        Expanded(child: _messageButton()),
+                      ],
+                    )
                   else
-                    SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _connect, child: const Text('Connect'))),
+                    Row(
+                      children: [
+                        Expanded(child: ElevatedButton(onPressed: _connect, child: const Text('Connect'))),
+                        const SizedBox(width: 10),
+                        Expanded(child: _messageButton()),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -5040,4 +5109,4 @@ class _PublicMemberProfilePageState extends State<PublicMemberProfilePage> {
       ),
     );
   }
-}
+}

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../features/ai_assistant/ai_launcher.dart';
+
 import 'chat_page.dart';
 import 'community_page.dart';
 import 'me_page.dart';
+import 'public_name_dialog.dart';
+import '../services/user_profile_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/incoming_message_alert.dart';
 import '../widgets/nexus_notify.dart';
 import '../widgets/wind_down_alert.dart';
@@ -59,7 +64,8 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => HomeShellState();
 }
 
-class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
+class HomeShellState extends State<HomeShell>
+    with WidgetsBindingObserver, AiHomeVisibility {
   late int _index =
       (widget.initialIndex >= 0 && widget.initialIndex <= 2)
           ? widget.initialIndex
@@ -100,8 +106,37 @@ class HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
         // app is open (widgets/incoming_message_alert.dart). Starts the
         // chats/groups listeners once; it no-ops if already running.
         IncomingMessageAlert.start();
+        // Public name == Account ID is compulsory: block the app with
+        // a non-dismissible dialog until it is set.
+        _ensurePublicName();
       }
     });
+  }
+
+  bool _askingPublicName = false;
+
+  Future<void> _ensurePublicName() async {
+    if (_askingPublicName) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _askingPublicName = true;
+    try {
+      final profile = await UserProfileService.getCurrentUserProfile();
+      if (!mounted) return;
+      if (!UserProfileService.needsPublicName(profile)) return;
+
+      final old = (profile?['publicName'] ?? '').toString().trim();
+      await showPublicNameDialog(
+        context,
+        mandatory: true,
+        initial: UserProfileService.validatePublicName(old) == null ? old : '',
+      );
+    } catch (e) {
+      debugPrint('Public name check error: $e');
+    } finally {
+      _askingPublicName = false;
+    }
   }
 
   @override
