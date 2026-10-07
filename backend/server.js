@@ -49,6 +49,24 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Translator -> Python AI service (port 8000)
+app.post("/translate", async (req, res) => {
+    try {
+        const r = await fetch("http://127.0.0.1:8000/translate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-forwarded-for": req.ip || "",
+            },
+            body: JSON.stringify(req.body),
+        });
+        res.status(r.status).json(await r.json());
+    } catch (e) {
+        res.status(502).json({ detail: "Translator unavailable" });
+    }
+});
+
 require("./gateway")(app);
 
 // ==========================================================

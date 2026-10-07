@@ -1,0 +1,17 @@
+# ---- Node (server.js, port 3000) ----
+CLOUDINARY_CLOUD_NAME=hmae9acm
+CLOUDINARY_API_KEY=983755953629657
+CLOUDINARY_API_SECRET=0HO2p4fx9R4-PO21oBhqsLnb6Ws
+# + put serviceAccountKey.json (Firebase) next to server.js
+
+# ---- Python AI (ai/) ----
+OPENROUTER_API_KEY=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
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_MAX_TOKENS=400
+ALLOWED_ORIGINS=*
+APP_LIB_DIR=            # default: ../../lib (Flutter lib/ when backend/ sits in the project root)
+AI_ENABLED=1
+AI_PORT=8000
+REINDEX_TOKEN=
+CHAT_RATE_LIMIT=30
+CHAT_CACHE_TTL=1800   # seconds, 0 = off
